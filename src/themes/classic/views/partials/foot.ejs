@@ -1,0 +1,31 @@
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-inner">
+    <p class="footer-name"><%= settings.site.name %></p>
+    <ul class="footer-links">
+      <% settings.site.emails.forEach(function (address) { %>
+        <li><a href="mailto:<%= address %>"><%= address %></a></li>
+      <% }); %>
+      <% if (safeUrl(settings.site.github)) { %>
+        <li><a href="<%= safeUrl(settings.site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      <% } %>
+      <% if (safeUrl(settings.site.linkedin)) { %>
+        <li><a href="<%= safeUrl(settings.site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+      <% } %>
+      <% if (safeUrl(settings.site.resumeUrl)) { %>
+        <li><a href="<%= safeUrl(settings.site.resumeUrl) %>" target="_blank" rel="noopener noreferrer">Resume</a></li>
+      <% } %>
+      <% (settings.site.extraLinks || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+    <p class="footer-meta">
+      &copy; <%= new Date().getFullYear() %> <%= settings.site.name %><% if (user) { %> · <a href="/admin">Admin</a><% } %>
+    </p>
+  </div>
+</footer>
+
+<script src="<%= themeAssets %>/theme.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<%- include('../partials/head') %>
+
+<div class="page-title">
+  <div>
+    <p class="breadcrumb-admin"><a href="/admin/projects">← Projects</a></p>
+    <h1><%= isNew ? 'New project' : project.title %></h1>
+    <% if (!isNew) { %>
+      <p class="page-sub">
+        <span class="tag <%= project.isPublished ? 'tag-live' : 'tag-draft' %>"><%= project.isPublished ? 'Published' : 'Draft' %></span>
+        <a href="<%= project.href %>" target="_blank" rel="noopener">View page</a>
+        ·
+        <a href="/admin/preview?path=<%= encodeURIComponent(project.href) %>">Preview</a>
+      </p>
+    <% } %>
+  </div>
+</div>
+
+<form method="post" action="<%= isNew ? '/admin/projects' : '/admin/projects/' + project.id %>" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Basics</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="title">Title</label>
+        <input id="title" name="title" type="text" value="<%= project.title %>" required data-slug-source>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="slug">URL slug</label>
+        <div class="input-prefix">
+          <span>/projects/</span>
+          <input id="slug" name="slug" type="text" value="<%= project.slug %>" data-slug-target>
+        </div>
+        <p class="field-help">Leave blank to generate it from the title.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="summary">Short description</label>
+        <input id="summary" name="summary" type="text" value="<%= project.summary %>" maxlength="300">
+        <p class="field-help">One sentence, shown on the cards. Keep it under ~140 characters.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="description">Full description</label>
+        <textarea id="description" name="description" rows="8"><%= project.description %></textarea>
+        <p class="field-help">Markdown supported. Shown at the top of the project page, before the content blocks.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="year">Year</label>
+        <input id="year" name="year" type="text" value="<%= project.year %>" placeholder="2025">
+      </div>
+
+      <div class="field">
+        <span class="field-label">Technologies</span>
+        <div class="tech-field" data-tech-field>
+          <input type="hidden" name="tech" value="<%= JSON.stringify(project.tech) %>" data-tech-input>
+
+          <ul class="tech-field-list" data-tech-list>
+            <% project.tech.forEach(function (item) { %>
+              <li data-tech-name="<%= item.name %>" data-tech-icon="<%= item.icon %>">
+                <span class="tech-field-logo" aria-hidden="true"><%- item.icon ? renderIcon(item.icon, { style: 'color' }) : '' %></span>
+                <span class="tech-field-name"><%= item.name %></span>
+                <span class="tech-field-buttons">
+                  <button type="button" class="icon-button" data-tech-move="up" aria-label="Move <%= item.name %> earlier">↑</button>
+                  <button type="button" class="icon-button" data-tech-move="down" aria-label="Move <%= item.name %> later">↓</button>
+                  <button type="button" class="icon-button icon-button-danger" data-tech-remove aria-label="Remove <%= item.name %>">✕</button>
+                </span>
+              </li>
+            <% }); %>
+          </ul>
+
+          <p class="tech-field-empty" data-tech-empty<%= project.tech.length ? ' hidden' : '' %>>No technologies added yet.</p>
+
+          <div class="tech-field-add">
+            <label class="visually-hidden" for="tech-name">Technology name</label>
+            <input id="tech-name" type="text" data-tech-name-input list="known-tech" placeholder="e.g. PyTorch">
+            <datalist id="known-tech">
+              <% knownTech.forEach(function (item) { %><option value="<%= item.name %>"></option><% }); %>
+            </datalist>
+
+            <%- include('../partials/field-icon', {
+                  fieldName: 'techIcon',
+                  fieldId: 'tech-icon',
+                  fieldLabel: 'Logo for the new technology',
+                  fieldValue: ''
+                }) %>
+
+            <button type="button" class="button button-small button-primary" data-tech-add>Add</button>
+          </div>
+          <p class="field-help">Pick a logo from the Devicon library, or add a name on its own.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="github_url">GitHub URL</label>
+          <input id="github_url" name="github_url" type="url" value="<%= project.github_url %>" placeholder="https://github.com/...">
+        </div>
+        <div class="field">
+          <label class="field-label" for="demo_url">Live demo URL</label>
+          <input id="demo_url" name="demo_url" type="url" value="<%= project.demo_url %>" placeholder="https://...">
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Images</h2>
+          <p class="panel-hint">The thumbnail is used on cards, the project page header and link previews.</p>
+        </div>
+      </div>
+      <%- include('../partials/field-media', {
+            fieldName: 'thumbnail_id',
+            fieldLabel: 'Thumbnail',
+            fieldValue: project.thumbnail,
+            fieldHelp: 'Landscape images work best (about 16:10).'
+          }) %>
+      <%- include('../partials/field-gallery', {
+            fieldName: 'gallery',
+            fieldLabel: 'Gallery',
+            fieldItems: project.gallery,
+            fieldHelp: 'Screenshots shown at the bottom of the project page.'
+          }) %>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Publishing</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="status">Status</label>
+        <select id="status" name="status">
+          <option value="draft"<%= project.status === 'draft' ? ' selected' : '' %>>Draft — only visible to you</option>
+          <option value="published"<%= project.status === 'published' ? ' selected' : '' %>>Published — visible to everyone</option>
+        </select>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" name="featured" value="1"<%= project.featured ? ' checked' : '' %>>
+        <span>Show on the homepage</span>
+      </label>
+
+      <label class="checkbox">
+        <input type="checkbox" name="has_detail_page" value="1"<%= project.hasDetailPage ? ' checked' : '' %>>
+        <span>Give this project its own page</span>
+      </label>
+      <p class="field-help">Turn this off for small projects that only need a card and links.</p>
+
+      <div class="field">
+        <label class="field-label" for="meta_description">Search/meta description</label>
+        <textarea id="meta_description" name="meta_description" rows="3" maxlength="300"><%= project.meta_description %></textarea>
+        <p class="field-help">Optional. Falls back to the short description.</p>
+      </div>
+
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit"><%= isNew ? 'Create project' : 'Save changes' %></button>
+      </div>
+    </section>
+
+    <% if (!isNew) { %>
+      <section class="panel">
+        <div class="panel-head"><div><h2>Other actions</h2></div></div>
+        <div class="side-actions">
+          <button class="button button-block" type="submit" form="duplicate-form">Duplicate as draft</button>
+          <button class="button button-block button-danger" type="submit" form="delete-form">Delete project</button>
+        </div>
+      </section>
+    <% } %>
+  </aside>
+</form>
+
+<% if (!isNew) { %>
+  <form method="post" action="/admin/projects/<%= project.id %>/duplicate" id="duplicate-form" hidden>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  </form>
+  <form method="post" action="/admin/projects/<%= project.id %>/delete" id="delete-form" hidden
+        data-confirm="Delete “<%= project.title %>” and all of its content blocks? This cannot be undone.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  </form>
+
+  <%- include('../partials/block-editor', { ownerType: 'project', ownerId: project.id, blocks: blocks, blockTypes: blockTypes }) %>
+<% } else { %>
+  <section class="panel">
+    <p class="empty-state">Create the project first — then you can add content blocks, images and a full case study.</p>
+  </section>
+<% } %>
+
+<%- include('../partials/foot') %>

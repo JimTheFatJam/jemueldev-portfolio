@@ -1,0 +1,56 @@
+<%- include('../partials/head') %>
+
+<div class="page-title">
+  <div>
+    <h1>Education</h1>
+    <p class="page-sub">Degrees and programmes, newest first is a good default.</p>
+  </div>
+  <a class="button button-primary" href="/admin/education/new">Add entry</a>
+</div>
+
+<% if (items.length === 0) { %>
+  <section class="panel">
+    <p class="empty-state">No entries yet. <a href="/admin/education/new">Add your degree</a>.</p>
+  </section>
+<% } else { %>
+  <section class="panel panel-flush">
+    <ul class="record-list">
+      <% items.forEach(function (item, index) { %>
+        <li class="record">
+          <div class="record-order">
+            <form method="post" action="/admin/education/<%= item.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="up">
+              <button class="icon-button" type="submit" aria-label="Move <%= item.degree %> up"<%= index === 0 ? ' disabled' : '' %>>↑</button>
+            </form>
+            <form method="post" action="/admin/education/<%= item.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="down">
+              <button class="icon-button" type="submit" aria-label="Move <%= item.degree %> down"<%= index === items.length - 1 ? ' disabled' : '' %>>↓</button>
+            </form>
+          </div>
+
+          <div class="record-body record-body-wide">
+            <a class="record-title" href="/admin/education/<%= item.id %>"><%= item.degree %></a>
+            <p class="record-sub"><%= item.institution %></p>
+            <p class="record-meta">
+              <span class="tag <%= item.visible ? 'tag-live' : 'tag-draft' %>"><%= item.visible ? 'Visible' : 'Hidden' %></span>
+              <% if (item.date_range) { %><span><%= item.date_range %></span><% } %>
+            </p>
+          </div>
+
+          <div class="record-actions">
+            <a class="button button-small" href="/admin/education/<%= item.id %>">Edit</a>
+            <form method="post" action="/admin/education/<%= item.id %>/delete" class="inline-form"
+                  data-confirm="Delete “<%= item.degree %>”?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="button button-small button-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </li>
+      <% }); %>
+    </ul>
+  </section>
+<% } %>
+
+<%- include('../partials/foot') %>

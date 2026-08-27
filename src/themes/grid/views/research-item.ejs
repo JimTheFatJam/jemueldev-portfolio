@@ -1,0 +1,100 @@
+<%- include('./partials/head') %>
+
+<article class="gd-detail">
+  <div class="gd-shell">
+    <nav class="gd-crumb" aria-label="Breadcrumb">
+      <a href="/research"><span aria-hidden="true">←</span> Research</a>
+    </nav>
+
+    <header class="gd-detail-head">
+      <p class="gd-label">
+        <span class="gd-label-num">R</span>Record
+        <% if (item.date) { %><span class="gd-detail-year"><%= item.date %></span><% } %>
+        <% if (item.work_status) { %><span class="gd-tag gd-tag-accent"><%= item.work_status %></span><% } %>
+      </p>
+
+      <h1 class="gd-detail-title"><%= item.title %></h1>
+      <% if (item.authors) { %><p class="gd-detail-byline"><%= item.authors %></p><% } %>
+      <% if (item.institution) { %><p class="gd-detail-lead"><%= item.institution %></p><% } %>
+
+      <div class="gd-detail-actions">
+        <% if (safeUrl(item.paper_url)) { %>
+          <a class="gd-btn gd-btn-accent" href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Read the paper</a>
+        <% } %>
+        <% if (safeUrl(item.github_url)) { %>
+          <a class="gd-btn" href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">View code</a>
+        <% } %>
+        <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+          <a class="gd-btn" href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+        <% } }); %>
+      </div>
+    </header>
+
+    <% if (item.thumbnail) { %>
+      <figure class="gd-panel gd-detail-figure" data-reveal>
+        <%- include('shared/image', {
+              media: item.thumbnail,
+              imgSizes: '(max-width: 72rem) 100vw, 64rem',
+              imgLoading: 'eager',
+              imgClass: 'gd-detail-img'
+            }) %>
+      </figure>
+    <% } %>
+
+    <div class="gd-detail-layout">
+      <aside class="gd-detail-side">
+        <div class="gd-side-block">
+          <p class="gd-label"><span class="gd-label-num">—</span>Status</p>
+          <p class="gd-side-value"><%= item.work_status || (item.isPublished ? 'Published' : 'Draft') %></p>
+        </div>
+
+        <% if (item.keywords.length) { %>
+          <div class="gd-side-block">
+            <p class="gd-label"><span class="gd-label-num">—</span>Keywords</p>
+            <ul class="gd-keywords">
+              <% item.keywords.forEach(function (keyword) { %><li><%= keyword %></li><% }); %>
+            </ul>
+          </div>
+        <% } %>
+        <% if (item.institution) { %>
+          <div class="gd-side-block">
+            <p class="gd-label"><span class="gd-label-num">—</span>Institution</p>
+            <p class="gd-side-value"><%= item.institution %></p>
+          </div>
+        <% } %>
+      </aside>
+
+      <div class="gd-detail-content">
+        <% if (item.abstract) { %>
+          <section class="gd-detail-block" data-reveal>
+            <p class="gd-label"><span class="gd-label-num">—</span>Abstract</p>
+            <div class="gd-prose"><%- md(item.abstract) %></div>
+          </section>
+        <% } %>
+
+        <%- include('shared/blocks', { blocks: blocks }) %>
+
+        <% if (item.gallery.length) { %>
+          <section class="gd-detail-block" data-reveal>
+            <p class="gd-label"><span class="gd-label-num">—</span>Figures</p>
+            <ul class="gallery-grid" data-columns="2">
+              <% item.gallery.forEach(function (image) { %>
+                <li>
+                  <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
+                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 24rem', imgClass: 'gallery-img' }) %>
+                  </a>
+                </li>
+              <% }); %>
+            </ul>
+          </section>
+        <% } %>
+      </div>
+    </div>
+
+    <footer class="gd-detail-foot">
+      <a href="/research"><span aria-hidden="true">←</span> All research</a>
+    </footer>
+  </div>
+</article>
+
+<%- include('./partials/foot') %>

@@ -1,0 +1,41 @@
+<%
+  // Locals: item, recordIndex
+  const num = String((typeof recordIndex !== 'undefined' ? recordIndex : 0) + 1).padStart(2, '0');
+%>
+<article class="gd-record" data-reveal>
+  <div class="gd-record-meta">
+    <span class="gd-record-num"><%= num %></span>
+    <% if (item.date) { %><span class="gd-record-year"><%= item.date %></span><% } %>
+    <% if (item.work_status) { %><span class="gd-tag gd-tag-accent"><%= item.work_status %></span><% } %>
+    <% if (!item.isPublished) { %><span class="gd-tag gd-tag-draft">Draft</span><% } %>
+  </div>
+
+  <div class="gd-record-body">
+    <h3 class="gd-record-title">
+      <% if (item.hasDetailPage) { %>
+        <a href="<%= item.href %>"><%= item.title %><span class="gd-card-arrow" aria-hidden="true">→</span></a>
+      <% } else { %><%= item.title %><% } %>
+    </h3>
+
+    <% if (item.authors || item.institution) { %>
+      <p class="gd-record-byline">
+        <%= item.authors %><% if (item.authors && item.institution) { %> · <% } %><%= item.institution %>
+      </p>
+    <% } %>
+
+    <% if (item.abstract) { %><p class="gd-record-abstract"><%= plain(item.abstract, 260) %></p><% } %>
+
+    <ul class="gd-linkrow">
+      <% if (item.hasDetailPage) { %><li><a href="<%= item.href %>">Read record</a></li><% } %>
+      <% if (safeUrl(item.paper_url)) { %>
+        <li><a href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Paper</a></li>
+      <% } %>
+      <% if (safeUrl(item.github_url)) { %>
+        <li><a href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">Code</a></li>
+      <% } %>
+      <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+  </div>
+</article>

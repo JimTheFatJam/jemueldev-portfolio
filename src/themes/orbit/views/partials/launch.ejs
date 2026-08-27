@@ -1,0 +1,153 @@
+<%
+  // Destinations orbiting the sun. Each is a real link with a real href, so the
+  // scene works with JavaScript off and by keyboard alone — the 3D orbital
+  // motion is decoration layered over an ordinary nav list.
+  const isHome = currentPath === '/';
+  const anchor = (id) => (isHome ? '#' + id : '/#' + id);
+
+  const destinations = [];
+  if (settings.sections.about) {
+    destinations.push({ label: 'About', code: 'ABT', href: anchor('about'), note: 'Who I am' });
+  }
+  if (settings.sections.projects) {
+    destinations.push({ label: 'Work', code: 'WRK', href: '/projects', note: 'Selected projects' });
+  }
+  if (settings.sections.skills) {
+    destinations.push({ label: 'Toolkit', code: 'TLK', href: anchor('skills'), note: 'What I build with' });
+  }
+  if (settings.sections.research) {
+    destinations.push({ label: 'Research', code: 'RSH', href: '/research', note: 'Studies and papers' });
+  }
+  // Gated on there being entries too, because the section itself only renders
+  // when there are — a planet must never point at an anchor that is not there.
+  if (settings.sections.education && (education || []).length) {
+    destinations.push({ label: 'Education', code: 'EDU', href: anchor('education'), note: 'Where I studied' });
+  }
+  if (settings.sections.contact) {
+    destinations.push({ label: 'Contact', code: 'CTC', href: anchor('contact'), note: 'Get in touch' });
+  }
+  navPages.forEach(function (page) {
+    destinations.push({ label: page.title, code: 'PGE', href: page.href, note: 'Page' });
+  });
+
+  // Six orbit slots are defined in the stylesheet; anything beyond reuses the
+  // outermost one rather than disappearing.
+  const bodies = destinations.slice(0, 6);
+  const siteName = settings.site.name || 'Portfolio';
+
+  // The display type is the name broken onto its own lines — a graphic element
+  // built from real content, and the unit the typing reveal walks through.
+  const launchName = hero.headline || siteName;
+  const launchLines = launchName.split(/\s+/).filter(Boolean);
+
+  // Counts are derived from what is actually published, not vanity numbers.
+  const launchTech = new Set((projects || []).flatMap((project) => project.tech.map((t) => t.name))).size;
+%>
+
+<section class="ob-launch" aria-labelledby="ob-launch-title">
+  <%# Shown only while the header has stepped aside over the map. %>
+  <div class="ob-launch-theme">
+    <button class="ob-theme" type="button" data-theme-toggle aria-label="Switch to dark theme" title="Switch theme">
+      <svg class="ob-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"></path>
+      </svg>
+      <svg class="ob-theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.1"></circle>
+        <path d="M12 2.6v2.1M12 19.3v2.1M4.2 4.2l1.5 1.5M18.3 18.3l1.5 1.5M2.6 12h2.1M19.3 12h2.1M4.2 19.8l1.5-1.5M18.3 5.7l1.5-1.5"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="ob-launch-inner ob-shell">
+    <div class="ob-launch-intro">
+      <p class="ob-label"><span class="ob-label-num">00</span><%= hero.identity || settings.site.tagline || 'Portfolio' %></p>
+
+      <h1 class="ob-launch-title" id="ob-launch-title">
+        <% launchLines.forEach(function (line, index) { %>
+          <span class="ob-launch-line"><%= line %><% if (index === launchLines.length - 1) { %><span class="ob-launch-caret" aria-hidden="true">_</span><% } %></span>
+        <% }); %>
+      </h1>
+
+      <div class="ob-launch-profile" data-reveal>
+        <p class="ob-label"><span class="ob-label-num">—</span>Profile</p>
+
+        <% if (hero.intro) { %>
+          <div class="ob-launch-lead"><p><%- mdInline(hero.intro) %></p></div>
+        <% } %>
+
+        <dl class="ob-index">
+          <% if (settings.sections.projects) { %>
+            <div><dt>Projects</dt><dd><%= String((projects || []).length).padStart(2, '0') %></dd></div>
+          <% } %>
+          <% if (launchTech) { %>
+            <div><dt>Technologies</dt><dd><%= String(launchTech).padStart(2, '0') %></dd></div>
+          <% } %>
+          <% if (settings.sections.research && (research || []).length) { %>
+            <div><dt>Research</dt><dd><%= String((research || []).length).padStart(2, '0') %></dd></div>
+          <% } %>
+        </dl>
+      </div>
+
+      <p class="ob-launch-hint" aria-hidden="true" data-reveal>Select a body to travel<span class="ob-launch-hint-controls"> · Scroll to zoom · Drag to orbit</span></p>
+    </div>
+
+    <div class="ob-system" data-system>
+      <!-- perspective root: everything inside shares one camera -->
+      <div class="ob-scene" data-scene>
+        <div class="ob-camera" data-camera>
+          <!-- Orbit paths. Circles in the tilted plane, so perspective draws
+               them as ellipses. Flattened into a single layer by the stylesheet
+               so they always sit behind the planets. Purely decorative. -->
+          <div class="ob-orbits" aria-hidden="true">
+            <% bodies.forEach(function (body, index) { %>
+              <span class="ob-path ob-path--<%= index + 1 %>"></span>
+            <% }); %>
+            <span class="ob-path ob-path--outer"></span>
+          </div>
+
+          <!-- The sun is home. Following it re-enters the portfolio. The whole
+               disc is the hit area; the name shows only in the mobile list. -->
+          <a class="ob-sun" href="/" aria-label="Home">
+            <span class="ob-sun-core" aria-hidden="true"></span>
+            <span class="ob-sun-name">Home</span>
+          </a>
+
+          <nav class="ob-bodies" aria-label="Explore">
+            <ul>
+              <% bodies.forEach(function (body, index) { %>
+                <%
+                  const slot = index + 1;
+                %>
+                <li class="ob-arm ob-arm--<%= slot %>">
+                  <!-- anchor: pushes the body out to its orbit and undoes the
+                       camera's spin; billboard: undoes the arm rotation and the
+                       resting tilt; the link itself absorbs any live tilt. The
+                       three together keep every label upright and readable.
+                       Only the disc and the label plate take pointer events, so
+                       overlapping bodies never steal each other's clicks. -->
+                  <span class="ob-anchor ob-anchor--<%= slot %>">
+                    <span class="ob-billboard ob-billboard--<%= slot %>">
+                      <a class="ob-body ob-body--<%= slot %>" href="<%= body.href %>" data-body>
+                        <span class="ob-orb" aria-hidden="true"><span class="ob-planet"></span></span>
+                        <span class="ob-body-tag">
+                          <span class="ob-body-code" aria-hidden="true"><%= String(slot).padStart(2, '0') %> / <%= body.code %></span>
+                          <span class="ob-body-name"><%= body.label %></span>
+                          <span class="ob-body-note" aria-hidden="true"><%= body.note %></span>
+                        </span>
+                      </a>
+                    </span>
+                  </span>
+                </li>
+              <% }); %>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <a class="ob-scroll-cue" href="#ob-content">
+      <span class="ob-scroll-text">Continue</span>
+      <span class="ob-scroll-arrow" aria-hidden="true">↓</span>
+    </a>
+  </div>
+</section>

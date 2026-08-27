@@ -1,0 +1,75 @@
+<%- include('../partials/head') %>
+
+<div class="page-title">
+  <div>
+    <h1>Projects</h1>
+    <p class="page-sub">The homepage shows published projects marked as featured, in this order.</p>
+  </div>
+  <a class="button button-primary" href="/admin/projects/new">Add project</a>
+</div>
+
+<% if (projects.length === 0) { %>
+  <section class="panel">
+    <p class="empty-state">No projects yet. <a href="/admin/projects/new">Add your first project</a>.</p>
+  </section>
+<% } else { %>
+  <section class="panel panel-flush">
+    <ul class="record-list">
+      <% projects.forEach(function (project, index) { %>
+        <li class="record">
+          <div class="record-order">
+            <form method="post" action="/admin/projects/<%= project.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="up">
+              <button class="icon-button" type="submit" aria-label="Move <%= project.title %> up"<%= index === 0 ? ' disabled' : '' %>>↑</button>
+            </form>
+            <form method="post" action="/admin/projects/<%= project.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="down">
+              <button class="icon-button" type="submit" aria-label="Move <%= project.title %> down"<%= index === projects.length - 1 ? ' disabled' : '' %>>↓</button>
+            </form>
+          </div>
+
+          <div class="record-thumb">
+            <% if (project.thumbnail) { %>
+              <img src="<%= project.thumbnail.url %>" alt="" width="80" height="56" loading="lazy">
+            <% } else { %>
+              <span class="record-thumb-empty" aria-hidden="true"></span>
+            <% } %>
+          </div>
+
+          <div class="record-body">
+            <a class="record-title" href="/admin/projects/<%= project.id %>"><%= project.title %></a>
+            <p class="record-sub"><%= project.summary || 'No summary yet' %></p>
+            <p class="record-meta">
+              <span class="tag <%= project.isPublished ? 'tag-live' : 'tag-draft' %>"><%= project.isPublished ? 'Published' : 'Draft' %></span>
+              <% if (project.featured) { %><span class="tag tag-featured">Featured</span><% } %>
+              <% if (project.year) { %><span><%= project.year %></span><% } %>
+              <span class="record-slug">/projects/<%= project.slug %></span>
+            </p>
+          </div>
+
+          <div class="record-actions">
+            <form method="post" action="/admin/projects/<%= project.id %>/feature" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="button button-small" type="submit"><%= project.featured ? 'Unfeature' : 'Feature' %></button>
+            </form>
+            <form method="post" action="/admin/projects/<%= project.id %>/status" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="status" value="<%= project.isPublished ? 'draft' : 'published' %>">
+              <button class="button button-small" type="submit"><%= project.isPublished ? 'Unpublish' : 'Publish' %></button>
+            </form>
+            <a class="button button-small" href="/admin/projects/<%= project.id %>">Edit</a>
+            <form method="post" action="/admin/projects/<%= project.id %>/delete" class="inline-form"
+                  data-confirm="Delete “<%= project.title %>” and all of its content blocks? This cannot be undone.">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="button button-small button-danger" type="submit">Delete</button>
+            </form>
+          </div>
+        </li>
+      <% }); %>
+    </ul>
+  </section>
+<% } %>
+
+<%- include('../partials/foot') %>

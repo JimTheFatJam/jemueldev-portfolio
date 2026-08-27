@@ -1,0 +1,109 @@
+<%- include('./partials/head') %>
+
+<div class="page-title">
+  <div>
+    <h1>Skills</h1>
+    <p class="page-sub">Grouped by category. No levels, no percentages — just what you work with, with an optional technology logo.</p>
+  </div>
+</div>
+
+<section class="panel panel-narrow">
+  <div class="panel-head"><div><h2>Add a category</h2></div></div>
+  <form method="post" action="/admin/skills/categories" class="row-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="visually-hidden" for="new-category">Category name</label>
+    <input id="new-category" name="name" type="text" placeholder="e.g. Machine Learning &amp; Data" required>
+    <button class="button button-primary" type="submit">Add category</button>
+  </form>
+</section>
+
+<% if (categories.length === 0) { %>
+  <section class="panel">
+    <p class="empty-state">No categories yet. Add one above — for example “Programming Languages”.</p>
+  </section>
+<% } %>
+
+<% categories.forEach(function (category, index) { %>
+  <section class="panel skill-category">
+    <div class="panel-head skill-category-head">
+      <form method="post" action="/admin/skills/categories/<%= category.id %>" class="row-form row-form-tight">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label class="visually-hidden" for="cat-<%= category.id %>">Category name</label>
+        <input id="cat-<%= category.id %>" name="name" type="text" value="<%= category.name %>" required>
+        <label class="checkbox checkbox-inline">
+          <input type="checkbox" name="visible" value="1"<%= category.visible ? ' checked' : '' %>>
+          <span>Visible</span>
+        </label>
+        <button class="button button-small" type="submit">Save</button>
+      </form>
+
+      <div class="skill-category-actions">
+        <form method="post" action="/admin/skills/categories/<%= category.id %>/move" class="inline-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="direction" value="up">
+          <button class="icon-button" type="submit" aria-label="Move <%= category.name %> up"<%= index === 0 ? ' disabled' : '' %>>↑</button>
+        </form>
+        <form method="post" action="/admin/skills/categories/<%= category.id %>/move" class="inline-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <input type="hidden" name="direction" value="down">
+          <button class="icon-button" type="submit" aria-label="Move <%= category.name %> down"<%= index === categories.length - 1 ? ' disabled' : '' %>>↓</button>
+        </form>
+        <form method="post" action="/admin/skills/categories/<%= category.id %>/delete" class="inline-form"
+              data-confirm="Delete “<%= category.name %>” and its <%= category.skills.length %> skill(s)?">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="button button-small button-danger" type="submit">Delete</button>
+        </form>
+      </div>
+    </div>
+
+    <ul class="skill-rows">
+      <% category.skills.forEach(function (skill, skillIndex) { %>
+        <li class="skill-row">
+          <form method="post" action="/admin/skills/skills/<%= skill.id %>" class="row-form row-form-tight">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label class="visually-hidden" for="skill-<%= skill.id %>">Skill name</label>
+            <input id="skill-<%= skill.id %>" name="name" type="text" value="<%= skill.name %>" required>
+            <%- include('./partials/field-icon', {
+                  fieldName: 'icon',
+                  fieldId: 'icon-' + skill.id,
+                  fieldLabel: 'Icon for ' + skill.name,
+                  fieldValue: skill.icon
+                }) %>
+            <button class="button button-small" type="submit">Save</button>
+          </form>
+          <div class="skill-row-actions">
+            <form method="post" action="/admin/skills/skills/<%= skill.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="up">
+              <button class="icon-button" type="submit" aria-label="Move <%= skill.name %> up"<%= skillIndex === 0 ? ' disabled' : '' %>>↑</button>
+            </form>
+            <form method="post" action="/admin/skills/skills/<%= skill.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="down">
+              <button class="icon-button" type="submit" aria-label="Move <%= skill.name %> down"<%= skillIndex === category.skills.length - 1 ? ' disabled' : '' %>>↓</button>
+            </form>
+            <form method="post" action="/admin/skills/skills/<%= skill.id %>/delete" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="icon-button icon-button-danger" type="submit" aria-label="Delete <%= skill.name %>">✕</button>
+            </form>
+          </div>
+        </li>
+      <% }); %>
+    </ul>
+
+    <form method="post" action="/admin/skills/categories/<%= category.id %>/skills" class="row-form row-form-add">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label class="visually-hidden" for="add-skill-<%= category.id %>">Add skills to <%= category.name %></label>
+      <input id="add-skill-<%= category.id %>" name="name" type="text" placeholder="Add a skill — or paste several, comma separated" required>
+      <%- include('./partials/field-icon', {
+            fieldName: 'icon',
+            fieldId: 'add-icon-' + category.id,
+            fieldLabel: 'Icon for the new skill',
+            fieldValue: ''
+          }) %>
+      <button class="button button-small button-primary" type="submit">Add</button>
+    </form>
+  </section>
+<% }); %>
+
+<%- include('./partials/foot') %>

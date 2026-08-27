@@ -1,0 +1,75 @@
+<%- include('../partials/head') %>
+
+<div class="page-title">
+  <div>
+    <p class="breadcrumb-admin"><a href="/admin/pages">← Pages</a></p>
+    <h1><%= isNew ? 'New page' : page.title %></h1>
+    <% if (!isNew) { %>
+      <p class="page-sub">
+        <span class="tag <%= page.status === 'published' ? 'tag-live' : 'tag-draft' %>"><%= page.status === 'published' ? 'Published' : 'Draft' %></span>
+        <a href="<%= page.href %>" target="_blank" rel="noopener">View page</a>
+      </p>
+    <% } %>
+  </div>
+</div>
+
+<form method="post" action="<%= isNew ? '/admin/pages' : '/admin/pages/' + page.id %>" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Page</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="title">Title</label>
+        <input id="title" name="title" type="text" value="<%= page.title %>" required data-slug-source>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="slug">URL slug</label>
+        <div class="input-prefix">
+          <span>/</span>
+          <input id="slug" name="slug" type="text" value="<%= page.slug %>" data-slug-target>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="meta_description">Meta description</label>
+        <textarea id="meta_description" name="meta_description" rows="3" maxlength="300"><%= page.meta_description %></textarea>
+      </div>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Publishing</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="status">Status</label>
+        <select id="status" name="status">
+          <option value="draft"<%= page.status === 'draft' ? ' selected' : '' %>>Draft</option>
+          <option value="published"<%= page.status === 'published' ? ' selected' : '' %>>Published</option>
+        </select>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" name="show_in_nav" value="1"<%= page.showInNav ? ' checked' : '' %>>
+        <span>Show in the main navigation</span>
+      </label>
+
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit"><%= isNew ? 'Create page' : 'Save changes' %></button>
+      </div>
+    </section>
+  </aside>
+</form>
+
+<% if (!isNew) { %>
+  <%- include('../partials/block-editor', { ownerType: 'page', ownerId: page.id, blocks: blocks, blockTypes: blockTypes }) %>
+<% } else { %>
+  <section class="panel">
+    <p class="empty-state">Create the page first — then build it from content blocks.</p>
+  </section>
+<% } %>
+
+<%- include('../partials/foot') %>

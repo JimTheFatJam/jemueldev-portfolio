@@ -1,0 +1,72 @@
+<%- include('./partials/head') %>
+
+<article class="ed-detail">
+  <nav class="ed-breadcrumb" aria-label="Breadcrumb">
+    <a class="ed-link-sweep" href="/projects">← Projects</a>
+  </nav>
+
+  <header class="ed-detail-head">
+    <p class="ed-label">
+      <% if (project.year) { %><span><%= project.year %></span><% } %>
+      <% if (project.featured) { %><span class="ed-flag ed-flag-quiet">Featured</span><% } %>
+    </p>
+    <h1 class="ed-detail-title"><%= project.title %></h1>
+    <% if (project.summary) { %><p class="ed-detail-lead"><%= project.summary %></p><% } %>
+
+    <ul class="ed-actions ed-detail-actions">
+      <% if (safeUrl(project.github_url)) { %>
+        <li><a class="ed-button" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">View source</a></li>
+      <% } %>
+      <% if (safeUrl(project.demo_url)) { %>
+        <li><a class="ed-button" href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a></li>
+      <% } %>
+    </ul>
+  </header>
+
+  <% if (project.thumbnail) { %>
+    <figure class="ed-detail-figure" data-reveal>
+      <%- include('shared/image', {
+            media: project.thumbnail,
+            imgSizes: '(max-width: 60rem) 100vw, 52rem',
+            imgLoading: 'eager',
+            imgClass: 'ed-detail-img'
+          }) %>
+    </figure>
+  <% } %>
+
+  <% if (project.tech.length) { %>
+    <section class="ed-detail-block" data-reveal>
+      <h2 class="ed-sub-label">Technologies</h2>
+      <ul class="ed-tech ed-tech-lg">
+        <% project.tech.forEach(function (tech) { %><li<%- tech.icon ? ' class="has-icon"' : '' %>><% if (tech.icon) { %><span class="ed-tech-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li><% }); %>
+      </ul>
+    </section>
+  <% } %>
+
+  <% if (project.description) { %>
+    <div class="ed-prose ed-detail-prose" data-reveal><%- md(project.description) %></div>
+  <% } %>
+
+  <%- include('shared/blocks', { blocks: blocks }) %>
+
+  <% if (project.gallery.length) { %>
+    <section class="ed-detail-block" data-reveal>
+      <h2 class="ed-sub-label">Gallery</h2>
+      <ul class="gallery-grid" data-columns="2">
+        <% project.gallery.forEach(function (image) { %>
+          <li>
+            <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
+              <%- include('shared/image', { media: image, imgSizes: '(max-width: 40rem) 100vw, 26rem', imgClass: 'gallery-img' }) %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    </section>
+  <% } %>
+
+  <footer class="ed-detail-foot">
+    <a class="ed-link-sweep" href="/projects">← All projects</a>
+  </footer>
+</article>
+
+<%- include('./partials/foot') %>

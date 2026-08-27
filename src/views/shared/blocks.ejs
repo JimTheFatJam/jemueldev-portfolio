@@ -1,0 +1,7 @@
+<% if (blocks && blocks.length) { %>
+<div class="blocks">
+<% blocks.forEach(function (block) { %>
+<%- include("blocks/" + block.type, { block: block }) %>
+<% }); %>
+</div>
+<% } %>

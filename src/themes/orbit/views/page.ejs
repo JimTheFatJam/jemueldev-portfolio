@@ -1,0 +1,16 @@
+<%- include('./partials/head') %>
+
+<article class="ob-detail">
+  <div class="ob-shell">
+    <header class="ob-detail-head">
+      <p class="ob-label"><span class="ob-label-num">—</span>Page</p>
+      <h1 class="ob-detail-title"><%= page.title %></h1>
+    </header>
+
+    <div class="ob-detail-content ob-detail-content-wide">
+      <%- include('shared/blocks', { blocks: blocks }) %>
+    </div>
+  </div>
+</article>
+
+<%- include('./partials/foot') %>

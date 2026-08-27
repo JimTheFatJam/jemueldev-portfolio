@@ -1,0 +1,73 @@
+<%
+  // Locals: ownerType, ownerId, blocks, blockTypes
+  const _addAction = '/admin/blocks/' + ownerType + '/' + ownerId + '/add';
+%>
+<section class="panel" id="content-blocks">
+  <div class="panel-head">
+    <div>
+      <h2>Content blocks</h2>
+      <p class="panel-hint">Build the page by stacking blocks. They render in this order.</p>
+    </div>
+  </div>
+
+  <% if (blocks.length === 0) { %>
+    <p class="empty-state">No blocks yet. Add one below to start building this page.</p>
+  <% } %>
+
+  <ol class="block-list">
+    <% blocks.forEach(function (block, index) {
+         const def = blockDefs[block.type];
+         if (!def) return; %>
+      <li class="block-item" id="block-<%= block.id %>">
+        <div class="block-item-head">
+          <span class="block-type"><%= def.label %></span>
+          <span class="block-summary"><%= def.summary(block.data) || '' %></span>
+          <span class="block-item-actions">
+            <form method="post" action="/admin/blocks/<%= block.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="up">
+              <button class="icon-button" type="submit" aria-label="Move block up"<%= index === 0 ? ' disabled' : '' %>>↑</button>
+            </form>
+            <form method="post" action="/admin/blocks/<%= block.id %>/move" class="inline-form">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <input type="hidden" name="direction" value="down">
+              <button class="icon-button" type="submit" aria-label="Move block down"<%= index === blocks.length - 1 ? ' disabled' : '' %>>↓</button>
+            </form>
+            <form method="post" action="/admin/blocks/<%= block.id %>/delete" class="inline-form" data-confirm="Delete this <%= def.label %> block?">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <button class="icon-button icon-button-danger" type="submit" aria-label="Delete block">✕</button>
+            </form>
+          </span>
+        </div>
+
+        <form method="post" action="/admin/blocks/<%= block.id %>" class="block-form">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <% if (def.fields.length === 0) { %>
+            <p class="field-help">This block has no settings.</p>
+          <% } %>
+          <% def.fields.forEach(function (field) { %>
+            <%- include('./block-field', { block: block, field: field }) %>
+          <% }); %>
+          <% if (def.fields.length > 0) { %>
+            <div class="block-form-actions">
+              <button class="button button-small button-primary" type="submit">Save block</button>
+            </div>
+          <% } %>
+        </form>
+      </li>
+    <% }); %>
+  </ol>
+
+  <form method="post" action="<%= _addAction %>" class="block-add">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="field-label" for="add-block-type">Add a block</label>
+    <div class="block-add-row">
+      <select id="add-block-type" name="type">
+        <% blockTypes.forEach(function (type) { %>
+          <option value="<%= type.type %>"><%= type.label %></option>
+        <% }); %>
+      </select>
+      <button class="button button-small" type="submit">Add block</button>
+    </div>
+  </form>
+</section>

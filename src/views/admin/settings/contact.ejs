@@ -1,0 +1,49 @@
+<%- include('../partials/head') %>
+<% const contact = settings.contact; %>
+
+<div class="page-title">
+  <div>
+    <h1>Contact</h1>
+    <p class="page-sub">Deliberately simple: a line of text and your links.</p>
+  </div>
+</div>
+
+<%- include('../partials/settings-nav') %>
+
+<form method="post" action="/admin/settings/contact" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Content</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="heading">Heading</label>
+        <input id="heading" name="heading" type="text" value="<%= contact.heading %>" placeholder="Let's connect.">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="body">Text</label>
+        <textarea id="body" name="body" rows="4"><%= contact.body %></textarea>
+        <p class="field-help">Optional. One or two sentences, e.g. what you are looking for right now.</p>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" name="showEmail" value="1"<%= contact.showEmail ? ' checked' : '' %>>
+        <span>Show my email address</span>
+      </label>
+      <p class="field-help">Your GitHub, LinkedIn, resume and other links are set under Settings.</p>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Save</h2></div></div>
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit">Save contact</button>
+      </div>
+    </section>
+  </aside>
+</form>
+
+<%- include('../partials/foot') %>

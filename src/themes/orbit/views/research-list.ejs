@@ -1,0 +1,27 @@
+<%- include('./partials/head') %>
+
+<section class="ob-section ob-section-first" id="research">
+  <div class="ob-shell">
+    <div class="ob-page-head">
+      <p class="ob-label"><span class="ob-label-num">04</span>Research</p>
+      <h1 class="ob-page-title">Research</h1>
+      <p class="ob-page-lead">Academic work, studies and ongoing investigations.</p>
+    </div>
+
+    <div class="ob-section-body">
+      <% if (items.length) { %>
+        <div class="ob-records">
+          <% items.forEach(function (item, index) { %>
+            <%- include('./partials/research-record', { item: item, recordIndex: index }) %>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="ob-empty">
+          Nothing published here yet.<% if (user) { %> <a href="/admin/research">Add research in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('./partials/foot') %>

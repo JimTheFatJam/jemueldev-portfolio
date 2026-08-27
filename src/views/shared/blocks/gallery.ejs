@@ -1,0 +1,12 @@
+<figure class="block-gallery is-wide">
+  <ul class="gallery-grid" data-columns="<%= block.data.columns || '2' %>">
+    <% block.items.forEach(function (item) { %>
+      <li>
+        <a class="gallery-item" href="<%= item.url %>" target="_blank" rel="noopener noreferrer">
+          <%- include('../image', { media: item, imgSizes: '(max-width: 40rem) 100vw, 30rem', imgClass: 'gallery-img' }) %>
+        </a>
+      </li>
+    <% }); %>
+  </ul>
+  <% if (block.data.caption) { %><figcaption><%= block.data.caption %></figcaption><% } %>
+</figure>

@@ -1,0 +1,50 @@
+<%
+  const linkable = project.hasDetailPage;
+  const href = linkable ? project.href : (safeUrl(project.demo_url) || safeUrl(project.github_url) || '');
+  const num = String((typeof cardIndex !== 'undefined' ? cardIndex : 0) + 1).padStart(2, '0');
+%>
+<li class="ob-card" data-reveal>
+  <% if (project.thumbnail) { %>
+    <div class="ob-card-media">
+      <% if (href) { %><a href="<%= href %>" tabindex="-1" aria-hidden="true"><% } %>
+        <%- include('shared/image', {
+              media: project.thumbnail,
+              imgSizes: '(max-width: 48rem) 100vw, (max-width: 72rem) 50vw, 26rem',
+              imgAlt: project.thumbnail.alt || '',
+              imgClass: 'ob-card-img'
+            }) %>
+      <% if (href) { %></a><% } %>
+    </div>
+  <% } %>
+
+  <div class="ob-card-body">
+    <p class="ob-card-meta">
+      <span class="ob-card-num"><%= num %></span>
+      <% if (project.year) { %><span><%= project.year %></span><% } %>
+      <% if (!project.isPublished) { %><span class="ob-tag ob-tag-draft">Draft</span><% } %>
+    </p>
+
+    <h3 class="ob-card-title">
+      <% if (href) { %>
+        <a href="<%= href %>"><%= project.title %><span class="ob-card-arrow" aria-hidden="true">→</span></a>
+      <% } else { %><%= project.title %><% } %>
+    </h3>
+
+    <% if (project.summary) { %><p class="ob-card-summary"><%= project.summary %></p><% } %>
+
+    <% if (project.tech.length) { %>
+      <ul class="ob-techlist">
+        <% project.tech.slice(0, 6).forEach(function (tech) { %><li><%= tech.name %></li><% }); %>
+      </ul>
+    <% } %>
+
+    <ul class="ob-linkrow">
+      <% if (safeUrl(project.github_url)) { %>
+        <li><a href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a></li>
+      <% } %>
+      <% if (safeUrl(project.demo_url)) { %>
+        <li><a href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live</a></li>
+      <% } %>
+    </ul>
+  </div>
+</li>

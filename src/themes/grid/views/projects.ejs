@@ -1,0 +1,27 @@
+<%- include('./partials/head') %>
+
+<section class="gd-section gd-section-first" id="projects">
+  <div class="gd-shell">
+    <div class="gd-page-head">
+      <p class="gd-label"><span class="gd-label-num">02</span>Work</p>
+      <h1 class="gd-page-title">Projects</h1>
+      <p class="gd-page-lead">Things I have designed, built and shipped.</p>
+    </div>
+
+    <div class="gd-section-body">
+      <% if (projects.length) { %>
+        <div class="gd-bento gd-card-grid">
+          <% projects.forEach(function (project, index) { %>
+            <%- include('./partials/project-card', { project: project, cardIndex: index, cardSpan: 4 }) %>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="gd-empty">
+          No projects published yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('./partials/foot') %>

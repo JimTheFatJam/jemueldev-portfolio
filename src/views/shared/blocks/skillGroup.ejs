@@ -1,0 +1,8 @@
+<div class="block-skill-group">
+  <h3 class="skill-group-title"><%= block.category.name %></h3>
+  <ul class="skill-list">
+    <% block.category.skills.forEach(function (skill) { %>
+      <%- include('shared/skill-chip', { skill: skill }) %>
+    <% }); %>
+  </ul>
+</div>

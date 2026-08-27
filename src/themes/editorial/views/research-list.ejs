@@ -1,0 +1,23 @@
+<%- include('./partials/head') %>
+
+<section class="ed-page-head">
+  <p class="ed-label"><span class="ed-label-num">04</span>Research</p>
+  <h1 class="ed-page-title">Research</h1>
+  <p class="ed-page-lead">Academic work, studies and ongoing investigations.</p>
+</section>
+
+<section class="ed-section ed-section-flush">
+  <% if (items.length) { %>
+    <ul class="ed-research-list">
+      <% items.forEach(function (item) { %>
+        <%- include('./partials/research-card', { item: item }) %>
+      <% }); %>
+    </ul>
+  <% } else { %>
+    <p class="ed-empty">
+      Nothing published here yet.<% if (user) { %> <a href="/admin/research">Add research in the admin</a>.<% } %>
+    </p>
+  <% } %>
+</section>
+
+<%- include('./partials/foot') %>

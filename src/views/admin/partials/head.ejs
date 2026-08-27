@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title><%= pageTitle %> · Admin</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin">
+<a class="skip-link" href="#admin-main">Skip to content</a>
+
+<header class="admin-topbar">
+  <button class="admin-nav-toggle" type="button" aria-expanded="false" aria-controls="admin-sidebar">Menu</button>
+  <a class="admin-logo" href="/admin"><%= settings.site.name || 'Portfolio' %><span>admin</span></a>
+  <div class="admin-topbar-actions">
+    <a class="button button-small" href="/" target="_blank" rel="noopener">View site</a>
+    <form method="post" action="/admin/logout">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="button button-small" type="submit">Sign out</button>
+    </form>
+  </div>
+</header>
+
+<div class="admin-shell">
+  <nav class="admin-sidebar" id="admin-sidebar" aria-label="Admin">
+    <ul>
+      <li><a href="/admin"<%- section === 'dashboard' ? ' aria-current="page"' : '' %>>Dashboard</a></li>
+    </ul>
+    <p class="admin-nav-heading" id="nav-content">Content</p>
+    <ul aria-labelledby="nav-content">
+      <li><a href="/admin/projects"<%- section === 'projects' ? ' aria-current="page"' : '' %>>Projects</a></li>
+      <li><a href="/admin/research"<%- section === 'research' ? ' aria-current="page"' : '' %>>Research</a></li>
+      <li><a href="/admin/skills"<%- section === 'skills' ? ' aria-current="page"' : '' %>>Skills</a></li>
+      <li><a href="/admin/education"<%- section === 'education' ? ' aria-current="page"' : '' %>>Education</a></li>
+      <li><a href="/admin/pages"<%- section === 'pages' ? ' aria-current="page"' : '' %>>Pages</a></li>
+      <li><a href="/admin/media"<%- section === 'media' ? ' aria-current="page"' : '' %>>Media</a></li>
+    </ul>
+    <p class="admin-nav-heading" id="nav-site">Site</p>
+    <ul aria-labelledby="nav-site">
+      <li><a href="/admin/settings"<%- section === 'settings' ? ' aria-current="page"' : '' %>>Settings</a></li>
+      <li><a href="/admin/preview"<%- section === 'preview' ? ' aria-current="page"' : '' %>>Preview</a></li>
+      <li><a href="/admin/account"<%- section === 'account' ? ' aria-current="page"' : '' %>>Account</a></li>
+    </ul>
+  </nav>
+
+  <main class="admin-main" id="admin-main">
+    <% if (flash) { %>
+      <div class="alert alert-<%= flash.type === 'error' ? 'error' : 'success' %>" role="status"><%= flash.message %></div>
+    <% } %>

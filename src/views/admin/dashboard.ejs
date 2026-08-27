@@ -1,0 +1,86 @@
+<%- include('./partials/head') %>
+
+<div class="page-title">
+  <h1>Dashboard</h1>
+  <p class="page-sub">Everything on your portfolio is edited from here.</p>
+</div>
+
+<div class="stat-row">
+  <a class="stat" href="/admin/projects">
+    <span class="stat-value"><%= counts.projectsPublished %></span>
+    <span class="stat-label">Published projects</span>
+    <span class="stat-note"><%= counts.projectsFeatured %> on the homepage</span>
+  </a>
+  <a class="stat" href="/admin/research">
+    <span class="stat-value"><%= counts.researchPublished %></span>
+    <span class="stat-label">Published research</span>
+    <span class="stat-note"><%= counts.research - counts.researchPublished %> draft</span>
+  </a>
+  <a class="stat" href="/admin/skills">
+    <span class="stat-value"><%= counts.skills %></span>
+    <span class="stat-label">Skills</span>
+    <span class="stat-note"><%= counts.skillCategories %> categories</span>
+  </a>
+  <a class="stat" href="/admin/media">
+    <span class="stat-value"><%= counts.media %></span>
+    <span class="stat-label">Media files</span>
+    <span class="stat-note">Images and PDFs</span>
+  </a>
+</div>
+
+<div class="panel-grid">
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Set-up checklist</h2>
+        <p class="panel-hint"><%= remaining === 0 ? 'All done — your portfolio is ready.' : remaining + ' item(s) left.' %></p>
+      </div>
+    </div>
+    <ul class="checklist">
+      <% checklist.forEach(function (item) { %>
+        <li class="<%= item.done ? 'is-done' : '' %>">
+          <span class="checklist-mark" aria-hidden="true"><%= item.done ? '✓' : '○' %></span>
+          <a href="<%= item.href %>"><%= item.label %></a>
+          <span class="visually-hidden"><%= item.done ? '(done)' : '(not done)' %></span>
+        </li>
+      <% }); %>
+    </ul>
+  </section>
+
+  <section class="panel">
+    <div class="panel-head">
+      <div>
+        <h2>Quick actions</h2>
+        <p class="panel-hint">The things you will do most often.</p>
+      </div>
+    </div>
+    <ul class="quick-actions">
+      <li><a class="button" href="/admin/projects/new">Add a project</a></li>
+      <li><a class="button" href="/admin/research/new">Add research</a></li>
+      <li><a class="button" href="/admin/media">Upload images</a></li>
+      <li><a class="button" href="/admin/settings">Edit site details</a></li>
+      <li><a class="button" href="/admin/preview">Preview the site</a></li>
+    </ul>
+  </section>
+</div>
+
+<% if (drafts.length) { %>
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2>Unpublished drafts</h2>
+      <p class="panel-hint">Only you can see these.</p>
+    </div>
+  </div>
+  <ul class="simple-list">
+    <% drafts.forEach(function (item) { %>
+      <li>
+        <span class="tag"><%= item.kind %></span>
+        <a href="<%= item.editHref %>"><%= item.title %></a>
+      </li>
+    <% }); %>
+  </ul>
+</section>
+<% } %>
+
+<%- include('./partials/foot') %>

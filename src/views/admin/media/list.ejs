@@ -1,0 +1,89 @@
+<%- include('../partials/head') %>
+
+<div class="page-title">
+  <div>
+    <h1>Media</h1>
+    <p class="page-sub">Images are re-encoded and resized on upload, so the public site never loads the original.</p>
+  </div>
+</div>
+
+<section class="panel">
+  <div class="panel-head"><div><h2>Upload</h2></div></div>
+  <form method="post" action="/admin/media/upload" enctype="multipart/form-data" class="upload-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="field">
+      <label class="field-label" for="files">Files</label>
+      <input id="files" name="files" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif,application/pdf" multiple required>
+      <p class="field-help">JPEG, PNG, WebP, AVIF, GIF or PDF. Up to <%= formatBytes(maxBytes) %> each, 12 at a time.</p>
+    </div>
+    <div class="field">
+      <label class="field-label" for="alt">Alt text</label>
+      <input id="alt" name="alt" type="text" maxlength="300" placeholder="Describe the image for screen readers">
+      <p class="field-help">Applied when you upload a single file. You can edit it later.</p>
+    </div>
+    <button class="button button-primary" type="submit">Upload</button>
+  </form>
+</section>
+
+<section class="panel">
+  <div class="panel-head">
+    <div>
+      <h2><%= items.length %> file<%= items.length === 1 ? '' : 's' %></h2>
+      <p class="panel-hint">Alt text is used everywhere the image appears.</p>
+    </div>
+    <form method="get" action="/admin/media" class="row-form row-form-tight">
+      <label class="visually-hidden" for="q">Search files</label>
+      <input id="q" name="q" type="search" value="<%= search %>" placeholder="Search by filename">
+      <button class="button button-small" type="submit">Search</button>
+    </form>
+  </div>
+
+  <% if (items.length === 0) { %>
+    <p class="empty-state"><%= search ? 'No files match that search.' : 'No files uploaded yet.' %></p>
+  <% } else { %>
+    <ul class="media-grid">
+      <% items.forEach(function (item) { %>
+        <li class="media-card">
+          <div class="media-card-preview">
+            <% if (item.isImage) { %>
+              <img src="<%= item.url %>" alt="<%= item.alt || item.original_name %>" loading="lazy">
+            <% } else { %>
+              <a class="media-card-file" href="<%= item.url %>" target="_blank" rel="noopener">PDF</a>
+            <% } %>
+          </div>
+          <div class="media-card-body">
+            <p class="media-card-name" title="<%= item.original_name %>"><%= item.original_name %></p>
+            <p class="media-card-meta">
+              <%= formatBytes(item.size) %><% if (item.width) { %> · <%= item.width %>×<%= item.height %><% } %>
+              <% if (item.variants.length > 1) { %> · <%= item.variants.length %> sizes<% } %>
+            </p>
+
+            <form method="post" action="/admin/media/<%= item.id %>/alt" class="row-form row-form-tight">
+              <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+              <label class="visually-hidden" for="alt-<%= item.id %>">Alt text for <%= item.original_name %></label>
+              <input id="alt-<%= item.id %>" name="alt" type="text" value="<%= item.alt %>" placeholder="Alt text">
+              <button class="button button-small" type="submit">Save</button>
+            </form>
+
+            <div class="media-card-actions">
+              <a class="button button-small" href="<%= item.url %>" target="_blank" rel="noopener">Open</a>
+              <form method="post" action="/admin/media/<%= item.id %>/delete" class="inline-form"
+                    data-confirm="Delete “<%= item.original_name %>”? Files still in use are protected unless you force it.">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <button class="button button-small button-danger" type="submit">Delete</button>
+              </form>
+              <form method="post" action="/admin/media/<%= item.id %>/delete" class="inline-form"
+                    data-confirm="Force delete “<%= item.original_name %>” even though it may still be used?">
+                <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+                <input type="hidden" name="force" value="1">
+                <button class="button button-small button-quiet" type="submit">Force delete</button>
+              </form>
+            </div>
+          </div>
+        </li>
+      <% }); %>
+    </ul>
+  <% } %>
+</section>
+
+<%- include('../partials/foot') %>

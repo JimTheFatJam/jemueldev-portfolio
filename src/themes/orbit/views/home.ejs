@@ -1,0 +1,267 @@
+<%- include('./partials/head') %>
+<%
+  const site = settings.site;
+  const titles = settings.sectionTitles;
+  const resume = safeUrl(site.resumeUrl);
+  const visibleSkills = (skillCategories || []).filter((category) => category.skills.length);
+  const featured = projects.length ? projects[0] : null;
+  const otherProjects = projects.slice(1);
+%>
+
+<%- include('./partials/launch') %>
+
+<div id="ob-content"></div>
+
+<% if (sections.about && (about.body || aboutImage || aboutBlocks.length)) { %>
+<section class="ob-section" id="about">
+  <div class="ob-shell">
+    <div class="ob-section-head" data-reveal>
+      <h2 class="ob-label"><span class="ob-label-num">01</span><%= about.heading || 'About' %></h2>
+    </div>
+
+    <div class="ob-section-body">
+      <div class="ob-about">
+        <% if (aboutImage) { %>
+          <figure class="ob-portrait" data-reveal>
+            <%- include('shared/image', {
+                  media: aboutImage,
+                  imgSizes: '(max-width: 48rem) 100vw, 18rem',
+                  imgClass: 'ob-portrait-img',
+                  imgLoading: 'eager'
+                }) %>
+          </figure>
+        <% } %>
+
+        <div class="ob-about-body" data-reveal>
+          <div class="ob-prose"><%- md(about.body) %></div>
+          <% if ((about.links || []).length) { %>
+            <ul class="ob-linkrow ob-linkrow-spaced">
+              <% about.links.forEach(function (link) { if (safeUrl(link.url)) { %>
+                <li><a href="<%= safeUrl(link.url) %>"<%- /^https?:/.test(safeUrl(link.url)) ? ' target="_blank" rel="noopener noreferrer"' : '' %>><%= link.label %></a></li>
+              <% } }); %>
+            </ul>
+          <% } %>
+        </div>
+
+        <% if (aboutSecondaryImage) { %>
+          <figure class="ob-portrait" data-reveal>
+            <%- include('shared/image', {
+                  media: aboutSecondaryImage,
+                  imgSizes: '(max-width: 48rem) 100vw, 18rem',
+                  imgClass: 'ob-portrait-img'
+                }) %>
+          </figure>
+        <% } %>
+      </div>
+
+      <%- include('shared/blocks', { blocks: aboutBlocks }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.projects) { %>
+<section class="ob-section" id="projects">
+  <div class="ob-shell">
+    <div class="ob-section-head" data-reveal>
+      <h2 class="ob-label"><span class="ob-label-num">02</span><%= titles.projects %></h2>
+      <a class="ob-section-link" href="/projects">All projects <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="ob-section-body">
+      <% if (featured) { %>
+        <%
+          const fHref = featured.hasDetailPage
+            ? featured.href
+            : (safeUrl(featured.demo_url) || safeUrl(featured.github_url) || '');
+        %>
+        <article class="ob-featured" data-reveal>
+          <div class="ob-featured-media">
+            <% if (featured.thumbnail) { %>
+              <% if (fHref) { %><a href="<%= fHref %>" tabindex="-1" aria-hidden="true"><% } %>
+                <%- include('shared/image', {
+                      media: featured.thumbnail,
+                      imgSizes: '(max-width: 60rem) 100vw, 38rem',
+                      imgAlt: featured.thumbnail.alt || '',
+                      imgClass: 'ob-featured-img',
+                      imgLoading: 'eager'
+                    }) %>
+              <% if (fHref) { %></a><% } %>
+            <% } else { %>
+              <div class="ob-featured-placeholder" aria-hidden="true"></div>
+            <% } %>
+          </div>
+
+          <div class="ob-featured-body">
+            <p class="ob-label ob-label-accent"><span class="ob-label-num">★</span>Featured</p>
+            <h3 class="ob-featured-title">
+              <% if (fHref) { %><a href="<%= fHref %>"><%= featured.title %></a><% } else { %><%= featured.title %><% } %>
+            </h3>
+            <p class="ob-featured-meta">
+              <% if (featured.year) { %><span><%= featured.year %></span><% } %>
+              <% if (!featured.isPublished) { %><span class="ob-tag ob-tag-draft">Draft</span><% } %>
+            </p>
+            <% if (featured.summary) { %><p class="ob-featured-summary"><%= featured.summary %></p><% } %>
+            <% if (featured.tech.length) { %>
+              <ul class="ob-techlist">
+                <% featured.tech.slice(0, 8).forEach(function (tech) { %><li><%= tech.name %></li><% }); %>
+              </ul>
+            <% } %>
+            <div class="ob-featured-actions">
+              <% if (featured.hasDetailPage) { %>
+                <a class="ob-btn ob-btn-accent" href="<%= featured.href %>">View project <span aria-hidden="true">→</span></a>
+              <% } %>
+              <% if (safeUrl(featured.github_url)) { %>
+                <a class="ob-btn" href="<%= safeUrl(featured.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a>
+              <% } %>
+              <% if (safeUrl(featured.demo_url)) { %>
+                <a class="ob-btn" href="<%= safeUrl(featured.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
+              <% } %>
+            </div>
+          </div>
+        </article>
+      <% } %>
+
+      <% if (otherProjects.length) { %>
+        <ul class="ob-card-grid">
+          <% otherProjects.forEach(function (project, index) { %>
+            <%- include('./partials/project-card', { project: project, cardIndex: index + 1 }) %>
+          <% }); %>
+        </ul>
+      <% } %>
+
+      <% if (!featured && !otherProjects.length) { %>
+        <p class="ob-empty">
+          No featured projects yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.skills && visibleSkills.length) { %>
+<section class="ob-section" id="skills">
+  <div class="ob-shell">
+    <div class="ob-section-head" data-reveal>
+      <h2 class="ob-label"><span class="ob-label-num">03</span><%= titles.skills %></h2>
+    </div>
+
+    <div class="ob-section-body">
+      <div class="ob-toolkit">
+        <% visibleSkills.forEach(function (category, index) { %>
+          <div class="ob-toolkit-row" data-reveal>
+            <div class="ob-toolkit-head">
+              <span class="ob-toolkit-num"><%= String(index + 1).padStart(2, '0') %></span>
+              <h3 class="ob-toolkit-name"><%= category.name %></h3>
+            </div>
+            <ul class="ob-toolkit-items">
+              <% category.skills.forEach(function (skill) { %>
+                <li class="ob-tool<%= skill.icon ? ' has-icon' : '' %>">
+                  <% if (skill.icon) { %>
+                    <span class="ob-tool-logo" aria-hidden="true"><%- renderIcon(skill.icon, { style: skillIconStyle }) %></span>
+                  <% } %>
+                  <span class="ob-tool-name"><%= skill.name %></span>
+                </li>
+              <% }); %>
+            </ul>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.research && research.length) { %>
+<section class="ob-section" id="research">
+  <div class="ob-shell">
+    <div class="ob-section-head" data-reveal>
+      <h2 class="ob-label"><span class="ob-label-num">04</span><%= titles.research %></h2>
+      <a class="ob-section-link" href="/research">All research <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="ob-section-body">
+      <div class="ob-records">
+        <% research.forEach(function (item, index) { %>
+          <%- include('./partials/research-record', { item: item, recordIndex: index }) %>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.education && education.length) { %>
+<section class="ob-section" id="education">
+  <div class="ob-shell">
+    <div class="ob-section-head" data-reveal>
+      <h2 class="ob-label"><span class="ob-label-num">05</span><%= titles.education %></h2>
+    </div>
+
+    <div class="ob-section-body">
+      <ul class="ob-timeline">
+        <% education.forEach(function (item) { %>
+          <li class="ob-timeline-row" data-reveal>
+            <p class="ob-timeline-dates"><%= item.date_range %></p>
+            <div class="ob-timeline-body">
+              <h3 class="ob-timeline-degree">
+                <% if (item.logo) { %>
+                  <span class="ob-timeline-logo"><%- include('shared/image', { media: item.logo, imgSizes: '2rem', imgAlt: '' }) %></span>
+                <% } %>
+                <%= item.degree %>
+              </h3>
+              <% if (item.institution) { %><p class="ob-timeline-school"><%= item.institution %></p><% } %>
+              <% if (item.description) { %>
+                <div class="ob-prose ob-prose-tight"><%- md(item.description) %></div>
+              <% } %>
+            </div>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.contact) { %>
+<section class="ob-section ob-section-last" id="contact">
+  <div class="ob-shell">
+    <div class="ob-section-head" data-reveal>
+      <h2 class="ob-label"><span class="ob-label-num">06</span><%= titles.contact || 'Contact' %></h2>
+    </div>
+
+    <div class="ob-section-body">
+      <div class="ob-contact" data-reveal>
+        <p class="ob-contact-heading"><%= settings.contact.heading %></p>
+        <% if (settings.contact.body) { %>
+          <div class="ob-prose ob-contact-body"><%- md(settings.contact.body) %></div>
+        <% } %>
+
+        <div class="ob-contact-actions">
+          <% if (settings.contact.showEmail) { site.emails.forEach(function (address, index) { %>
+            <a class="ob-btn ob-btn-lg<%= index === 0 ? ' ob-btn-accent' : '' %>" href="mailto:<%= address %>"><%= address %></a>
+          <% }); } %>
+          <% if (resume) { %>
+            <a class="ob-btn ob-btn-lg" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
+          <% } %>
+        </div>
+
+        <ul class="ob-contact-links">
+          <% if (safeUrl(site.github)) { %>
+            <li><a href="<%= safeUrl(site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          <% } %>
+          <% if (safeUrl(site.linkedin)) { %>
+            <li><a href="<%= safeUrl(site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+          <% } %>
+          <% (site.extraLinks || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+            <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+          <% } }); %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<%- include('./partials/foot') %>

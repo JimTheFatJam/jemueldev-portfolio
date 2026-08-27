@@ -1,0 +1,22 @@
+<%- include('./partials/head') %>
+
+<div class="container page-head">
+  <h1>Research</h1>
+  <p class="lead">Academic work, studies and ongoing investigations.</p>
+</div>
+
+<div class="container">
+  <% if (items.length) { %>
+    <ul class="research-list">
+      <% items.forEach(function (item) { %>
+        <%- include('./partials/research-card', { item: item }) %>
+      <% }); %>
+    </ul>
+  <% } else { %>
+    <p class="empty-note">
+      Nothing published here yet.<% if (user) { %> <a href="/admin/research">Add research in the admin</a>.<% } %>
+    </p>
+  <% } %>
+</div>
+
+<%- include('./partials/foot') %>

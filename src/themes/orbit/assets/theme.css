@@ -1,0 +1,2110 @@
+/* ==========================================================================
+   Orbit — Design 4
+   Design 3's light editorial system, with an angled 3D orbital map as the
+   homepage entrance. The space theme comes from the star chart, the orbital
+   paths and the planets — not from a dark repaint of the site.
+   Resets use :where() so component rules always win.
+   ========================================================================== */
+
+:root {
+  /* Identical to Design 3: same canvas, ink, rules and orange. */
+  --ob-canvas: #f2f2ef;
+  --ob-panel: #ffffff;
+  --ob-panel-alt: #fafaf8;
+  --ob-ink: #111111;
+  --ob-muted: #5c5c58;
+  /* Nudged from #7d7d76, which fell below AA on the canvas for the small
+     mono meta lines that use it. Still clearly subordinate to --ob-muted. */
+  --ob-faint: #6d6d66;
+  --ob-line: #e0e0da;
+  --ob-line-strong: #c9c9c1;
+  --ob-grid: rgba(17, 17, 17, 0.035);
+
+  --ob-accent: #c2410c;
+  --ob-accent-bright: #e2600f;
+  --ob-accent-soft: #fdf1e8;
+  --ob-on-accent: #ffffff;
+
+  /* Ink-on-paper star chart rather than white-on-black. */
+  --ob-star: rgba(17, 17, 17, 0.5);
+  --ob-star-soft: rgba(17, 17, 17, 0.3);
+  --ob-orbit-line: rgba(17, 17, 17, 0.16);
+  --ob-orbit-line-faint: rgba(17, 17, 17, 0.09);
+
+  /* Surfaces that sit over something else and so cannot be a flat panel. */
+  --ob-header-bg: rgba(242, 242, 239, 0.88);
+  --ob-header-bg-focus: rgba(242, 242, 239, 0.95);
+  --ob-panel-glass: rgba(255, 255, 255, 0.74);
+  --ob-plate: rgba(242, 242, 239, 0.82);
+  --ob-halo: rgba(194, 65, 12, 0.07);
+  --ob-contact-glow: rgba(194, 65, 12, 0.06);
+
+  /* The sun and the planets are lit objects, not flat swatches. */
+  --ob-sun-fill:
+    radial-gradient(circle at 36% 32%, rgba(255, 241, 214, 0.42), rgba(255, 174, 96, 0.08) 52%, rgba(146, 52, 8, 0.34)),
+    url("sun.webp");
+  --ob-sun-ring: rgba(194, 65, 12, 0.28);
+  --ob-sun-ring-lit: rgba(194, 65, 12, 0.5);
+  --ob-sun-glow: rgba(226, 96, 15, 0.22);
+  --ob-sun-glow-lit: rgba(226, 96, 15, 0.34);
+  --ob-planet-shade: rgba(17, 17, 17, 0.35);
+  --ob-planet-sheen: rgba(255, 255, 255, 0.45);
+  --ob-planet-drop: rgba(17, 17, 17, 0.22);
+  --ob-planet-halo: rgba(194, 65, 12, 0.4);
+
+  /* Tells the browser which form-control and scrollbar palette to use. */
+  color-scheme: light;
+
+  --ob-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --ob-display: "Segoe UI Variable Display", "SF Pro Display", "Helvetica Neue",
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --ob-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+
+  --ob-shell: 88rem;
+  --ob-measure: 44rem;
+  --ob-gutter: clamp(1rem, 3vw, 2.5rem);
+  --ob-pad: clamp(1.25rem, 2.4vw, 2rem);
+  --ob-label-gap: 3rem;
+  --ob-ease: cubic-bezier(0.2, 0.6, 0.35, 1);
+  --ob-radius: 3px;
+
+  /* Camera: how far the orbital plane is tilted away from face-on. */
+  --ob-tilt: 62deg;
+  --ob-tilt-back: -62deg;
+  /* Outermost orbital radius; every ring is a fraction of it. Sized so the
+     six-planet system still clears the viewport at the closest zoom. */
+  --ob-r: clamp(7rem, 17.5vw, 13.5rem);
+  --ob-sun-size: 4.5rem;
+  /* Fixed slot each planet is centred in, so every size sits on its ring. */
+  --ob-orb: 2.5rem;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+}
+
+body.ob {
+  margin: 0;
+  color: var(--ob-ink);
+  background-color: var(--ob-canvas);
+  font-family: var(--ob-sans);
+  font-size: 1rem;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The star chart. Fixed, behind everything, present on every page and every
+   scroll position — it never stops partway down the document. */
+body.ob::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    /* Design 3's technical grid, kept faint underneath the stars. */
+    linear-gradient(to right, var(--ob-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ob-grid) 1px, transparent 1px),
+    /* Three star planes at different scales. */
+    radial-gradient(1px 1px at 18% 24%, var(--ob-star), transparent),
+    radial-gradient(1px 1px at 67% 61%, var(--ob-star-soft), transparent),
+    radial-gradient(1px 1px at 41% 83%, var(--ob-star), transparent),
+    radial-gradient(1px 1px at 88% 17%, var(--ob-star-soft), transparent),
+    radial-gradient(1.5px 1.5px at 31% 52%, var(--ob-star-soft), transparent),
+    radial-gradient(1.5px 1.5px at 79% 12%, var(--ob-star), transparent),
+    radial-gradient(2px 2px at 57% 38%, var(--ob-star-soft), transparent),
+    radial-gradient(2px 2px at 12% 71%, var(--ob-star-soft), transparent);
+  background-size:
+    4rem 4rem, 4rem 4rem,
+    260px 260px, 260px 260px, 260px 260px, 260px 260px,
+    430px 430px, 430px 430px,
+    720px 720px, 720px 720px;
+  background-position: center top;
+  animation: ob-sky-in 1200ms var(--ob-ease) both;
+}
+
+@keyframes ob-sky-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ob :where(h1, h2, h3, h4) { margin: 0; font-weight: 600; line-height: 1.15; }
+.ob :where(p) { margin: 0 0 1rem; }
+.ob :where(p):last-child { margin-bottom: 0; }
+.ob :where(ul, ol) { margin: 0; padding: 0; list-style: none; }
+.ob :where(figure) { margin: 0; }
+.ob :where(img) { max-width: 100%; height: auto; display: block; }
+.ob :where(a) { color: var(--ob-ink); }
+.ob :where(a):hover { color: var(--ob-accent); }
+
+.ob :focus-visible { outline: 2px solid var(--ob-accent); outline-offset: 2px; }
+
+.ob :where(h1, h2, h3, h4, p, li, dd, dt, figcaption, blockquote, a, span) {
+  overflow-wrap: anywhere;
+}
+
+.ob-skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 200;
+  background: var(--ob-panel);
+  color: var(--ob-ink);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 0 0 1px var(--ob-line-strong);
+}
+.ob-skip:focus { left: 0; }
+
+.ob-shell {
+  width: 100%;
+  max-width: var(--ob-shell);
+  margin-inline: auto;
+  padding-inline: var(--ob-gutter);
+  min-width: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Night palette
+   Applied when the visitor has chosen dark, and by default when the system
+   asks for it and they have chosen nothing. An explicit "light" always wins.
+   The two lists are identical by construction.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-ob-theme="light"]) {
+  color-scheme: dark;
+
+  --ob-canvas: #101014;
+  --ob-panel: #1b1b21;
+  --ob-panel-alt: #23232b;
+  --ob-ink: #f0f0ec;
+  --ob-muted: #aeaea7;
+  --ob-faint: #8b8b84;
+  --ob-line: #34343e;
+  --ob-line-strong: #4c4c58;
+  --ob-grid: rgba(240, 240, 236, 0.045);
+
+  --ob-accent: #f07a2a;
+  --ob-accent-bright: #ff9450;
+  --ob-accent-soft: #2c1b11;
+  /* Dark ink on the bright accent: white on this orange would not carry. */
+  --ob-on-accent: #17120e;
+
+  --ob-star: rgba(255, 255, 255, 0.55);
+  --ob-star-soft: rgba(255, 255, 255, 0.3);
+  --ob-orbit-line: rgba(240, 240, 236, 0.2);
+  --ob-orbit-line-faint: rgba(240, 240, 236, 0.1);
+
+  --ob-header-bg: rgba(16, 16, 20, 0.9);
+  --ob-header-bg-focus: rgba(16, 16, 20, 0.97);
+  --ob-panel-glass: rgba(27, 27, 33, 0.8);
+  --ob-plate: rgba(16, 16, 20, 0.84);
+  --ob-halo: rgba(240, 122, 42, 0.1);
+  --ob-contact-glow: rgba(240, 122, 42, 0.08);
+
+  --ob-sun-fill:
+    radial-gradient(circle at 36% 32%, rgba(255, 244, 224, 0.5), rgba(255, 186, 116, 0.1) 52%, rgba(110, 36, 4, 0.26)),
+    url("sun.webp");
+  --ob-sun-ring: rgba(255, 148, 80, 0.34);
+  --ob-sun-ring-lit: rgba(255, 148, 80, 0.6);
+  --ob-sun-glow: rgba(255, 148, 80, 0.26);
+  --ob-sun-glow-lit: rgba(255, 148, 80, 0.42);
+  /* The planets keep their own hues; only the lighting follows the sky. */
+  --ob-planet-shade: rgba(0, 0, 0, 0.5);
+  --ob-planet-sheen: rgba(255, 255, 255, 0.42);
+  --ob-planet-drop: rgba(0, 0, 0, 0.55);
+  --ob-planet-halo: rgba(240, 122, 42, 0.5);
+  }
+}
+
+:root[data-ob-theme="dark"] {
+  color-scheme: dark;
+
+  --ob-canvas: #101014;
+  --ob-panel: #1b1b21;
+  --ob-panel-alt: #23232b;
+  --ob-ink: #f0f0ec;
+  --ob-muted: #aeaea7;
+  --ob-faint: #8b8b84;
+  --ob-line: #34343e;
+  --ob-line-strong: #4c4c58;
+  --ob-grid: rgba(240, 240, 236, 0.045);
+
+  --ob-accent: #f07a2a;
+  --ob-accent-bright: #ff9450;
+  --ob-accent-soft: #2c1b11;
+  /* Dark ink on the bright accent: white on this orange would not carry. */
+  --ob-on-accent: #17120e;
+
+  --ob-star: rgba(255, 255, 255, 0.55);
+  --ob-star-soft: rgba(255, 255, 255, 0.3);
+  --ob-orbit-line: rgba(240, 240, 236, 0.2);
+  --ob-orbit-line-faint: rgba(240, 240, 236, 0.1);
+
+  --ob-header-bg: rgba(16, 16, 20, 0.9);
+  --ob-header-bg-focus: rgba(16, 16, 20, 0.97);
+  --ob-panel-glass: rgba(27, 27, 33, 0.8);
+  --ob-plate: rgba(16, 16, 20, 0.84);
+  --ob-halo: rgba(240, 122, 42, 0.1);
+  --ob-contact-glow: rgba(240, 122, 42, 0.08);
+
+  --ob-sun-fill:
+    radial-gradient(circle at 36% 32%, rgba(255, 244, 224, 0.5), rgba(255, 186, 116, 0.1) 52%, rgba(110, 36, 4, 0.26)),
+    url("sun.webp");
+  --ob-sun-ring: rgba(255, 148, 80, 0.34);
+  --ob-sun-ring-lit: rgba(255, 148, 80, 0.6);
+  --ob-sun-glow: rgba(255, 148, 80, 0.26);
+  --ob-sun-glow-lit: rgba(255, 148, 80, 0.42);
+  /* The planets keep their own hues; only the lighting follows the sky. */
+  --ob-planet-shade: rgba(0, 0, 0, 0.5);
+  --ob-planet-sheen: rgba(255, 255, 255, 0.42);
+  --ob-planet-drop: rgba(0, 0, 0, 0.55);
+  --ob-planet-halo: rgba(240, 122, 42, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   Light / dark toggle
+   One control, in two places: over the map it floats at the top right of the
+   landing; once the header takes over it lives in the header's own top right.
+   Only ever revealed once script is running, so it is never a dead button.
+   -------------------------------------------------------------------------- */
+
+.ob-theme {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  flex: none;
+  padding: 0;
+  border: 1px solid var(--ob-line-strong);
+  border-radius: 50%;
+  background: var(--ob-panel);
+  color: var(--ob-muted);
+  cursor: pointer;
+  transition: color 0.18s var(--ob-ease), border-color 0.18s var(--ob-ease),
+              background-color 0.18s var(--ob-ease);
+}
+.ob-theme-ready .ob-theme { display: inline-flex; }
+.ob-theme:hover { color: var(--ob-accent); border-color: var(--ob-accent); }
+.ob-theme svg { width: 1.05rem; height: 1.05rem; }
+
+/* The icon shows the mode the button will switch to. */
+.ob-theme .ob-theme-moon { display: block; }
+.ob-theme .ob-theme-sun { display: none; }
+:root[data-ob-theme="dark"] .ob-theme .ob-theme-moon { display: none; }
+:root[data-ob-theme="dark"] .ob-theme .ob-theme-sun { display: block; }
+
+/* Over the map, where the header has stepped aside. */
+.ob-launch-theme {
+  position: absolute;
+  top: clamp(0.9rem, 2.5vh, 1.6rem);
+  right: var(--ob-gutter);
+  z-index: 5;
+  display: none;
+}
+.ob-theme-ready body.is-over-map .ob-launch-theme { display: block; }
+/* Exactly one of the two is live at a time — including in the tab order, so a
+   keyboard never meets the same control twice. */
+body.is-over-map .ob-header-tools .ob-theme { display: none; }
+
+/* Below the two-column layout the intro runs the full width and the floating
+   toggle would sit on top of the identity line, so the line gives it room. */
+@media (max-width: 63.99rem) {
+  .ob-theme-ready body.is-over-map .ob-launch-intro > .ob-label { padding-right: 3.25rem; }
+}
+/* Slightly stronger over the busy map. */
+.ob-launch-theme .ob-theme { background: var(--ob-panel-glass); }
+@supports (backdrop-filter: blur(1px)) {
+  .ob-launch-theme .ob-theme { backdrop-filter: saturate(140%) blur(6px); }
+}
+
+/* The header keeps its mark on the left and everything else to the right;
+   ordering puts the tools after the navigation on a wide screen and beside the
+   menu button on a narrow one. */
+.ob-header-inner { justify-content: flex-start; }
+.ob-mark { margin-right: auto; }
+.ob-header-tools { display: flex; align-items: center; gap: 0.6rem; flex: none; order: 3; }
+.ob-nav { order: 2; }
+
+@media (max-width: 60rem) {
+  .ob-header-tools { order: 2; }
+  .ob-nav { order: 3; }
+}
+
+/* --------------------------------------------------------------------------
+   Header
+   -------------------------------------------------------------------------- */
+
+.ob-header {
+  position: sticky;
+  top: 0;
+  z-index: 60;
+  background: var(--ob-header-bg);
+  border-bottom: 1px solid var(--ob-line);
+  transition: background-color 0.3s var(--ob-ease), border-color 0.3s var(--ob-ease),
+              opacity 0.3s var(--ob-ease), transform 0.3s var(--ob-ease);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .ob-header { backdrop-filter: saturate(150%) blur(10px); }
+}
+
+/* The map fills the first screen, and script hides the header over it — but it
+   only gets to do that after the first paint, which shows as a flash. Holding
+   the header transparent for a moment covers exactly that gap. The animation
+   has no forwards fill, so if script never runs the header simply fades in and
+   a visitor without JavaScript is never left without navigation. */
+body.ob-home .ob-header { animation: ob-header-hold 320ms linear; }
+@keyframes ob-header-hold {
+  from { opacity: 0; }
+  to { opacity: 0; }
+}
+
+/* Only ever applied by script, so with JS off the header is simply always on. */
+.ob-header.is-over-map {
+  background: transparent;
+  border-bottom-color: transparent;
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  pointer-events: none;
+}
+.ob-header.is-over-map:focus-within {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  background: var(--ob-header-bg-focus);
+}
+
+.ob-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 4rem;
+  flex-wrap: wrap;
+}
+
+.ob-mark { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; min-width: 0; }
+.ob-mark-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.85rem;
+  height: 1.85rem;
+  flex: none;
+  border-radius: 50%;
+  background: var(--ob-ink);
+  color: var(--ob-panel);
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+}
+.ob-mark-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ob-nav-toggle {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ob-ink);
+  background: none;
+  border: 1px solid var(--ob-line-strong);
+  border-radius: var(--ob-radius);
+  padding: 0.4rem 0.65rem;
+  cursor: pointer;
+}
+.ob-nav-toggle-bars {
+  width: 0.85rem;
+  height: 0.5rem;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+}
+
+.ob-nav { display: flex; align-items: center; gap: clamp(1rem, 2.5vw, 2rem); min-width: 0; }
+.ob-nav ul {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.8vw, 1.5rem);
+  flex-wrap: wrap;
+  min-width: 0;
+}
+.ob-nav ul a {
+  position: relative;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ob-muted);
+  text-decoration: none;
+  padding-block: 0.4rem;
+  white-space: nowrap;
+  transition: color 0.18s var(--ob-ease);
+}
+.ob-nav ul a::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.1rem;
+  height: 1px;
+  background: var(--ob-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.25s var(--ob-ease);
+}
+.ob-nav ul a:hover,
+.ob-nav ul a[aria-current="page"],
+.ob-nav ul a.is-active { color: var(--ob-ink); }
+.ob-nav ul a:hover::before,
+.ob-nav ul a[aria-current="page"]::before,
+.ob-nav ul a.is-active::before { transform: scaleX(1); }
+
+.ob-nav-actions { display: flex; align-items: center; gap: 0.5rem; flex: none; }
+
+@media (max-width: 60rem) {
+  .ob-nav-toggle { display: inline-flex; }
+  .ob-nav {
+    display: none;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1rem;
+    width: 100%;
+    padding-block: 1rem 1.25rem;
+    border-top: 1px solid var(--ob-line);
+  }
+  .ob-nav.is-open { display: flex; }
+  .ob-nav ul { flex-direction: column; align-items: stretch; gap: 0; }
+  .ob-nav ul li { border-bottom: 1px solid var(--ob-line); }
+  .ob-nav ul li:last-child { border-bottom: 0; }
+  .ob-nav ul a { display: block; padding-block: 0.7rem; }
+  .ob-nav-actions { flex-wrap: wrap; }
+}
+
+/* --------------------------------------------------------------------------
+   Type elements — Design 3's vocabulary
+   -------------------------------------------------------------------------- */
+
+.ob-label {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin: 0;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ob-muted);
+}
+.ob-label-num {
+  flex: none;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  color: var(--ob-accent);
+  font-variant-numeric: tabular-nums;
+}
+.ob-label-accent { color: var(--ob-accent); }
+
+.ob-tag {
+  display: inline-block;
+  font-family: var(--ob-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 0.05rem 0.45rem;
+  border: 1px solid var(--ob-line-strong);
+  border-radius: var(--ob-radius);
+  color: var(--ob-muted);
+  white-space: nowrap;
+}
+.ob-tag-accent { color: var(--ob-accent); border-color: currentColor; }
+.ob-tag-draft { color: var(--ob-accent); background: var(--ob-accent-soft); border-color: currentColor; }
+
+.ob-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  color: var(--ob-ink);
+  background: var(--ob-panel);
+  border: 1px solid var(--ob-line-strong);
+  border-radius: var(--ob-radius);
+  padding: 0.55rem 0.9rem;
+  white-space: nowrap;
+  transition: border-color 0.18s var(--ob-ease), color 0.18s var(--ob-ease),
+              background-color 0.18s var(--ob-ease), transform 0.2s var(--ob-ease);
+}
+.ob-btn:hover { border-color: var(--ob-ink); color: var(--ob-ink); }
+.ob-btn-accent { background: var(--ob-accent); border-color: var(--ob-accent); color: var(--ob-on-accent); }
+.ob-btn-accent:hover { background: var(--ob-accent-bright); border-color: var(--ob-accent-bright); color: var(--ob-on-accent); }
+.ob-btn-quiet { background: transparent; color: var(--ob-muted); border-color: var(--ob-line-strong); }
+.ob-btn-quiet:hover { color: var(--ob-ink); border-color: var(--ob-ink); }
+.ob-btn-lg { padding: 0.75rem 1.2rem; font-size: 0.8125rem; }
+
+.ob-linkrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+}
+.ob-linkrow a { position: relative; color: var(--ob-muted); text-decoration: none; }
+.ob-linkrow a:hover { color: var(--ob-accent); }
+.ob-linkrow a::after { content: ""; position: absolute; inset: -0.45rem 0; }
+.ob-linkrow-spaced { margin-top: 1.25rem; }
+
+.ob-techlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  color: var(--ob-muted);
+}
+.ob-techlist li {
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius);
+  background: var(--ob-panel-alt);
+  padding: 0.1rem 0.5rem;
+}
+.ob-techlist-stacked { flex-direction: column; align-items: flex-start; }
+.ob-techlist li.has-icon { display: inline-flex; align-items: center; gap: 0.55rem; }
+.ob-tech-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.05em;
+  width: 1.05em;
+  flex: none;
+}
+.ob-tech-logo .icon-svg { height: 100%; width: auto; max-width: 2.4em; display: block; }
+
+.ob-empty {
+  color: var(--ob-muted);
+  padding: 2rem;
+  background: var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+}
+
+/* --------------------------------------------------------------------------
+   The launch — hero content beside an angled 3D orbital map
+   -------------------------------------------------------------------------- */
+
+.ob-launch {
+  position: relative;
+  margin-top: -4rem;
+  /* Shaved on short viewports. The header is hidden over the map anyway, so
+     the full 4rem of clearance is only needed where there is room for it. */
+  padding-top: clamp(1.75rem, 5vh, 4rem);
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  /* Clips the outermost path where it runs past the frame. min-height (not
+     height) means taller content grows the section instead of being cut.
+
+     hidden is the floor for browsers without clip. clip does the same job
+     without making a scroll container, and unlike hidden it takes a margin —
+     so the clip edge can sit well outside the section. Tilting the plane toward
+     face-on swings the near planets below the section by up to ~70px on a short
+     window, and they used to be cut there mid-body. The margin gives the scene
+     room to stay whole through any orientation; it paints, but contributes
+     nothing scrollable, so the page still cannot be dragged sideways. */
+  overflow: hidden;
+}
+
+/* Clipping only needs to happen sideways. Tilting the plane toward face-on
+   swings the near planets below the section by up to ~70px on a short window,
+   and hidden cut them there mid-body. clip on one axis and visible on the other
+   is the one pairing the cascade keeps as written — hidden would drag visible
+   to auto and hang a scrollbar on the section — so the scene stays whole
+   through any orientation while the page still cannot be dragged sideways.
+   A clip margin was the obvious alternative and is the wrong tool: it applies
+   to every side, and the outermost ring then widens the scrollable area. */
+@supports (overflow: clip) {
+  .ob-launch {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+}
+
+/* A soft warm halo behind the system, echoing the sun. */
+.ob-launch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(760px 520px at 68% 52%, var(--ob-halo), transparent 66%);
+}
+
+.ob-launch-inner {
+  display: grid;
+  /* The column gap separates the intro from the map; the row gap only sits
+     between the intro and the scroll cue, where it needs far less. */
+  column-gap: clamp(2rem, 5vw, 4rem);
+  row-gap: clamp(0.9rem, 3vh, 2rem);
+  align-items: center;
+  /* Deliberately bottom-heavy. The section centres its content, so the extra
+     padding underneath lifts the composition about half a wheel step up the
+     viewport — the hint is in view on arrival, with nothing jumping. */
+  padding-block: clamp(0.75rem, 2vh, 2rem) clamp(2.5rem, 9vh, 9rem);
+  width: 100%;
+}
+
+.ob-launch-intro { max-width: 34rem; min-width: 0; }
+.ob-launch-intro > .ob-label { margin-bottom: clamp(0.7rem, 2.4vh, 1.5rem); }
+
+.ob-launch-title {
+  font-family: var(--ob-display);
+  /* Height-aware as well as width-aware: the display type gives way first
+     when the viewport is short. */
+  font-size: clamp(2rem, min(5.5vw, 8.5vh), 4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  margin-bottom: clamp(0.9rem, 3vh, 2rem);
+}
+/* One word per line, exactly as Design 3 sets it: the reveal walks these. */
+.ob-launch-line { display: block; }
+.ob-launch-caret { color: var(--ob-accent); margin-left: 0.06em; }
+
+/* Design 3's profile block, carried over: introduction then the index. */
+.ob-launch-profile {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.6rem, 2vh, 1.25rem);
+  padding: clamp(0.8rem, min(2.2vw, 2.4vh), 1.5rem);
+  border-radius: var(--ob-radius);
+  /* Translucent, so the star chart still reads behind the panel. */
+  background: var(--ob-panel-glass);
+  box-shadow: 0 0 0 1px var(--ob-line);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .ob-launch-profile { backdrop-filter: saturate(140%) blur(6px); }
+}
+
+.ob-launch-lead { color: var(--ob-muted); font-size: 1rem; min-width: 0; }
+
+/* The introduction is written in the CMS, so its length is not fixed, and it
+   is the one thing between the top of the page and the instruction line that
+   can grow without limit. It gets a ceiling in vh — well clear of any ordinary
+   introduction, so nothing normally scrolls — and scrolls within the panel past
+   that. Nothing is truncated, and the landing keeps its shape whatever is
+   typed. Only where the map shares the screen with the hero; stacked layouts
+   below that scroll normally anyway. */
+@media (min-width: 64rem) {
+  .ob-launch-lead {
+    max-height: min(12em, 20vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+.ob-launch-lead a { color: var(--ob-accent); }
+
+.ob-index {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-top: 1px solid var(--ob-line);
+}
+.ob-index > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: clamp(0.3rem, 1.1vh, 0.55rem);
+  border-bottom: 1px solid var(--ob-line);
+  min-width: 0;
+}
+.ob-index dt {
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ob-muted);
+}
+.ob-index dd {
+  margin: 0;
+  font-family: var(--ob-mono);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ob-ink);
+  flex: none;
+  overflow-wrap: normal;
+}
+
+/* The camera controls need a mouse, so only mention them where they work. */
+.ob-launch-hint-controls { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .ob-launch-hint-controls { display: inline; }
+}
+
+.ob-launch-hint {
+  margin-top: clamp(0.7rem, 2.4vh, 1.5rem);
+  font-family: var(--ob-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ob-muted);
+}
+
+.ob-system { display: flex; justify-content: center; align-items: center; min-width: 0; }
+
+/* Perspective root. A moderate value keeps the depth convincing without
+   distorting the planets at the near edge. Also the live camera state: script
+   writes these three properties and the whole system re-orients from them. */
+.ob-scene {
+  position: relative;
+  width: 100%;
+  max-width: calc(var(--ob-r) * 2.5);
+  aspect-ratio: 10 / 7;
+  /* Capped on short viewports so the map does not drive the row height. The
+     orbits are sized from --ob-r, not from this box, so the system keeps its
+     scale — the frame just sits higher and tighter. */
+  max-height: min(64vh, 32rem);
+  perspective: 1400px;
+  /* Kept on the camera own transform origin. Moving the vanishing point off it
+     skews the projection about a different point than the sun, which quietly
+     drops the near side of every orbit further down the screen than the
+     geometry predicts — the map sits high because the frame does, not because
+     the vanishing point has been nudged. */
+  perspective-origin: 50% 50%;
+  --ob-tilt-live: var(--ob-tilt);
+  --ob-spin: 0deg;
+  /* The resting zoom: the system arrives already drawn in, four wheel steps
+     closer than face value. Must match REST_ZOOM in theme.js. Where the window
+     is too small to hold that, script lowers it to the geometric ceiling. */
+  --ob-zoom: 360px;
+}
+/* Dragging anywhere in the scene orients the system, so the whole thing reads
+   as grabbable — except the bodies, which say "pointer" over their discs. */
+.ob-scene { cursor: grab; -webkit-user-select: none; user-select: none; }
+.ob-scene.is-grabbing,
+.ob-scene.is-grabbing .ob-planet,
+.ob-scene.is-grabbing .ob-body-tag,
+.ob-scene.is-grabbing .ob-sun { cursor: grabbing; }
+
+/* The camera. translateZ runs first, so zoom moves the system straight toward
+   the viewer — that is, toward the sun at the origin. Then the plane is tilted
+   away and spun about its own axis. */
+.ob-camera {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transform: translateZ(var(--ob-zoom)) rotateX(var(--ob-tilt-live)) rotateZ(var(--ob-spin));
+}
+
+/* Deliberately flat, not preserve-3d. As a single layer at the centre of the
+   orbital plane the whole ring system sorts behind the planets, so a near ring
+   segment can never be drawn across a body the way an individually depth-sorted
+   ring would. Visually identical: every ring is coplanar anyway. */
+.ob-orbits {
+  position: absolute;
+  inset: 0;
+  transform-style: flat;
+  pointer-events: none;
+}
+
+/* Every ring and every body sits at
+     radius = R x (base + step x n)
+   so the orbits step outward by one fixed increment each time. Slot n is set
+   once per element and both the path and the planet read the same value, which
+   is what puts each planet exactly on its own ring. */
+:root {
+  /* Six evenly spaced orbits: 0.36, 0.49, 0.62, 0.76, 0.89, 1.02 of --ob-r.
+     A wider step than the rings started with, so neighbouring planets read as
+     clearly separate bodies rather than a band. */
+  --ob-orbit-base: 0.36;
+  --ob-orbit-step: 0.132;
+}
+
+/* --ob-ring is declared on the ring and the anchor rather than on :root,
+   because a custom property is substituted where it is *declared* — on :root
+   it would only ever see slot 0 and every orbit would land on top of the
+   first. Declared here it resolves against each element own --ob-n. */
+.ob-path, .ob-anchor {
+  --ob-ring: calc(var(--ob-r) * (var(--ob-orbit-base) + var(--ob-orbit-step) * var(--ob-n, 0)));
+}
+
+/* Paths are circles living in the tilted plane. Centred with margins rather
+   than a percentage translate, so spinning the camera cannot shift them. */
+.ob-path {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: calc(var(--ob-ring) * 2);
+  height: calc(var(--ob-ring) * 2);
+  margin: calc(var(--ob-ring) * -1);
+  border: 1px solid var(--ob-orbit-line);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ob-path-in 900ms var(--ob-ease) forwards;
+}
+.ob-path--1 { --ob-n: 0; animation-delay: 200ms; }
+.ob-path--2 { --ob-n: 1; animation-delay: 290ms; }
+.ob-path--3 { --ob-n: 2; animation-delay: 380ms; }
+.ob-path--4 { --ob-n: 3; animation-delay: 470ms; }
+.ob-path--5 { --ob-n: 4; animation-delay: 560ms; }
+.ob-path--6 { --ob-n: 5; animation-delay: 650ms; }
+/* One decorative path further out on the same progression, running past the
+   frame, so the view reads as a portion of a larger system. */
+.ob-path--outer {
+  --ob-n: 9;
+  border-style: dashed;
+  border-color: var(--ob-orbit-line-faint);
+  animation-delay: 740ms;
+}
+
+@keyframes ob-path-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The sun sits at the origin, is home, and faces the viewer whatever the
+   camera is doing. Centred with margins for the same reason as the paths. */
+.ob-sun {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--ob-sun-size);
+  height: var(--ob-sun-size);
+  margin: calc(var(--ob-sun-size) / -2);
+  transform-style: preserve-3d;
+  transform: rotateZ(calc(-1 * var(--ob-spin))) rotateX(calc(-1 * var(--ob-tilt-live)));
+  display: grid;
+  place-items: center;
+  text-align: center;
+  text-decoration: none;
+  /* Rounded, so the hit area is the visible disc and not its bounding box. */
+  border-radius: 50%;
+  cursor: pointer;
+}
+.ob-sun-core {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background-image: var(--ob-sun-fill);
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 0 0 1px var(--ob-sun-ring), 0 0 46px 10px var(--ob-sun-glow);
+  animation: ob-sun-in 1000ms var(--ob-ease) both;
+  transition: box-shadow 0.25s var(--ob-ease);
+}
+.ob-sun:hover .ob-sun-core,
+.ob-sun:focus-visible .ob-sun-core {
+  box-shadow: 0 0 0 1px var(--ob-sun-ring-lit), 0 0 60px 16px var(--ob-sun-glow-lit);
+}
+/* The sun carries no lettering in the map; the name is for the mobile list. */
+.ob-sun-name { display: none; }
+
+@keyframes ob-sun-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+.ob-bodies { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ob-bodies ul { position: absolute; inset: 0; transform-style: preserve-3d; }
+
+/* Every wrapper in the chain is a box lying in the tilted orbital plane, and a
+   planet straddles that plane — so the half of each disc that falls behind it
+   was being hit-tested against the wrapper instead of the planet. Making the
+   whole scaffold hit-transparent leaves exactly the visible bodies clickable;
+   an ancestor set to none never blocks a descendant set to auto. */
+.ob-camera,
+.ob-orbits,
+.ob-bodies,
+.ob-bodies ul,
+.ob-arm,
+.ob-anchor,
+.ob-billboard,
+.ob-orb { pointer-events: none; }
+.ob-planet,
+.ob-body-tag,
+.ob-sun { pointer-events: auto; }
+
+/* Four nested transforms per body:
+   arm       — rotates around the sun in the tilted plane
+   anchor    — pushes the body out to its ring, and undoes the camera spin
+   billboard — undoes the arm rotation and the resting tilt
+   body      — absorbs whatever tilt the visitor has dragged in
+   The rotations cancel exactly, so a label is upright at every orbital
+   position and at every camera orientation. */
+.ob-arm {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  animation: ob-arm linear infinite;
+}
+.ob-anchor {
+  position: absolute;
+  transform-style: preserve-3d;
+  display: block;
+  /* Declared here, not on :root, so it resolves against this arm's own rate.
+     The middle of the system has a rate of ~1 and so barely drifts at all —
+     that is what keeps the drag feeling exactly as responsive as it did. */
+  --ob-drift: calc(var(--ob-spin) * (var(--ob-rate, 1) - 1));
+  /* Drift out to the body, then unwind the camera spin and the drift together,
+     which is what keeps the label upright through all of it. */
+  transform: rotateZ(var(--ob-drift))
+             translateX(var(--ob-ring))
+             rotateZ(calc(-1 * var(--ob-spin) - var(--ob-drift)));
+}
+.ob-billboard {
+  position: absolute;
+  transform-style: preserve-3d;
+  display: block;
+  /* Pivot on the anchor point. Left at its default box centre, the billboard
+     would swing the planet off its own ring as it counter-rotates. */
+  transform-origin: 0 0;
+  animation: ob-billboard linear infinite;
+}
+
+@keyframes ob-arm {
+  from { transform: rotateZ(0deg); }
+  to { transform: rotateZ(360deg); }
+}
+/* -62deg is --ob-tilt negated. Kept literal because it is the *resting* tilt
+   the billboard cancels; live tilt is handled on .ob-body. */
+@keyframes ob-billboard {
+  from { transform: rotateZ(0deg) rotateX(-62deg); }
+  to { transform: rotateZ(-360deg) rotateX(-62deg); }
+}
+
+/* Slots, periods and starting phases. Periods are minutes long, so the system
+   drifts rather than spins; script re-rolls each starting phase per visit. */
+.ob-arm--1 { --ob-n: 0; --ob-rate: 2.189; animation-duration: 111s; animation-delay: -12s; }
+.ob-arm--2 { --ob-n: 1; --ob-rate: 1.500; animation-duration: 162s; animation-delay: -108s; }
+.ob-arm--3 { --ob-n: 2; --ob-rate: 1.130; animation-duration: 215s; animation-delay: -48s; }
+.ob-arm--4 { --ob-n: 3; --ob-rate: 0.897; animation-duration: 271s; animation-delay: -196s; }
+.ob-arm--5 { --ob-n: 4; --ob-rate: 0.739; animation-duration: 329s; animation-delay: -84s; }
+.ob-arm--6 { --ob-n: 5; --ob-rate: 0.626; animation-duration: 388s; animation-delay: -250s; }
+
+/* Must match the arm exactly, or the label stops cancelling its own rotation. */
+.ob-arm--1 .ob-billboard { animation-duration: 111s; animation-delay: -12s; }
+.ob-arm--2 .ob-billboard { animation-duration: 162s; animation-delay: -108s; }
+.ob-arm--3 .ob-billboard { animation-duration: 215s; animation-delay: -48s; }
+.ob-arm--4 .ob-billboard { animation-duration: 271s; animation-delay: -196s; }
+.ob-arm--5 .ob-billboard { animation-duration: 329s; animation-delay: -84s; }
+.ob-arm--6 .ob-billboard { animation-duration: 388s; animation-delay: -250s; }
+
+/* Keyboard focus holds the system still so a focused target can be activated.
+   Hovering deliberately does not: the orbits keep running under the pointer. */
+.ob-scene:focus-within .ob-arm,
+.ob-scene:focus-within .ob-billboard { animation-play-state: paused; }
+
+.ob-scene.is-managed:focus-within .ob-arm,
+.ob-scene.is-managed:focus-within .ob-billboard { animation-play-state: running; }
+
+.ob-scene.is-managed.is-holding .ob-arm,
+.ob-scene.is-managed.is-holding .ob-billboard { animation-play-state: paused; }
+
+.ob-body {
+  display: grid;
+  grid-template-rows: var(--ob-orb) auto;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 8rem;
+  margin-left: -4rem;
+  /* Half the orb slot, so the planet's centre — not the top of the label —
+     lands exactly on the ring, whatever size that planet is. */
+  margin-top: calc(var(--ob-orb) / -2);
+  padding: 0 0.2rem 0.35rem;
+  text-decoration: none;
+  text-align: center;
+  border-radius: var(--ob-radius);
+  /* The link box is only a layout frame: it must not swallow clicks meant for
+     a body behind it. The disc and the plate opt back in below. */
+  pointer-events: none;
+  /* 1px toward the viewer breaks the depth tie with the ring the planet sits
+     on. Too small to shift the projection — measured under 0.2px. */
+  transform: translateZ(1px) rotateX(calc(var(--ob-tilt) - var(--ob-tilt-live)));
+  /* Pivot on the planet, not on the middle of the label, so absorbing a live
+     tilt change never nudges the planet off its ring. */
+  transform-origin: 50% calc(var(--ob-orb) / 2);
+}
+
+/* A fixed-height slot centres every planet on its ring regardless of size. */
+.ob-orb {
+  display: grid;
+  place-items: center;
+  height: var(--ob-orb);
+  /* Identity, deliberately: see the entrance note below. */
+  transform: scale(1);
+}
+
+/* The planets arrive with the rings, so the system enters as one scene.
+   No forwards fill: once the entrance is over the elements fall back to their
+   normal styles, which are fully visible whatever happened during it. */
+.ob-orb {
+  animation: ob-orb-in 720ms var(--ob-ease) backwards;
+  animation-delay: calc(320ms + var(--ob-n, 0) * 90ms);
+}
+.ob-body-tag {
+  animation: ob-tag-in 720ms var(--ob-ease) backwards;
+  animation-delay: calc(420ms + var(--ob-n, 0) * 90ms);
+}
+
+@keyframes ob-orb-in {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes ob-tag-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Each planet is a small lit sphere: distinct size, distinct colour, a soft
+   terminator on the shaded side and a contact shadow on the orbital plane. */
+.ob-planet {
+  display: block;
+  /* The map is a square disc with transparent corners, so it lines up with the
+     circle exactly. Sized to the element, which is what keeps a 20px planet
+     from trying to paint at the file's own 256px. */
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* The visible disc is the hit area, and border-radius clips hit testing to
+     the circle. Because it lives inside the 3D chain, it scales and moves with
+     the camera, so the target stays exact at any zoom or orientation. */
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 50%;
+  background-image: var(--ob-planet-fill);
+  box-shadow:
+    inset -0.18em -0.22em 0.4em var(--ob-planet-shade),
+    inset 0.1em 0.12em 0.3em var(--ob-planet-sheen),
+    0 0.12em 0.5em var(--ob-planet-drop);
+  transition: transform 0.25s var(--ob-ease), box-shadow 0.25s var(--ob-ease);
+}
+
+/* Planet, ring and sun maps: Solar System Scope (solarsystemscope.com), CC BY 4.0.
+   Re-projected from equirectangular to a sphere seen head on, then reduced to
+   256px — see Credits in the README. The disc carries only the surface; the
+   lighting above stays in CSS, so both palettes light it their own way. */
+.ob-body--1 .ob-planet { width: 1.00rem; height: 1.00rem; --ob-planet-fill: url("planet-mercury.webp"); }
+.ob-body--2 .ob-planet { width: 1.20rem; height: 1.20rem; --ob-planet-fill: url("planet-venus.webp"); }
+.ob-body--3 .ob-planet { width: 1.22rem; height: 1.22rem; --ob-planet-fill: url("planet-earth.webp"); }
+.ob-body--4 .ob-planet { width: 1.07rem; height: 1.07rem; --ob-planet-fill: url("planet-mars.webp"); }
+.ob-body--5 .ob-planet { width: 1.96rem; height: 1.96rem; --ob-planet-fill: url("planet-jupiter.webp"); }
+.ob-body--6 { --ob-saturn: 1.88rem; }
+.ob-body--6 .ob-planet { width: 1.88rem; height: 1.88rem; --ob-planet-fill: url("planet-saturn.webp"); }
+
+/* Saturn's rings.
+   Decoration only, and deliberately hung off .ob-orb rather than the planet:
+   the orb takes no pointer events, and a pseudo-element inherits that, so the
+   hit area stays exactly the visible disc no matter how far the rings reach.
+   Two halves, because a ring that only ever passes in front of the planet reads
+   as a sticker — the far side has to go behind it. The map is swept from the
+   pack's radial strip and runs out to 2.3 planet radii, which is where the box
+   size comes from; flattening and tipping it puts it in Saturn's own plane. */
+.ob-body--6 .ob-orb { position: relative; }
+
+.ob-body--6 .ob-orb::before,
+.ob-body--6 .ob-orb::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--ob-saturn) * 2.3);
+  height: calc(var(--ob-saturn) * 2.3);
+  margin: calc(var(--ob-saturn) * -1.15) 0 0 calc(var(--ob-saturn) * -1.15);
+  background: url("saturn-rings.webp") center / 100% 100% no-repeat;
+  /* Flattened, and deliberately not rotated. The disc is projected with the
+     pole straight up, so every latitude circle lands as a horizontal chord and
+     Saturn's bands run flat across it. The rings share that plane, so their
+     major axis has to be flat too — the 14deg tip this used to carry put the
+     ring plane at an angle to the planet's own equator, and skewed the line
+     where the near half crosses in front. Both are inside the billboard, so
+     once they agree here they stay parallel at every camera orientation. */
+  transform: scaleY(0.34);
+  pointer-events: none;
+}
+
+/* Far side, behind the planet; near side, across it. The orb already makes a
+   stacking context, so neither escapes past its own body. */
+.ob-body--6 .ob-orb::before { z-index: -1; clip-path: inset(0 0 50% 0); }
+.ob-body--6 .ob-orb::after { z-index: 1; clip-path: inset(50% 0 0 0); }
+
+.ob-body-tag {
+  display: grid;
+  gap: 0.05rem;
+  pointer-events: auto;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--ob-radius);
+  /* A quiet plate so labels stay legible over paths and other bodies. */
+  background: var(--ob-plate);
+}
+.ob-body-code {
+  font-family: var(--ob-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  /* Muted rather than faint: this is small type over a busy scene. */
+  color: var(--ob-muted);
+  transition: color 0.25s var(--ob-ease);
+}
+.ob-body-name {
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ob-ink);
+}
+.ob-body-note {
+  font-size: 0.6875rem;
+  color: var(--ob-muted);
+  opacity: 0;
+  height: 0;
+  transition: opacity 0.25s var(--ob-ease);
+}
+
+/* Hover lights the planet up where it is. It is never displaced, and the orbit
+   underneath it never pauses — the highlight rides along with the body. */
+.ob-body:hover .ob-planet, .ob-body:focus-visible .ob-planet {
+  transform: scale(1.16);
+  box-shadow:
+    inset -0.18em -0.22em 0.4em var(--ob-planet-shade),
+    inset 0.1em 0.12em 0.3em var(--ob-planet-sheen),
+    0 0 0 0.28em var(--ob-accent-soft),
+    0 0.12em 0.7em var(--ob-planet-halo);
+}
+.ob-body:hover .ob-body-code, .ob-body:focus-visible .ob-body-code { color: var(--ob-accent); }
+.ob-body:hover .ob-body-name, .ob-body:focus-visible .ob-body-name { color: var(--ob-accent); }
+.ob-body:hover .ob-body-note, .ob-body:focus-visible .ob-body-note { opacity: 1; height: auto; }
+
+.ob-scroll-cue {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--ob-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ob-muted);
+  text-decoration: none;
+  padding: 0.5rem 0.25rem;
+}
+.ob-scroll-cue:hover { color: var(--ob-accent); }
+.ob-scroll-arrow { animation: ob-cue 2.6s ease-in-out infinite; }
+@keyframes ob-cue {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(3px); opacity: 1; }
+}
+
+@media (min-width: 64rem) {
+  .ob-launch-inner {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas: "intro system" "cue system";
+    align-content: center;
+  }
+  .ob-launch-intro { grid-area: intro; }
+  .ob-system { grid-area: system; }
+  .ob-scroll-cue { grid-area: cue; justify-self: start; }
+}
+
+/* --- mobile: a list, not a shrunken orbit --------------------------------- */
+
+@media (max-width: 48rem) {
+  .ob-launch { min-height: 0; padding-block: 1rem 3rem; overflow: visible; }
+  .ob-launch-inner { padding-block: 2rem 0; }
+  .ob-launch-hint { display: none; }
+
+  /* Saturn's rings run out to 2.3 planet radii — past the 2rem disc column
+     and into the text, by a constant 4px at every width here, since both are
+     sized in rem. The planets stay exactly where they are and the text column
+     moves instead, by the same amount on every row so the list stays true to
+     one column. Eased up a little on wider tablets, where there is room. */
+  .ob-scene { --ob-list-gap: clamp(1.6rem, 1.1rem + 1.6vw, 2rem); }
+
+  .ob-scene {
+    max-width: none;
+    aspect-ratio: auto;
+    perspective: none;
+    position: static;
+  }
+  .ob-camera { position: static; transform: none; transform-style: flat; }
+  .ob-orbits { display: none; }
+
+  .ob-sun {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0 0 0.5rem;
+    transform: none;
+    transform-style: flat;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--ob-list-gap);
+    text-align: left;
+    padding-bottom: 1.25rem;
+    border-radius: 0;
+    border-bottom: 1px solid var(--ob-line);
+  }
+  .ob-sun-core {
+    position: static;
+    inset: auto;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    box-shadow: 0 0 0 1px var(--ob-sun-ring), 0 0 20px 4px var(--ob-sun-glow);
+  }
+  .ob-sun-name {
+    display: block;
+    font-family: var(--ob-mono);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ob-ink);
+    text-align: left;
+  }
+
+  .ob-bodies, .ob-bodies ul { position: static; transform-style: flat; }
+  .ob-bodies ul { display: grid; }
+
+  .ob-arm {
+    position: static;
+    width: auto;
+    height: auto;
+    animation: none;
+    transform: none;
+    transform-style: flat;
+    border-bottom: 1px solid var(--ob-line);
+  }
+  .ob-arm:last-child { border-bottom: 0; }
+  .ob-anchor, .ob-billboard {
+    position: static;
+    transform: none;
+    animation: none;
+    transform-style: flat;
+    display: block;
+  }
+
+  .ob-body {
+    grid-template-rows: auto;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+    gap: 0.9rem;
+    column-gap: var(--ob-list-gap);
+    width: auto;
+    margin: 0;
+    padding: 0.9rem 0.25rem;
+    text-align: left;
+    transform: none;
+  }
+  /* A tap anywhere on the row should follow it, and nothing is overlapping. */
+  .ob-body { pointer-events: auto; }
+  .ob-orb { height: auto; justify-self: center; animation: none; }
+  .ob-body-tag { animation: none; }
+  .ob-scene { cursor: auto; }
+  .ob-body-tag { background: none; padding: 0; justify-items: start; }
+  .ob-body-note { opacity: 1; height: auto; }
+}
+
+/* --------------------------------------------------------------------------
+   Sections
+   -------------------------------------------------------------------------- */
+
+.ob-section { padding-block: clamp(3rem, 7vw, 5.5rem) 0; }
+.ob-section-first { padding-top: clamp(2.5rem, 5vw, 4rem); }
+.ob-section-last { padding-bottom: clamp(3rem, 7vw, 5.5rem); }
+
+.ob-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  min-height: 2.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--ob-line-strong);
+}
+.ob-section-body { margin-top: var(--ob-label-gap); }
+
+.ob-section-link {
+  position: relative;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ob-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ob-section-link:hover { color: var(--ob-accent); }
+.ob-section-link::after { content: ""; position: absolute; inset: -0.5rem 0; }
+
+.ob-page-head { padding-block: clamp(1.5rem, 4vw, 3rem) 0; }
+.ob-page-head .ob-label { margin-bottom: 1.25rem; }
+.ob-page-title {
+  font-family: var(--ob-display);
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.ob-page-lead { color: var(--ob-muted); max-width: var(--ob-measure); }
+
+.ob-message { padding-block: clamp(3rem, 10vw, 7rem); }
+.ob-message .ob-label { margin-bottom: 1.25rem; }
+.ob-message-action { margin-top: 2rem; }
+
+/* --------------------------------------------------------------------------
+   About / featured / cards
+   -------------------------------------------------------------------------- */
+
+.ob-about { display: grid; gap: 2rem; align-items: start; }
+@media (min-width: 60rem) {
+  .ob-about { grid-template-columns: 16rem minmax(0, 1fr); }
+  .ob-about-body { max-width: var(--ob-measure); }
+}
+.ob-portrait { overflow: hidden; box-shadow: 0 0 0 1px var(--ob-line); border-radius: var(--ob-radius); }
+.ob-portrait-img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; transition: transform 0.6s var(--ob-ease); }
+.ob-portrait:hover .ob-portrait-img { transform: scale(1.03); }
+
+.ob-featured {
+  display: grid;
+  gap: 0;
+  background: var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+}
+.ob-featured-media { overflow: hidden; background: var(--ob-panel-alt); min-width: 0; }
+.ob-featured-media a { display: block; }
+.ob-featured-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; transition: transform 0.7s var(--ob-ease); }
+.ob-featured:hover .ob-featured-img { transform: scale(1.035); }
+.ob-featured-placeholder { width: 100%; aspect-ratio: 16 / 10; background: var(--ob-panel-alt); }
+
+.ob-featured-body {
+  padding: var(--ob-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  border-top: 1px solid var(--ob-line);
+}
+.ob-featured-title {
+  font-family: var(--ob-display);
+  font-size: clamp(1.5rem, 3.2vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.ob-featured-title a { text-decoration: none; }
+.ob-featured-title a:hover { color: var(--ob-accent); }
+.ob-featured-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  color: var(--ob-faint);
+}
+.ob-featured-summary { color: var(--ob-muted); margin: 0; max-width: var(--ob-measure); }
+.ob-featured-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: auto; padding-top: 0.5rem; }
+
+@media (min-width: 60rem) {
+  .ob-featured { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); }
+  .ob-featured-body { border-top: 0; border-left: 1px solid var(--ob-line); }
+  .ob-featured-img, .ob-featured-placeholder { height: 100%; aspect-ratio: auto; min-height: 21rem; }
+}
+
+.ob-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  gap: 1.5rem;
+}
+
+.ob-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+  overflow: hidden;
+  transition: box-shadow 0.2s var(--ob-ease), transform 0.2s var(--ob-ease);
+}
+.ob-card:hover { box-shadow: 0 0 0 1px var(--ob-line-strong); transform: translateY(-2px); }
+
+.ob-card-media { overflow: hidden; background: var(--ob-panel-alt); border-bottom: 1px solid var(--ob-line); }
+.ob-card-media a { display: block; }
+.ob-card-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; transition: transform 0.6s var(--ob-ease); }
+.ob-card:hover .ob-card-img { transform: scale(1.045); }
+
+.ob-card-body {
+  padding: var(--ob-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+}
+.ob-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  color: var(--ob-faint);
+}
+.ob-card-num { flex: none; white-space: nowrap; overflow-wrap: normal; color: var(--ob-accent); font-variant-numeric: tabular-nums; }
+.ob-card-title { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.015em; }
+.ob-card-title a { text-decoration: none; display: inline-flex; align-items: baseline; gap: 0.4rem; }
+.ob-card-title a:hover { color: var(--ob-accent); }
+.ob-card-arrow {
+  color: var(--ob-accent);
+  opacity: 0;
+  transform: translateX(-0.2rem);
+  transition: opacity 0.2s var(--ob-ease), transform 0.2s var(--ob-ease);
+}
+.ob-card:hover .ob-card-arrow,
+.ob-record:hover .ob-card-arrow,
+.ob-card-title a:focus-visible .ob-card-arrow,
+.ob-record-title a:focus-visible .ob-card-arrow { opacity: 1; transform: none; }
+.ob-card-summary { color: var(--ob-muted); font-size: 0.9375rem; margin: 0; }
+.ob-card .ob-linkrow { margin-top: auto; padding-top: 0.4rem; }
+
+/* --------------------------------------------------------------------------
+   Toolkit / records / timeline
+   -------------------------------------------------------------------------- */
+
+.ob-toolkit, .ob-records, .ob-timeline {
+  background: var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+}
+
+.ob-toolkit-row, .ob-timeline-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: var(--ob-pad);
+  border-bottom: 1px solid var(--ob-line);
+}
+.ob-toolkit-row:last-child, .ob-timeline-row:last-child { border-bottom: 0; }
+
+.ob-toolkit-head { display: flex; align-items: baseline; gap: 0.75rem; min-width: 0; }
+.ob-toolkit-num {
+  flex: none;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--ob-accent);
+  font-variant-numeric: tabular-nums;
+}
+.ob-toolkit-name {
+  font-family: var(--ob-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.ob-toolkit-items { display: flex; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
+.ob-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--ob-panel-alt);
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius);
+  font-family: var(--ob-mono);
+  font-size: 0.8125rem;
+  color: var(--ob-muted);
+  min-width: 0;
+  transition: border-color 0.18s var(--ob-ease), color 0.18s var(--ob-ease);
+}
+.ob-tool:hover { border-color: var(--ob-line-strong); color: var(--ob-ink); }
+.ob-tool-logo { display: inline-flex; align-items: center; justify-content: center; height: 1.2rem; width: 1.2rem; flex: none; }
+.ob-tool-logo .icon-svg { height: 100%; width: auto; max-width: 2.4rem; display: block; }
+
+.ob-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: clamp(1.5rem, 3vw, 2.25rem) var(--ob-pad);
+  border-bottom: 1px solid var(--ob-line);
+  transition: background-color 0.2s var(--ob-ease);
+}
+.ob-record:last-child { border-bottom: 0; }
+.ob-record:hover { background: var(--ob-panel-alt); }
+.ob-record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ob-faint);
+  min-width: 0;
+}
+.ob-record-num { flex: none; white-space: nowrap; overflow-wrap: normal; color: var(--ob-accent); font-variant-numeric: tabular-nums; }
+.ob-record-year { color: var(--ob-ink); }
+.ob-record-body { min-width: 0; }
+.ob-record-title {
+  font-family: var(--ob-display);
+  font-size: clamp(1.25rem, 2.6vw, 1.625rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin-bottom: 0.6rem;
+}
+.ob-record-title a { text-decoration: none; display: inline-flex; align-items: baseline; gap: 0.4rem; }
+.ob-record-title a:hover { color: var(--ob-accent); }
+.ob-record-byline { color: var(--ob-muted); font-size: 0.875rem; margin-bottom: 0.6rem; }
+.ob-record-abstract { color: var(--ob-muted); margin-bottom: 1rem; max-width: var(--ob-measure); }
+
+.ob-timeline-dates {
+  margin: 0;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--ob-faint);
+  text-transform: uppercase;
+}
+.ob-timeline-body { min-width: 0; }
+.ob-timeline-degree { font-size: 1.0625rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.ob-timeline-logo img { width: 1.6rem; height: 1.6rem; object-fit: contain; }
+.ob-timeline-school { color: var(--ob-muted); font-size: 0.9375rem; margin: 0.2rem 0 0.5rem; }
+
+@media (min-width: 60rem) {
+  .ob-toolkit-row, .ob-record, .ob-timeline-row {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+  .ob-record-meta { flex-direction: column; align-items: flex-start; gap: 0.45rem; }
+}
+
+/* --------------------------------------------------------------------------
+   Contact + footer
+   -------------------------------------------------------------------------- */
+
+.ob-contact {
+  padding: clamp(1.75rem, 4vw, 3rem);
+  background:
+    radial-gradient(700px 300px at 82% 0%, var(--ob-contact-glow), transparent 70%),
+    var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+}
+.ob-contact-heading {
+  font-family: var(--ob-display);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  text-transform: uppercase;
+  margin: 0 0 1.5rem;
+}
+.ob-contact-body { color: var(--ob-muted); max-width: var(--ob-measure); margin-bottom: 2rem; }
+.ob-contact-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 2rem; }
+.ob-contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--ob-line);
+}
+.ob-contact-links a { position: relative; color: var(--ob-muted); text-decoration: none; }
+.ob-contact-links a:hover { color: var(--ob-accent); }
+.ob-contact-links a::after { content: ""; position: absolute; inset: -0.5rem 0; }
+
+.ob-footer { margin-top: clamp(3rem, 7vw, 5.5rem); padding-block: 2.5rem clamp(2rem, 5vw, 4rem); border-top: 1px solid var(--ob-line-strong); }
+.ob-footer-inner { display: grid; gap: 2rem; }
+@media (min-width: 48rem) { .ob-footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ob-footer-name { font-weight: 600; margin: 1rem 0 0.35rem; }
+.ob-footer-meta { font-family: var(--ob-mono); font-size: 0.75rem; color: var(--ob-faint); margin: 0; }
+.ob-footer-meta a { color: var(--ob-faint); }
+/* Quieter again than the meta line above it: this is a licence credit, not
+   something a visitor came for. Same mono face as the rest of the colophon. */
+.ob-footer-credit {
+  font-family: var(--ob-mono);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--ob-faint);
+  margin: 0.5rem 0 0;
+  max-width: 22rem;
+}
+.ob-footer-credit a { color: var(--ob-muted); text-decoration: none; border-bottom: 1px solid var(--ob-line-strong); }
+.ob-footer-credit a:hover { color: var(--ob-accent); border-bottom-color: currentColor; }
+.ob-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  font-family: var(--ob-mono);
+  font-size: 0.8125rem;
+}
+.ob-footer-links a { position: relative; color: var(--ob-muted); text-decoration: none; }
+.ob-footer-links a:hover { color: var(--ob-accent); }
+.ob-footer-links a::after { content: ""; position: absolute; inset: -0.45rem 0; }
+
+/* --------------------------------------------------------------------------
+   Detail pages
+   -------------------------------------------------------------------------- */
+
+.ob-detail { padding-block: clamp(1.5rem, 4vw, 2.5rem) clamp(3rem, 7vw, 5rem); }
+
+.ob-crumb {
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 2rem;
+}
+.ob-crumb a { color: var(--ob-muted); text-decoration: none; }
+.ob-crumb a:hover { color: var(--ob-accent); }
+
+.ob-detail-head { max-width: 58rem; margin-bottom: 2.5rem; }
+.ob-detail-head .ob-label { margin-bottom: 1.25rem; }
+.ob-detail-year { color: var(--ob-ink); }
+.ob-detail-title {
+  font-family: var(--ob-display);
+  font-size: clamp(2rem, 5.5vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.ob-detail-lead { color: var(--ob-muted); font-size: 1.0625rem; max-width: var(--ob-measure); }
+.ob-detail-byline { font-size: 0.9375rem; margin-bottom: 0.35rem; }
+.ob-detail-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.75rem; }
+
+.ob-detail-figure {
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  background: var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+}
+.ob-detail-img { width: auto; max-width: 100%; max-height: 26rem; margin-inline: auto; }
+
+.ob-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+.ob-detail-side { display: grid; gap: 1.5rem; align-content: start; min-width: 0; }
+.ob-side-block { padding-top: 1rem; border-top: 1px solid var(--ob-line-strong); min-width: 0; }
+.ob-side-block .ob-label { margin-bottom: 0.6rem; }
+.ob-side-value { font-size: 0.9375rem; margin: 0; }
+.ob-detail-content { min-width: 0; }
+.ob-detail-content-wide { max-width: 58rem; }
+.ob-detail-block { margin-top: 2.5rem; }
+.ob-detail-block .ob-label { margin-bottom: 1.25rem; }
+
+.ob-detail-foot {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ob-line-strong);
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.ob-detail-foot a { color: var(--ob-muted); text-decoration: none; }
+.ob-detail-foot a:hover { color: var(--ob-accent); }
+
+.ob-keywords { display: flex; flex-wrap: wrap; gap: 0.35rem; min-width: 0; }
+.ob-keywords li {
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  color: var(--ob-muted);
+  background: var(--ob-panel-alt);
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius);
+  padding: 0.15rem 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 64rem) {
+  .ob-detail-layout { grid-template-columns: 15rem minmax(0, 1fr); gap: clamp(2rem, 4vw, 3.5rem); }
+  .ob-detail-side { position: sticky; top: 6rem; }
+}
+
+/* --------------------------------------------------------------------------
+   Prose + CMS content blocks
+   -------------------------------------------------------------------------- */
+
+.ob-prose { max-width: var(--ob-measure); min-width: 0; }
+.ob-prose > *:first-child { margin-top: 0; }
+.ob-prose p { margin-bottom: 1.15rem; color: var(--ob-muted); }
+.ob-prose h2 { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; margin: 2.25rem 0 0.875rem; }
+.ob-prose h3 { font-size: 1.125rem; font-weight: 600; margin: 1.875rem 0 0.7rem; }
+.ob-prose ul, .ob-prose ol { margin: 0 0 1.15rem; padding-left: 1.2rem; color: var(--ob-muted); }
+.ob-prose li { list-style: disc; margin-bottom: 0.35rem; }
+.ob-prose ol li { list-style: decimal; }
+.ob-prose a { color: var(--ob-accent); }
+.ob-prose strong { color: var(--ob-ink); font-weight: 650; }
+.ob-prose blockquote {
+  margin: 1.5rem 0;
+  padding-left: 1.125rem;
+  border-left: 2px solid var(--ob-accent);
+  color: var(--ob-muted);
+}
+.ob-prose code, .ob .block-prose code {
+  font-family: var(--ob-mono);
+  font-size: 0.8125em;
+  background: var(--ob-panel-alt);
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius);
+  padding: 0.1em 0.35em;
+  overflow-wrap: anywhere;
+}
+.ob-prose pre, .ob .block-prose pre {
+  background: var(--ob-panel-alt);
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius);
+  padding: 1.125rem;
+  margin: 1.5rem 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.ob-prose pre code, .ob .block-prose pre code, .ob .block-code code {
+  background: none;
+  border: 0;
+  padding: 0;
+  font-size: 0.8125rem;
+  overflow-wrap: normal;
+}
+.ob-prose table, .ob .block-prose table {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  margin: 1.5rem 0;
+}
+.ob-prose th, .ob-prose td, .ob .block-prose th, .ob .block-prose td {
+  border-bottom: 1px solid var(--ob-line);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.ob-prose hr { border: 0; border-top: 1px solid var(--ob-line); margin: 2rem 0; }
+.ob-prose-tight { font-size: 0.9375rem; }
+.ob-prose-tight p { margin-bottom: 0.7rem; }
+
+.ob .blocks { margin-top: 2.5rem; max-width: 58rem; min-width: 0; }
+.ob .blocks > * { margin-bottom: 2rem; max-width: var(--ob-measure); min-width: 0; }
+.ob .blocks > *:last-child { margin-bottom: 0; }
+.ob .blocks > .is-wide,
+.ob .is-wide { max-width: 100%; margin-inline: 0; }
+
+.ob .block-heading { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-top: 3rem; }
+.ob .block-heading-small { font-size: 1.1875rem; margin-top: 2.25rem; }
+.ob .blocks > .block-heading:first-child { margin-top: 0; }
+
+.ob .block-prose { color: var(--ob-muted); }
+.ob .block-prose p { margin-bottom: 1.15rem; }
+.ob .block-prose a { color: var(--ob-accent); }
+.ob .block-prose strong { color: var(--ob-ink); }
+.ob .block-prose ul, .ob .block-prose ol { margin: 0 0 1.15rem; padding-left: 1.2rem; }
+.ob .block-prose li { list-style: disc; margin-bottom: 0.35rem; }
+.ob .block-prose ol li { list-style: decimal; }
+
+.ob .block-divider { border: 0; border-top: 1px solid var(--ob-line-strong); margin-block: 3rem; }
+
+.ob .block-quote {
+  margin-block: 2.5rem;
+  padding: 1.25rem 1.5rem;
+  background: var(--ob-panel);
+  border-left: 2px solid var(--ob-accent);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+}
+.ob .block-quote blockquote { margin: 0; font-size: 1.125rem; color: var(--ob-ink); }
+.ob .block-quote figcaption {
+  margin-top: 0.7rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ob-faint);
+}
+
+.ob figcaption {
+  margin-top: 0.65rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  color: var(--ob-faint);
+  max-width: 100%;
+}
+
+.ob .block-image img, .ob .block-gallery img, .ob .gallery-img {
+  width: 100%;
+  max-width: 100%;
+  box-shadow: 0 0 0 1px var(--ob-line);
+}
+.ob .ob-detail .block-image img {
+  width: auto;
+  max-width: 100%;
+  max-height: 30rem;
+  margin-inline: auto;
+}
+
+.ob .gallery-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
+  min-width: 0;
+}
+.ob .gallery-grid[data-columns="3"] { grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); }
+.ob .gallery-item { display: block; overflow: hidden; border-radius: var(--ob-radius); min-width: 0; }
+.ob .gallery-img { aspect-ratio: 4 / 3; object-fit: cover; transition: transform 0.5s var(--ob-ease); }
+.ob .gallery-item:hover .gallery-img { transform: scale(1.04); }
+
+.ob .block-code {
+  background: var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+  min-width: 0;
+  overflow: hidden;
+}
+.ob .block-code pre { margin: 0; padding: 1.125rem; max-width: 100%; overflow-x: auto; background: transparent; border: 0; }
+.ob .block-code-lang {
+  font-family: var(--ob-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ob-accent);
+  padding: 0.5rem 1.125rem;
+  border-bottom: 1px solid var(--ob-line);
+  background: var(--ob-panel-alt);
+}
+.ob .block-code figcaption { padding: 0 1.125rem 0.9rem; margin-top: 0.5rem; }
+
+.ob .block-embed .embed-frame {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--ob-panel-alt);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+}
+.ob .embed-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+
+.ob .button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  text-decoration: none;
+  color: var(--ob-ink);
+  background: var(--ob-panel);
+  border: 1px solid var(--ob-line-strong);
+  border-radius: var(--ob-radius);
+  padding: 0.55rem 0.9rem;
+  transition: border-color 0.18s var(--ob-ease), color 0.18s var(--ob-ease);
+}
+.ob .button:hover { border-color: var(--ob-ink); }
+.ob .button-primary { background: var(--ob-accent); border-color: var(--ob-accent); color: var(--ob-on-accent); }
+.ob .button-primary:hover { background: var(--ob-accent-bright); border-color: var(--ob-accent-bright); color: var(--ob-on-accent); }
+
+.ob .project-ref-card {
+  display: flex;
+  gap: 1.25rem;
+  align-items: center;
+  background: var(--ob-panel);
+  box-shadow: 0 0 0 1px var(--ob-line);
+  border-radius: var(--ob-radius);
+  padding: 1rem;
+  text-decoration: none;
+  min-width: 0;
+  transition: box-shadow 0.2s var(--ob-ease);
+}
+.ob .project-ref-card:hover { box-shadow: 0 0 0 1px var(--ob-accent); }
+.ob .project-ref-thumb { width: 7rem; flex: none; }
+.ob .project-ref-thumb img { aspect-ratio: 4 / 3; object-fit: cover; }
+.ob .project-ref-body { min-width: 0; }
+.ob .project-ref-body .eyebrow {
+  font-family: var(--ob-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ob-accent);
+  margin: 0 0 0.3rem;
+}
+.ob .project-ref-body h3 { font-size: 1.0625rem; font-weight: 600; margin-bottom: 0.25rem; }
+.ob .project-ref-body p { color: var(--ob-muted); font-size: 0.875rem; margin: 0; }
+
+.ob .block-skill-group .skill-group-title {
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: var(--ob-faint);
+  margin-bottom: 1rem;
+}
+.ob .skill-list { display: flex; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
+.ob .skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--ob-mono);
+  font-size: 0.8125rem;
+  color: var(--ob-muted);
+  background: var(--ob-panel-alt);
+  border: 1px solid var(--ob-line);
+  border-radius: var(--ob-radius);
+  padding: 0.3rem 0.6rem;
+  min-width: 0;
+}
+.ob .skill-icon { display: inline-flex; align-items: center; justify-content: center; height: 1.05em; width: 1.05em; flex: none; }
+.ob .skill-icon .icon-svg { height: 100%; width: auto; max-width: 2.4em; display: block; }
+
+/* --------------------------------------------------------------------------
+   Draft banner
+   -------------------------------------------------------------------------- */
+
+.ob-draft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--ob-accent-soft);
+  border-bottom: 1px solid var(--ob-line-strong);
+  padding: 0.55rem var(--ob-gutter);
+  font-size: 0.8125rem;
+}
+.ob-draft-tag {
+  font-family: var(--ob-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ob-accent);
+  border: 1px solid currentColor;
+  border-radius: var(--ob-radius);
+  padding: 0.05rem 0.4rem;
+}
+
+/* --------------------------------------------------------------------------
+   Reveal — only active once script has confirmed it can undo it
+   -------------------------------------------------------------------------- */
+
+.ob-js [data-reveal] {
+  opacity: 0;
+  transform: translateY(14px);
+  transition: opacity 0.55s var(--ob-ease), transform 0.55s var(--ob-ease);
+}
+.ob-js [data-reveal].is-in { opacity: 1; transform: none; }
+
+/* --------------------------------------------------------------------------
+   Hero typing reveal (the launch only, so never on a detail page)
+   Characters are wrapped by script and faded in left to right. They stay
+   inline and only opacity animates, so the line keeps its exact shaping and
+   nothing shifts. Without script the heading renders as the server sent it.
+   -------------------------------------------------------------------------- */
+
+.ob-typing .ob-char {
+  opacity: 0;
+  animation: ob-char-in 260ms var(--ob-ease) forwards;
+  /* Script writes each key its own moment, so the rhythm is uneven the way a
+     hand is; an even multiple of an index would tick like a clock. */
+  animation-delay: var(--ob-char-delay, 0ms);
+}
+
+@keyframes ob-char-in {
+  to { opacity: 1; }
+}
+
+/* The caret is part of the static design; it only blinks while typing runs. */
+.ob-launch-caret.is-blinking {
+  animation: ob-caret-blink 700ms steps(2, jump-none) infinite;
+}
+
+@keyframes ob-caret-blink {
+  0%, 45% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+
+/* The profile block settles in just behind the name. */
+.ob-js .ob-launch-profile[data-reveal] { transition-delay: 400ms; }
+.ob-js .ob-launch-hint[data-reveal] { transition-delay: 640ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+
+  .ob-js [data-reveal],
+  .ob-js [data-reveal].is-in { opacity: 1; transform: none; transition: none; }
+
+  /* The map becomes a still diagram: the perspective and every body stay
+     exactly where they are, and nothing moves. */
+  .ob-arm, .ob-billboard { animation: none !important; }
+  .ob-arm--1 { transform: rotateZ(28deg); }
+  .ob-arm--2 { transform: rotateZ(-64deg); }
+  .ob-arm--3 { transform: rotateZ(126deg); }
+  .ob-arm--4 { transform: rotateZ(-142deg); }
+  .ob-arm--5 { transform: rotateZ(74deg); }
+  .ob-arm--6 { transform: rotateZ(-16deg); }
+  .ob-arm--1 .ob-billboard { transform: rotateZ(-28deg) rotateX(-62deg); }
+  .ob-arm--2 .ob-billboard { transform: rotateZ(64deg) rotateX(-62deg); }
+  .ob-arm--3 .ob-billboard { transform: rotateZ(-126deg) rotateX(-62deg); }
+  .ob-arm--4 .ob-billboard { transform: rotateZ(142deg) rotateX(-62deg); }
+  .ob-arm--5 .ob-billboard { transform: rotateZ(-74deg) rotateX(-62deg); }
+  .ob-arm--6 .ob-billboard { transform: rotateZ(16deg) rotateX(-62deg); }
+
+  body.ob::before { animation: none !important; opacity: 1; }
+  .ob-path { animation: none !important; opacity: 1; }
+  .ob-sun-core { animation: none !important; }
+  .ob-orb, .ob-body-tag { animation: none !important; opacity: 1; transform: none; }
+  .ob-scroll-arrow { animation: none !important; }
+  .ob-typing .ob-char { opacity: 1; animation: none !important; }
+  .ob-launch-caret.is-blinking { animation: none !important; }
+  .ob-js .ob-launch-profile[data-reveal],
+  .ob-js .ob-launch-hint[data-reveal] { transition-delay: 0s; }
+
+  .ob *, .ob *::before, .ob *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* The one exception to the blanket above. This animation moves nothing —
+     it holds the header at opacity 0 while script decides whether the map is
+     under it — so the flash is prevented here too. */
+  body.ob-home .ob-header { animation-duration: 320ms !important; }
+}

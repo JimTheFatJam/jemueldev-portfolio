@@ -1,0 +1,34 @@
+<li class="ed-research" data-reveal>
+  <p class="ed-research-meta">
+    <% if (item.date) { %><span><%= item.date %></span><% } %>
+    <% if (item.work_status) { %><span class="ed-flag ed-flag-quiet"><%= item.work_status %></span><% } %>
+    <% if (!item.isPublished) { %><span class="ed-flag">Draft</span><% } %>
+  </p>
+
+  <h3 class="ed-research-title">
+    <% if (item.hasDetailPage) { %>
+      <a class="ed-link-sweep" href="<%= item.href %>"><%= item.title %></a>
+    <% } else { %><%= item.title %><% } %>
+  </h3>
+
+  <% if (item.authors || item.institution) { %>
+    <p class="ed-research-sub">
+      <%= item.authors %><% if (item.authors && item.institution) { %> · <% } %><%= item.institution %>
+    </p>
+  <% } %>
+
+  <% if (item.abstract) { %><p class="ed-research-abstract"><%= plain(item.abstract, 240) %></p><% } %>
+
+  <ul class="ed-actions">
+    <% if (item.hasDetailPage) { %><li><a class="ed-link-sweep" href="<%= item.href %>">Details</a></li><% } %>
+    <% if (safeUrl(item.paper_url)) { %>
+      <li><a class="ed-link-sweep" href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Paper</a></li>
+    <% } %>
+    <% if (safeUrl(item.github_url)) { %>
+      <li><a class="ed-link-sweep" href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">Code</a></li>
+    <% } %>
+    <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+      <li><a class="ed-link-sweep" href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+    <% } }); %>
+  </ul>
+</li>

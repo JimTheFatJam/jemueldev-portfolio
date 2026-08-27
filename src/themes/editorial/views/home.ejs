@@ -1,0 +1,203 @@
+<%- include('./partials/head') %>
+<%
+  const site = settings.site;
+  const titles = settings.sectionTitles;
+  const heroName = hero.headline || site.name;
+  const resume = safeUrl(site.resumeUrl);
+  const visibleSkills = (skillCategories || []).filter((category) => category.skills.length);
+%>
+
+<section class="ed-hero">
+  <% if (hero.identity) { %>
+    <p class="ed-label ed-hero-label"><%= hero.identity %></p>
+  <% } %>
+
+  <h1 class="ed-hero-name"><%= heroName %></h1>
+
+  <% if (hero.intro) { %>
+    <div class="ed-hero-intro"><p><%- mdInline(hero.intro) %></p></div>
+  <% } %>
+
+  <div class="ed-hero-actions">
+    <% if (hero.ctaLabel && safeUrl(hero.ctaHref)) { %>
+      <a class="ed-button ed-button-primary" href="<%= safeUrl(hero.ctaHref) %>"><%= hero.ctaLabel %></a>
+    <% } %>
+    <% if (hero.secondaryCtaLabel && safeUrl(hero.secondaryCtaHref)) { %>
+      <a class="ed-button" href="<%= safeUrl(hero.secondaryCtaHref) %>"><%= hero.secondaryCtaLabel %></a>
+    <% } %>
+    <% if (resume) { %>
+      <a class="ed-button" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
+    <% } %>
+  </div>
+</section>
+
+<% if (sections.about && (about.body || aboutImage || aboutBlocks.length)) { %>
+<section class="ed-section" id="about">
+  <div class="ed-section-head" data-reveal>
+    <p class="ed-label"><span class="ed-label-num">01</span><%= about.heading || 'About' %></p>
+  </div>
+
+  <div class="ed-about" data-reveal>
+    <% if (aboutImage) { %>
+      <figure class="ed-portrait">
+        <%- include('shared/image', {
+              media: aboutImage,
+              imgSizes: '(max-width: 48rem) 60vw, 15rem',
+              imgClass: 'ed-portrait-img',
+              imgLoading: 'eager'
+            }) %>
+        <% if (aboutSecondaryImage) { %>
+          <%- include('shared/image', {
+                media: aboutSecondaryImage,
+                imgSizes: '(max-width: 48rem) 60vw, 15rem',
+                imgClass: 'ed-portrait-img ed-portrait-second'
+              }) %>
+        <% } %>
+      </figure>
+    <% } %>
+
+    <div class="ed-prose ed-about-body">
+      <%- md(about.body) %>
+      <% if ((about.links || []).length) { %>
+        <ul class="ed-actions ed-about-links">
+          <% about.links.forEach(function (link) { if (safeUrl(link.url)) { %>
+            <li><a class="ed-link-sweep" href="<%= safeUrl(link.url) %>"<%- /^https?:/.test(safeUrl(link.url)) ? ' target="_blank" rel="noopener noreferrer"' : '' %>><%= link.label %></a></li>
+          <% } }); %>
+        </ul>
+      <% } %>
+    </div>
+  </div>
+
+  <%- include('shared/blocks', { blocks: aboutBlocks }) %>
+</section>
+<% } %>
+
+<% if (sections.projects) { %>
+<section class="ed-section" id="projects">
+  <div class="ed-section-head" data-reveal>
+    <p class="ed-label"><span class="ed-label-num">02</span><%= titles.projects %></p>
+    <a class="ed-section-link ed-link-sweep" href="/projects">All projects</a>
+  </div>
+
+  <% if (projects.length) { %>
+    <ol class="ed-projects">
+      <% projects.forEach(function (project, index) { %>
+        <%- include('./partials/project-row', { project: project, rowIndex: index }) %>
+      <% }); %>
+    </ol>
+  <% } else { %>
+    <p class="ed-empty">
+      No featured projects yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+    </p>
+  <% } %>
+</section>
+<% } %>
+
+<% if (sections.skills && visibleSkills.length) { %>
+<section class="ed-section" id="skills">
+  <div class="ed-section-head" data-reveal>
+    <p class="ed-label"><span class="ed-label-num">03</span><%= titles.skills %></p>
+  </div>
+
+  <div class="ed-skills">
+    <% visibleSkills.forEach(function (category) { %>
+      <div class="ed-skill-group" data-reveal>
+        <h3 class="ed-skill-heading"><%= category.name %></h3>
+        <ul class="ed-skill-grid">
+          <% category.skills.forEach(function (skill) { %>
+            <li class="ed-skill<%= skill.icon ? ' has-icon' : '' %>">
+              <% if (skill.icon) { %>
+                <span class="ed-skill-logo" aria-hidden="true"><%- renderIcon(skill.icon, { style: skillIconStyle }) %></span>
+              <% } %>
+              <span class="ed-skill-name"><%= skill.name %></span>
+            </li>
+          <% }); %>
+        </ul>
+      </div>
+    <% }); %>
+  </div>
+</section>
+<% } %>
+
+<% if ((sections.education && education.length) || (sections.research && research.length)) { %>
+<section class="ed-section" id="research">
+  <div class="ed-section-head" data-reveal>
+    <p class="ed-label"><span class="ed-label-num">04</span><%= sections.research && research.length ? titles.research : titles.education %></p>
+    <% if (sections.research && research.length) { %>
+      <a class="ed-section-link ed-link-sweep" href="/research">All research</a>
+    <% } %>
+  </div>
+
+  <% if (sections.research && research.length) { %>
+    <ul class="ed-research-list">
+      <% research.forEach(function (item) { %>
+        <%- include('./partials/research-card', { item: item }) %>
+      <% }); %>
+    </ul>
+  <% } %>
+
+  <% if (sections.education && education.length) { %>
+    <div class="ed-education" data-reveal>
+      <h3 class="ed-sub-label"><%= titles.education %></h3>
+      <ul class="ed-education-list">
+        <% education.forEach(function (item) { %>
+          <li class="ed-education-item">
+            <p class="ed-education-dates"><%= item.date_range %></p>
+            <div class="ed-education-body">
+              <h4 class="ed-education-degree">
+                <% if (item.logo) { %>
+                  <span class="ed-education-logo"><%- include('shared/image', { media: item.logo, imgSizes: '2rem', imgAlt: '' }) %></span>
+                <% } %>
+                <%= item.degree %>
+              </h4>
+              <% if (item.institution) { %><p class="ed-education-school"><%= item.institution %></p><% } %>
+              <% if (item.description) { %>
+                <div class="ed-prose ed-prose-tight"><%- md(item.description) %></div>
+              <% } %>
+            </div>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  <% } %>
+</section>
+<% } %>
+
+<% if (sections.contact) { %>
+<section class="ed-section ed-contact" id="contact">
+  <div class="ed-section-head" data-reveal>
+    <p class="ed-label"><span class="ed-label-num">05</span><%= titles.contact || 'Contact' %></p>
+  </div>
+
+  <div data-reveal>
+    <h2 class="ed-contact-heading"><%= settings.contact.heading %></h2>
+
+    <% if (settings.contact.body) { %>
+      <div class="ed-prose ed-contact-body"><%- md(settings.contact.body) %></div>
+    <% } %>
+
+    <% if (settings.contact.showEmail) { site.emails.forEach(function (address) { %>
+      <p class="ed-contact-email">
+        <a class="ed-link-sweep" href="mailto:<%= address %>"><%= address %></a>
+      </p>
+    <% }); } %>
+
+    <ul class="ed-actions ed-contact-links">
+      <% if (safeUrl(site.github)) { %>
+        <li><a class="ed-link-sweep" href="<%= safeUrl(site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      <% } %>
+      <% if (safeUrl(site.linkedin)) { %>
+        <li><a class="ed-link-sweep" href="<%= safeUrl(site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+      <% } %>
+      <% if (resume) { %>
+        <li><a class="ed-link-sweep" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a></li>
+      <% } %>
+      <% (site.extraLinks || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a class="ed-link-sweep" href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+  </div>
+</section>
+<% } %>
+
+<%- include('./partials/foot') %>

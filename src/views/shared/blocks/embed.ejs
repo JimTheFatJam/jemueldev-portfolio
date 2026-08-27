@@ -1,0 +1,16 @@
+<% if (block.embed && block.embed.src) { %>
+  <figure class="block-embed is-wide">
+    <div class="embed-frame">
+      <iframe src="<%= block.embed.src %>"
+              title="<%= block.data.title || (block.embed.provider + ' video') %>"
+              loading="lazy"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+    </div>
+    <% if (block.data.title) { %><figcaption><%= block.data.title %></figcaption><% } %>
+  </figure>
+<% } else if (block.embed) { %>
+  <p class="block-button">
+    <a class="button button-secondary" href="<%= block.embed.href %>" target="_blank" rel="noopener noreferrer"><%= block.data.title || 'Watch video' %></a>
+  </p>
+<% } %>

@@ -1,0 +1,99 @@
+<%
+  const site = settings.site;
+  const siteName = site.name || 'Portfolio';
+  const fullTitle = pageTitle
+    ? pageTitle + ' — ' + siteName
+    : (site.title || (site.tagline ? siteName + ' — ' + site.tagline : siteName));
+  const description = metaDescription || site.metaDescription || site.description || '';
+  const base = (site.baseUrl || '').replace(/\/$/, '');
+  const canonical = base ? base + (canonicalPath || '/') : '';
+  const favicon = site.faviconId ? (mediaByIds([site.faviconId]).get(Number(site.faviconId)) || null) : null;
+  const shareImage = ogImage || (site.ogImageId ? mediaByIds([site.ogImageId]).get(Number(site.ogImageId)) : null);
+  const shareImageUrl = shareImage && base ? base + shareImage.url : (shareImage ? shareImage.url : '');
+  const isHome = currentPath === '/';
+  const anchor = (id) => (isHome ? '#' + id : '/#' + id);
+  const resume = safeUrl(site.resumeUrl);
+%><!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= fullTitle %></title>
+<% if (description) { %><meta name="description" content="<%= description %>"><% } %>
+<% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+<meta property="og:type" content="website">
+<meta property="og:title" content="<%= fullTitle %>">
+<% if (description) { %><meta property="og:description" content="<%= description %>"><% } %>
+<% if (canonical) { %><meta property="og:url" content="<%= canonical %>"><% } %>
+<% if (shareImageUrl) { %><meta property="og:image" content="<%= shareImageUrl %>">
+<meta name="twitter:card" content="summary_large_image"><% } else { %>
+<meta name="twitter:card" content="summary"><% } %>
+<meta name="twitter:title" content="<%= fullTitle %>">
+<% if (description) { %><meta name="twitter:description" content="<%= description %>"><% } %>
+<link rel="icon" href="<%= favicon ? favicon.url : '/favicon.svg' %>"<%- favicon ? '' : ' type="image/svg+xml"' %>>
+<link rel="stylesheet" href="<%= themeAssets %>/theme.css">
+</head>
+<body class="ed<%= bodyClass ? ' ' + bodyClass : '' %>">
+<a class="ed-skip" href="#main">Skip to content</a>
+
+<% if (typeof isDraft !== 'undefined' && isDraft) { %>
+<div class="ed-draft" role="status">
+  <strong>Draft preview.</strong> Not published — only you can see this.
+</div>
+<% } %>
+
+<div class="ed-shell">
+  <header class="ed-rail">
+    <div class="ed-rail-inner">
+      <div class="ed-identity">
+        <a class="ed-name" href="/"><%= siteName %></a>
+        <% if (site.tagline) { %><p class="ed-tagline"><%= site.tagline %></p><% } %>
+      </div>
+
+      <button class="ed-menu-toggle" type="button" aria-expanded="false" aria-controls="ed-nav">
+        <span class="ed-menu-label">Menu</span>
+        <span class="ed-menu-bars" aria-hidden="true"></span>
+      </button>
+
+      <nav class="ed-nav" id="ed-nav" aria-label="Main">
+        <ol>
+          <li><a href="/"<%- isHome ? ' aria-current="page"' : '' %>><span class="ed-nav-num">00</span>Home</a></li>
+          <% if (settings.sections.about) { %>
+            <li><a href="<%= anchor('about') %>" data-nav-section="about"><span class="ed-nav-num">01</span>About</a></li>
+          <% } %>
+          <% if (settings.sections.projects) { %>
+            <li><a href="/projects"<%- currentPath.startsWith('/projects') ? ' aria-current="page"' : '' %> data-nav-section="projects"><span class="ed-nav-num">02</span>Work</a></li>
+          <% } %>
+          <% if (settings.sections.skills) { %>
+            <li><a href="<%= anchor('skills') %>" data-nav-section="skills"><span class="ed-nav-num">03</span>Toolkit</a></li>
+          <% } %>
+          <% if (settings.sections.research) { %>
+            <li><a href="/research"<%- currentPath.startsWith('/research') ? ' aria-current="page"' : '' %> data-nav-section="research"><span class="ed-nav-num">04</span>Research</a></li>
+          <% } %>
+          <% navPages.forEach(function (page) { %>
+            <li><a href="<%= page.href %>"<%- currentPath === page.href ? ' aria-current="page"' : '' %>><span class="ed-nav-num">—</span><%= page.title %></a></li>
+          <% }); %>
+          <% if (settings.sections.contact) { %>
+            <li><a href="<%= anchor('contact') %>" data-nav-section="contact"><span class="ed-nav-num">05</span>Contact</a></li>
+          <% } %>
+        </ol>
+
+        <div class="ed-rail-foot">
+          <ul class="ed-rail-links">
+            <% if (safeUrl(site.github)) { %>
+              <li><a href="<%= safeUrl(site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+            <% } %>
+            <% if (safeUrl(site.linkedin)) { %>
+              <li><a href="<%= safeUrl(site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+            <% } %>
+            <% if (site.email) { %><li><a href="mailto:<%= site.email %>">Email</a></li><% } %>
+          </ul>
+          <% if (resume) { %>
+            <a class="ed-resume" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume →</a>
+          <% } %>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="ed-main" id="main">

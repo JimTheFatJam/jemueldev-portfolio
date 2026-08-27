@@ -1,0 +1,85 @@
+<%- include('../partials/head') %>
+<% const hero = settings.hero; %>
+
+<div class="page-title">
+  <div>
+    <h1>Hero</h1>
+    <p class="page-sub">The first thing a recruiter reads. Keep it to a few lines.</p>
+  </div>
+</div>
+
+<%- include('../partials/settings-nav') %>
+
+<form method="post" action="/admin/settings/hero" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Content</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="identity">Professional identity</label>
+        <input id="identity" name="identity" type="text" value="<%= hero.identity %>"
+               placeholder="Computer Science Student • Machine Learning • Software Development">
+        <p class="field-help">The small line above your name.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="headline">Headline</label>
+        <input id="headline" name="headline" type="text" value="<%= hero.headline %>" placeholder="<%= settings.site.name %>">
+        <p class="field-help">Leave blank to use your name from Settings.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="intro">Introduction</label>
+        <textarea id="intro" name="intro" rows="4"><%= hero.intro %></textarea>
+        <p class="field-help">Two or three sentences. Basic Markdown (bold, italic, links) is supported.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Buttons</h2>
+          <p class="panel-hint">Use <code>#projects</code> or <code>#contact</code> to jump down the page.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="ctaLabel">Primary button label</label>
+          <input id="ctaLabel" name="ctaLabel" type="text" value="<%= hero.ctaLabel %>">
+        </div>
+        <div class="field">
+          <label class="field-label" for="ctaHref">Primary button link</label>
+          <input id="ctaHref" name="ctaHref" type="text" value="<%= hero.ctaHref %>">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="secondaryCtaLabel">Secondary button label</label>
+          <input id="secondaryCtaLabel" name="secondaryCtaLabel" type="text" value="<%= hero.secondaryCtaLabel %>">
+        </div>
+        <div class="field">
+          <label class="field-label" for="secondaryCtaHref">Secondary button link</label>
+          <input id="secondaryCtaHref" name="secondaryCtaHref" type="text" value="<%= hero.secondaryCtaHref %>">
+        </div>
+      </div>
+      <p class="field-help">Leave a label blank to hide that button.</p>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Save</h2></div></div>
+      <p class="field-help">GitHub, LinkedIn, resume and email links under the buttons come from Settings.</p>
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit">Save hero</button>
+        <a class="button button-block" href="/admin/preview">Preview homepage</a>
+      </div>
+    </section>
+  </aside>
+</form>
+
+<%- include('../partials/foot') %>

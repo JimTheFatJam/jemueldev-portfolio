@@ -1,0 +1,40 @@
+<div class="icon-picker">
+  <form class="row-form row-form-tight icon-picker-search" data-icon-search method="get" action="/admin/icons/picker">
+    <label class="visually-hidden" for="icon-q">Search technology logos</label>
+    <input id="icon-q" name="q" type="search" value="<%= query %>"
+           placeholder="Search <%= total %> logos — python, react, postgres…" autofocus>
+    <button class="button button-small" type="submit">Search</button>
+  </form>
+
+  <p class="field-help icon-picker-hint">
+    Logos from <a href="https://devicon.dev/" target="_blank" rel="noopener noreferrer">Devicon</a>,
+    shown in the <%= style === 'mono' ? 'monochrome' : 'colour' %> style your site currently uses.
+  </p>
+
+  <% if (results.length === 0) { %>
+    <p class="empty-state">No logo matches “<%= query %>”. Try the technology's plain name, such as <code>postgresql</code>.</p>
+  <% } else { %>
+    <ul class="icon-grid">
+      <% results.forEach(function (icon) { %>
+        <li>
+          <button type="button"
+                  class="icon-option"
+                  data-icon-option
+                  data-icon-name="<%= icon.name %>"
+                  title="<%= icon.name %><%= icon.altnames.length ? ' — also: ' + icon.altnames.join(', ') : '' %>">
+            <span class="icon-option-art"><%- icon.svg %></span>
+            <span class="icon-option-name"><%= icon.label %></span>
+          </button>
+        </li>
+      <% }); %>
+    </ul>
+  <% } %>
+
+  <div class="icon-picker-footer">
+    <button type="button" class="icon-option icon-option-inline" data-icon-option data-icon-name="<%= fallbackIcon %>">
+      <span class="icon-option-art"><%- fallbackSvg %></span>
+      <span class="icon-option-name">Generic mark</span>
+    </button>
+    <button type="button" class="button button-small button-quiet" data-icon-option data-icon-name="">No icon</button>
+  </div>
+</div>

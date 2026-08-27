@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Create your account · Admin</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin admin-auth">
+<main class="auth-card">
+  <h1>Create your admin account</h1>
+  <p class="auth-sub">This is a one-time step. Only one account exists, and it is yours.</p>
+
+  <% if (error) { %>
+    <div class="alert alert-error" role="alert"><%= error %></div>
+  <% } %>
+
+  <form method="post" action="/admin/setup" class="auth-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="field">
+      <label class="field-label" for="username">Username</label>
+      <input id="username" name="username" type="text" value="<%= username %>" autocomplete="username"
+             pattern="[A-Za-z0-9._-]{3,40}" required autofocus>
+      <p class="field-help">3–40 characters: letters, numbers, dot, dash or underscore.</p>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
+      <p class="field-help">At least 12 characters. Stored only as a salted scrypt hash.</p>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="confirm">Confirm password</label>
+      <input id="confirm" name="confirm" type="password" autocomplete="new-password" minlength="12" required>
+    </div>
+
+    <button class="button button-primary button-block" type="submit">Create account</button>
+  </form>
+</main>
+</body>
+</html>

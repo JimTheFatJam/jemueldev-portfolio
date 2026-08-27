@@ -1,0 +1,4 @@
+<figure class="block-image <%= block.data.width === 'wide' ? 'is-wide' : '' %>">
+  <%- include('../image', { media: block.media, imgSizes: block.data.width === 'wide' ? '(max-width: 60rem) 100vw, 60rem' : '(max-width: 44rem) 100vw, 44rem', imgClass: 'block-image-img' }) %>
+  <% if (block.data.caption) { %><figcaption><%= block.data.caption %></figcaption><% } %>
+</figure>

@@ -1,0 +1,143 @@
+<%- include('../partials/head') %>
+<% const site = settings.site; %>
+
+<div class="page-title">
+  <div>
+    <h1>Settings</h1>
+    <p class="page-sub">Your name, links and everything the site needs for search and sharing.</p>
+  </div>
+</div>
+
+<%- include('../partials/settings-nav') %>
+
+<form method="post" action="/admin/settings" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Identity</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="name">Your name</label>
+        <input id="name" name="name" type="text" value="<%= site.name %>" required>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="tagline">Professional tagline</label>
+        <input id="tagline" name="tagline" type="text" value="<%= site.tagline %>"
+               placeholder="Computer Science Student">
+        <p class="field-help">Used in the browser title when no page title applies.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="description">Short description</label>
+        <textarea id="description" name="description" rows="3"><%= site.description %></textarea>
+        <p class="field-help">A sentence about you. Used as a fallback for the meta description.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Contact and links</h2>
+          <p class="panel-hint">These appear in the hero, the contact section and the footer.</p>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="email">Email</label>
+          <input id="email" name="email" type="email" value="<%= site.email %>">
+          <p class="field-help">Your main address, shown first.</p>
+        </div>
+        <div class="field">
+          <label class="field-label" for="resumeUrl">Resume URL</label>
+          <input id="resumeUrl" name="resumeUrl" type="url" value="<%= site.resumeUrl %>">
+          <p class="field-help">Upload a PDF under Media, then paste its link here.</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="extraEmails">Other email addresses</label>
+        <textarea id="extraEmails" name="extraEmails" rows="3" class="input-mono"><%= emailsToLines(site.extraEmails) %></textarea>
+        <p class="field-help">Optional. One per line — for example a university address alongside a personal one.</p>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="github">GitHub URL</label>
+          <input id="github" name="github" type="url" value="<%= site.github %>" placeholder="https://github.com/username">
+        </div>
+        <div class="field">
+          <label class="field-label" for="linkedin">LinkedIn URL</label>
+          <input id="linkedin" name="linkedin" type="url" value="<%= site.linkedin %>" placeholder="https://linkedin.com/in/username">
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="extraLinks">Other links</label>
+        <textarea id="extraLinks" name="extraLinks" rows="3" class="input-mono"><%= linksToLines(site.extraLinks) %></textarea>
+        <p class="field-help">One per line. Paste a URL on its own, or write <code>Label | https://url</code> to choose the wording.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Search and sharing</h2>
+          <p class="panel-hint">Controls the browser title, search snippets and link previews.</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="title">Site title</label>
+        <input id="title" name="title" type="text" value="<%= site.title %>" placeholder="<%= site.name %> — <%= site.tagline %>">
+        <p class="field-help">Leave blank to use “Name — Tagline”.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="metaDescription">Meta description</label>
+        <textarea id="metaDescription" name="metaDescription" rows="2" maxlength="300"><%= site.metaDescription %></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="baseUrl">Public site URL</label>
+        <input id="baseUrl" name="baseUrl" type="url" value="<%= site.baseUrl %>" placeholder="https://yourdomain.com">
+        <p class="field-help">Needed for canonical URLs, the sitemap and social previews.</p>
+      </div>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Images</h2></div></div>
+
+      <%- include('../partials/field-media', {
+            fieldName: 'profileImageId',
+            fieldLabel: 'Profile photo',
+            fieldValue: site.profileImageId ? (mediaByIds([site.profileImageId]).get(Number(site.profileImageId)) || null) : null,
+            fieldHelp: 'Used in About when no About image is set.'
+          }) %>
+
+      <%- include('../partials/field-media', {
+            fieldName: 'ogImageId',
+            fieldLabel: 'Sharing image',
+            fieldValue: site.ogImageId ? (mediaByIds([site.ogImageId]).get(Number(site.ogImageId)) || null) : null,
+            fieldHelp: 'Shown when your site is shared. 1200×630 works well.'
+          }) %>
+
+      <%- include('../partials/field-media', {
+            fieldName: 'faviconId',
+            fieldLabel: 'Favicon',
+            fieldValue: site.faviconId ? (mediaByIds([site.faviconId]).get(Number(site.faviconId)) || null) : null,
+            fieldHelp: 'A small square PNG. Leave empty for the default.'
+          }) %>
+
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit">Save settings</button>
+      </div>
+    </section>
+  </aside>
+</form>
+
+<%- include('../partials/foot') %>

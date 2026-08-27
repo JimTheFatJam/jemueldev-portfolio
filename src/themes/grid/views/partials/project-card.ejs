@@ -1,0 +1,52 @@
+<%
+  // Locals: project, cardIndex, cardSpan (grid columns at desktop)
+  const linkable = project.hasDetailPage;
+  const href = linkable ? project.href : (safeUrl(project.demo_url) || safeUrl(project.github_url) || '');
+  const num = String((typeof cardIndex !== 'undefined' ? cardIndex : 0) + 1).padStart(2, '0');
+  const span = typeof cardSpan !== 'undefined' ? cardSpan : 4;
+%>
+<article class="gd-panel gd-card gd-span-<%= span %>" data-reveal>
+  <% if (project.thumbnail) { %>
+    <div class="gd-card-media">
+      <% if (href) { %><a href="<%= href %>" tabindex="-1" aria-hidden="true"><% } %>
+        <%- include('shared/image', {
+              media: project.thumbnail,
+              imgSizes: '(max-width: 48rem) 100vw, (max-width: 72rem) 50vw, 30rem',
+              imgAlt: project.thumbnail.alt || '',
+              imgClass: 'gd-card-img'
+            }) %>
+      <% if (href) { %></a><% } %>
+    </div>
+  <% } %>
+
+  <div class="gd-card-body">
+    <p class="gd-card-meta">
+      <span class="gd-card-num"><%= num %></span>
+      <% if (project.year) { %><span><%= project.year %></span><% } %>
+      <% if (!project.isPublished) { %><span class="gd-tag gd-tag-draft">Draft</span><% } %>
+    </p>
+
+    <h3 class="gd-card-title">
+      <% if (href) { %>
+        <a href="<%= href %>"><%= project.title %><span class="gd-card-arrow" aria-hidden="true">→</span></a>
+      <% } else { %><%= project.title %><% } %>
+    </h3>
+
+    <% if (project.summary) { %><p class="gd-card-summary"><%= project.summary %></p><% } %>
+
+    <% if (project.tech.length) { %>
+      <ul class="gd-techlist">
+        <% project.tech.slice(0, 6).forEach(function (tech) { %><li><%= tech.name %></li><% }); %>
+      </ul>
+    <% } %>
+
+    <ul class="gd-linkrow">
+      <% if (safeUrl(project.github_url)) { %>
+        <li><a href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a></li>
+      <% } %>
+      <% if (safeUrl(project.demo_url)) { %>
+        <li><a href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live</a></li>
+      <% } %>
+    </ul>
+  </div>
+</article>

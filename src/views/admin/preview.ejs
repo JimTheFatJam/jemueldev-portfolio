@@ -1,0 +1,50 @@
+<%- include('./partials/head') %>
+
+<div class="page-title">
+  <h1>Preview</h1>
+  <p class="page-sub">See the live site exactly as a visitor would — drafts included, marked as drafts.</p>
+</div>
+
+<form class="preview-controls" method="get" action="/admin/preview">
+  <div class="field">
+    <label class="field-label" for="preview-path">Page</label>
+    <select id="preview-path" name="path">
+      <option value="/"<%= previewPath === '/' ? ' selected' : '' %>>Homepage</option>
+      <option value="/projects"<%= previewPath === '/projects' ? ' selected' : '' %>>All projects</option>
+      <option value="/research"<%= previewPath === '/research' ? ' selected' : '' %>>All research</option>
+      <% projects.forEach(function (project) { if (project.hasDetailPage) { %>
+        <option value="<%= project.href %>"<%= previewPath === project.href ? ' selected' : '' %>>
+          Project — <%= project.title %><%= project.isPublished ? '' : ' (draft)' %>
+        </option>
+      <% } }); %>
+      <% research.forEach(function (item) { if (item.hasDetailPage) { %>
+        <option value="<%= item.href %>"<%= previewPath === item.href ? ' selected' : '' %>>
+          Research — <%= item.title %><%= item.isPublished ? '' : ' (draft)' %>
+        </option>
+      <% } }); %>
+      <% navPages.forEach(function (page) { %>
+        <option value="<%= page.href %>"<%= previewPath === page.href ? ' selected' : '' %>>Page — <%= page.title %></option>
+      <% }); %>
+    </select>
+  </div>
+
+  <div class="field">
+    <label class="field-label" for="preview-device">Width</label>
+    <select id="preview-device" name="device">
+      <option value="desktop"<%= device === 'desktop' ? ' selected' : '' %>>Desktop</option>
+      <option value="tablet"<%= device === 'tablet' ? ' selected' : '' %>>Tablet (768px)</option>
+      <option value="mobile"<%= device === 'mobile' ? ' selected' : '' %>>Mobile (390px)</option>
+    </select>
+  </div>
+
+  <div class="preview-actions">
+    <button class="button button-small button-primary" type="submit">Update preview</button>
+    <a class="button button-small" href="<%= previewPath %>" target="_blank" rel="noopener">Open in a new tab</a>
+  </div>
+</form>
+
+<div class="preview-stage" data-device="<%= device %>">
+  <iframe class="preview-frame" src="<%= previewPath %>" title="Site preview" loading="lazy"></iframe>
+</div>
+
+<%- include('./partials/foot') %>

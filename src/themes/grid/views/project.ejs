@@ -1,0 +1,87 @@
+<%- include('./partials/head') %>
+
+<article class="gd-detail">
+  <div class="gd-shell">
+    <nav class="gd-crumb" aria-label="Breadcrumb">
+      <a href="/projects"><span aria-hidden="true">←</span> Projects</a>
+    </nav>
+
+    <header class="gd-detail-head">
+      <p class="gd-label">
+        <span class="gd-label-num">P</span>Project
+        <% if (project.year) { %><span class="gd-detail-year"><%= project.year %></span><% } %>
+        <% if (project.featured) { %><span class="gd-tag gd-tag-accent">Featured</span><% } %>
+      </p>
+
+      <h1 class="gd-detail-title"><%= project.title %></h1>
+      <% if (project.summary) { %><p class="gd-detail-lead"><%= project.summary %></p><% } %>
+
+      <div class="gd-detail-actions">
+        <% if (safeUrl(project.github_url)) { %>
+          <a class="gd-btn gd-btn-accent" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">View source</a>
+        <% } %>
+        <% if (safeUrl(project.demo_url)) { %>
+          <a class="gd-btn" href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
+        <% } %>
+      </div>
+    </header>
+
+    <% if (project.thumbnail) { %>
+      <figure class="gd-panel gd-detail-figure" data-reveal>
+        <%- include('shared/image', {
+              media: project.thumbnail,
+              imgSizes: '(max-width: 72rem) 100vw, 64rem',
+              imgLoading: 'eager',
+              imgClass: 'gd-detail-img'
+            }) %>
+      </figure>
+    <% } %>
+
+    <div class="gd-detail-layout">
+      <aside class="gd-detail-side">
+        <% if (project.tech.length) { %>
+          <div class="gd-side-block">
+            <p class="gd-label"><span class="gd-label-num">—</span>Stack</p>
+            <ul class="gd-techlist gd-techlist-stacked">
+              <% project.tech.forEach(function (tech) { %><li<%- tech.icon ? ' class="has-icon"' : '' %>><% if (tech.icon) { %><span class="gd-tech-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li><% }); %>
+            </ul>
+          </div>
+        <% } %>
+
+        <div class="gd-side-block">
+          <p class="gd-label"><span class="gd-label-num">—</span>Status</p>
+          <p class="gd-side-value"><%= project.isPublished ? 'Published' : 'Draft' %></p>
+        </div>
+      </aside>
+
+      <div class="gd-detail-content">
+        <% if (project.description) { %>
+          <div class="gd-prose" data-reveal><%- md(project.description) %></div>
+        <% } %>
+
+        <%- include('shared/blocks', { blocks: blocks }) %>
+
+        <% if (project.gallery.length) { %>
+          <section class="gd-detail-block" data-reveal>
+            <p class="gd-label"><span class="gd-label-num">—</span>Gallery</p>
+            <ul class="gallery-grid" data-columns="2">
+              <% project.gallery.forEach(function (image) { %>
+                <li>
+                  <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
+                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 24rem', imgClass: 'gallery-img' }) %>
+                  </a>
+                </li>
+              <% }); %>
+            </ul>
+          </section>
+        <% } %>
+      </div>
+    </div>
+
+    <footer class="gd-detail-foot">
+      <a href="/projects"><span aria-hidden="true">←</span> All projects</a>
+    </footer>
+  </div>
+</article>
+
+<%- include('./partials/foot') %>

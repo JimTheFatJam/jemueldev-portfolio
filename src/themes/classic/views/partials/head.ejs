@@ -1,0 +1,75 @@
+<%
+  const site = settings.site;
+  const siteName = site.name || 'Portfolio';
+  const fullTitle = pageTitle
+    ? pageTitle + ' — ' + siteName
+    : (site.title || (site.tagline ? siteName + ' — ' + site.tagline : siteName));
+  const description = metaDescription || site.metaDescription || site.description || '';
+  const base = (site.baseUrl || '').replace(/\/$/, '');
+  const canonical = base ? base + (canonicalPath || '/') : '';
+  const favicon = site.faviconId ? (mediaByIds([site.faviconId]).get(Number(site.faviconId)) || null) : null;
+  const shareImage = ogImage || (site.ogImageId ? mediaByIds([site.ogImageId]).get(Number(site.ogImageId)) : null);
+  const shareImageUrl = shareImage && base ? base + shareImage.url : (shareImage ? shareImage.url : '');
+  const isHome = currentPath === '/';
+  const anchor = (id) => (isHome ? '#' + id : '/#' + id);
+%><!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= fullTitle %></title>
+<% if (description) { %><meta name="description" content="<%= description %>"><% } %>
+<% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+<meta property="og:type" content="website">
+<meta property="og:title" content="<%= fullTitle %>">
+<% if (description) { %><meta property="og:description" content="<%= description %>"><% } %>
+<% if (canonical) { %><meta property="og:url" content="<%= canonical %>"><% } %>
+<% if (shareImageUrl) { %><meta property="og:image" content="<%= shareImageUrl %>">
+<meta name="twitter:card" content="summary_large_image"><% } else { %>
+<meta name="twitter:card" content="summary"><% } %>
+<meta name="twitter:title" content="<%= fullTitle %>">
+<% if (description) { %><meta name="twitter:description" content="<%= description %>"><% } %>
+<link rel="icon" href="<%= favicon ? favicon.url : '/favicon.svg' %>"<%- favicon ? '' : ' type="image/svg+xml"' %>>
+<link rel="stylesheet" href="<%= themeAssets %>/theme.css">
+</head>
+<body<%- bodyClass ? ' class="' + bodyClass + '"' : '' %>>
+<a class="skip-link" href="#main">Skip to content</a>
+
+<% if (typeof isDraft !== 'undefined' && isDraft) { %>
+<div class="draft-banner" role="status">
+  <strong>Draft preview.</strong> This item is not published — only you can see it.
+</div>
+<% } %>
+
+<header class="site-header">
+  <div class="container header-inner">
+    <a class="brand" href="/"><%= siteName %></a>
+
+    <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav">
+      <span class="nav-toggle-label">Menu</span>
+      <span class="nav-toggle-icon" aria-hidden="true"></span>
+    </button>
+
+    <nav class="site-nav" id="site-nav" aria-label="Main">
+      <ul>
+        <li><a href="/"<%- isHome ? ' aria-current="page"' : '' %>>Home</a></li>
+        <% if (settings.sections.about) { %><li><a href="<%= anchor('about') %>">About</a></li><% } %>
+        <% if (settings.sections.projects) { %>
+          <li><a href="/projects"<%- currentPath.startsWith('/projects') ? ' aria-current="page"' : '' %>>Projects</a></li>
+        <% } %>
+        <% if (settings.sections.research) { %>
+          <li><a href="/research"<%- currentPath.startsWith('/research') ? ' aria-current="page"' : '' %>>Research</a></li>
+        <% } %>
+        <% navPages.forEach(function (page) { %>
+          <li><a href="<%= page.href %>"<%- currentPath === page.href ? ' aria-current="page"' : '' %>><%= page.title %></a></li>
+        <% }); %>
+        <% if (settings.sections.contact) { %><li><a href="<%= anchor('contact') %>">Contact</a></li><% } %>
+        <% if (safeUrl(site.resumeUrl)) { %>
+          <li class="nav-cta"><a class="button button-small" href="<%= safeUrl(site.resumeUrl) %>"<%- /^https?:/.test(safeUrl(site.resumeUrl)) ? ' target="_blank" rel="noopener noreferrer"' : '' %>>Resume</a></li>
+        <% } %>
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<main id="main">

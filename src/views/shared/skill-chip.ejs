@@ -1,0 +1,11 @@
+<%
+  // Locals: skill { name, icon }. An empty icon renders no mark at all; an
+  // unrecognised one falls back to the generic mark inside renderIcon().
+  const _hasIcon = Boolean(skill.icon);
+%>
+<li class="skill-chip<%= _hasIcon ? ' has-icon' : '' %>">
+  <% if (_hasIcon) { %>
+    <span class="skill-icon" aria-hidden="true"><%- renderIcon(skill.icon, { style: skillIconStyle }) %></span>
+  <% } %>
+  <span class="skill-name"><%= skill.name %></span>
+</li>

@@ -1,0 +1,22 @@
+<%- include('./partials/head') %>
+
+<div class="container page-head">
+  <h1>Projects</h1>
+  <p class="lead">Things I have designed, built and shipped.</p>
+</div>
+
+<div class="container">
+  <% if (projects.length) { %>
+    <ul class="project-grid">
+      <% projects.forEach(function (project) { %>
+        <%- include('./partials/project-card', { project: project }) %>
+      <% }); %>
+    </ul>
+  <% } else { %>
+    <p class="empty-note">
+      No projects published yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+    </p>
+  <% } %>
+</div>
+
+<%- include('./partials/foot') %>

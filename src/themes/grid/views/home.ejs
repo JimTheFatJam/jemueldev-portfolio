@@ -1,0 +1,320 @@
+<%- include('./partials/head') %>
+<%
+  const site = settings.site;
+  const titles = settings.sectionTitles;
+  const heroName = hero.headline || site.name || 'Portfolio';
+  const resume = safeUrl(site.resumeUrl);
+
+  // The display type is the name broken onto its own lines — a graphic element
+  // built from real content, nothing invented.
+  const heroLines = heroName.split(/\s+/).filter(Boolean);
+
+  const visibleSkills = (skillCategories || []).filter((category) => category.skills.length);
+  const featured = projects.length ? projects[0] : null;
+  const otherProjects = projects.slice(1);
+
+  // Counts are derived from what is actually published, not vanity numbers.
+  const techCount = new Set(projects.flatMap((project) => project.tech.map((t) => t.name))).size;
+%>
+
+<section class="gd-hero" aria-labelledby="gd-hero-name">
+  <div class="gd-shell">
+    <div class="gd-bento">
+      <div class="gd-panel gd-hero-display gd-span-8">
+        <% if (hero.identity) { %><p class="gd-label"><span class="gd-label-num">00</span><%= hero.identity %></p><% } %>
+        <h1 class="gd-display" id="gd-hero-name">
+          <% heroLines.forEach(function (line, index) { %>
+            <span class="gd-display-line"><%= line %><% if (index === heroLines.length - 1) { %><span class="gd-display-caret" aria-hidden="true">_</span><% } %></span>
+          <% }); %>
+        </h1>
+      </div>
+
+      <div class="gd-panel gd-hero-meta gd-span-4">
+        <p class="gd-label"><span class="gd-label-num">—</span>Profile</p>
+        <% if (hero.intro) { %>
+          <div class="gd-hero-intro"><p><%- mdInline(hero.intro) %></p></div>
+        <% } %>
+
+        <div class="gd-hero-actions">
+          <% if (hero.ctaLabel && safeUrl(hero.ctaHref)) { %>
+            <a class="gd-btn gd-btn-accent" href="<%= safeUrl(hero.ctaHref) %>"><%= hero.ctaLabel %></a>
+          <% } %>
+          <% if (hero.secondaryCtaLabel && safeUrl(hero.secondaryCtaHref)) { %>
+            <a class="gd-btn" href="<%= safeUrl(hero.secondaryCtaHref) %>"><%= hero.secondaryCtaLabel %></a>
+          <% } %>
+        </div>
+
+        <dl class="gd-index">
+          <% if (sections.projects) { %>
+            <div><dt>Projects</dt><dd><%= String(projects.length).padStart(2, '0') %></dd></div>
+          <% } %>
+          <% if (techCount) { %>
+            <div><dt>Technologies</dt><dd><%= String(techCount).padStart(2, '0') %></dd></div>
+          <% } %>
+          <% if (sections.research && research.length) { %>
+            <div><dt>Research</dt><dd><%= String(research.length).padStart(2, '0') %></dd></div>
+          <% } %>
+        </dl>
+      </div>
+    </div>
+  </div>
+</section>
+
+<% if (sections.about && (about.body || aboutImage || aboutBlocks.length)) { %>
+<section class="gd-section" id="about">
+  <div class="gd-shell">
+    <div class="gd-section-head" data-reveal>
+      <h2 class="gd-label"><span class="gd-label-num">01</span><%= about.heading || 'About' %></h2>
+    </div>
+
+    <div class="gd-section-body">
+      <div class="gd-bento">
+        <% if (aboutImage) { %>
+          <figure class="gd-panel gd-portrait gd-span-4">
+            <%- include('shared/image', {
+                  media: aboutImage,
+                  imgSizes: '(max-width: 48rem) 100vw, 20rem',
+                  imgClass: 'gd-portrait-img',
+                  imgLoading: 'eager'
+                }) %>
+          </figure>
+        <% } %>
+
+        <div class="gd-panel <%= aboutImage ? 'gd-span-8' : 'gd-span-12' %>">
+          <div class="gd-prose"><%- md(about.body) %></div>
+          <% if ((about.links || []).length) { %>
+            <ul class="gd-linkrow gd-linkrow-spaced">
+              <% about.links.forEach(function (link) { if (safeUrl(link.url)) { %>
+                <li><a href="<%= safeUrl(link.url) %>"<%- /^https?:/.test(safeUrl(link.url)) ? ' target="_blank" rel="noopener noreferrer"' : '' %>><%= link.label %></a></li>
+              <% } }); %>
+            </ul>
+          <% } %>
+        </div>
+
+        <% if (aboutSecondaryImage) { %>
+          <figure class="gd-panel gd-portrait gd-span-4">
+            <%- include('shared/image', {
+                  media: aboutSecondaryImage,
+                  imgSizes: '(max-width: 48rem) 100vw, 20rem',
+                  imgClass: 'gd-portrait-img'
+                }) %>
+          </figure>
+        <% } %>
+      </div>
+
+      <%- include('shared/blocks', { blocks: aboutBlocks }) %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.projects) { %>
+<section class="gd-section" id="projects">
+  <div class="gd-shell">
+    <div class="gd-section-head" data-reveal>
+      <h2 class="gd-label"><span class="gd-label-num">02</span><%= titles.projects %></h2>
+      <a class="gd-section-link" href="/projects">All projects <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="gd-section-body">
+      <% if (featured) { %>
+        <%
+          const fHref = featured.hasDetailPage
+            ? featured.href
+            : (safeUrl(featured.demo_url) || safeUrl(featured.github_url) || '');
+        %>
+        <article class="gd-panel gd-featured" data-reveal>
+          <div class="gd-featured-media">
+            <% if (featured.thumbnail) { %>
+              <% if (fHref) { %><a href="<%= fHref %>" tabindex="-1" aria-hidden="true"><% } %>
+                <%- include('shared/image', {
+                      media: featured.thumbnail,
+                      imgSizes: '(max-width: 60rem) 100vw, 40rem',
+                      imgAlt: featured.thumbnail.alt || '',
+                      imgClass: 'gd-featured-img',
+                      imgLoading: 'eager'
+                    }) %>
+              <% if (fHref) { %></a><% } %>
+            <% } else { %>
+              <div class="gd-featured-placeholder" aria-hidden="true"></div>
+            <% } %>
+          </div>
+
+          <div class="gd-featured-body">
+            <p class="gd-label gd-label-accent"><span class="gd-label-num">★</span>Featured</p>
+            <h3 class="gd-featured-title">
+              <% if (fHref) { %><a href="<%= fHref %>"><%= featured.title %></a><% } else { %><%= featured.title %><% } %>
+            </h3>
+
+            <p class="gd-featured-meta">
+              <% if (featured.year) { %><span><%= featured.year %></span><% } %>
+              <% if (!featured.isPublished) { %><span class="gd-tag gd-tag-draft">Draft</span><% } %>
+            </p>
+
+            <% if (featured.summary) { %><p class="gd-featured-summary"><%= featured.summary %></p><% } %>
+
+            <% if (featured.tech.length) { %>
+              <ul class="gd-techlist">
+                <% featured.tech.slice(0, 8).forEach(function (tech) { %><li><%= tech.name %></li><% }); %>
+              </ul>
+            <% } %>
+
+            <div class="gd-featured-actions">
+              <% if (featured.hasDetailPage) { %>
+                <a class="gd-btn gd-btn-accent" href="<%= featured.href %>">View project <span aria-hidden="true">→</span></a>
+              <% } %>
+              <% if (safeUrl(featured.github_url)) { %>
+                <a class="gd-btn" href="<%= safeUrl(featured.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a>
+              <% } %>
+              <% if (safeUrl(featured.demo_url)) { %>
+                <a class="gd-btn" href="<%= safeUrl(featured.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
+              <% } %>
+            </div>
+          </div>
+        </article>
+      <% } %>
+
+      <% if (otherProjects.length) { %>
+        <div class="gd-bento gd-card-grid">
+          <% otherProjects.forEach(function (project, index) { %>
+            <%- include('./partials/project-card', { project: project, cardIndex: index + 1, cardSpan: 4 }) %>
+          <% }); %>
+        </div>
+      <% } %>
+
+      <% if (!featured && !otherProjects.length) { %>
+        <p class="gd-empty">
+          No featured projects yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.skills && visibleSkills.length) { %>
+<section class="gd-section" id="skills">
+  <div class="gd-shell">
+    <div class="gd-section-head" data-reveal>
+      <h2 class="gd-label"><span class="gd-label-num">03</span><%= titles.skills %></h2>
+    </div>
+
+    <div class="gd-section-body">
+      <div class="gd-toolkit">
+        <% visibleSkills.forEach(function (category, index) { %>
+          <div class="gd-toolkit-row" data-reveal>
+            <div class="gd-toolkit-head">
+              <span class="gd-toolkit-num"><%= String(index + 1).padStart(2, '0') %></span>
+              <h3 class="gd-toolkit-name"><%= category.name %></h3>
+            </div>
+            <ul class="gd-toolkit-items">
+              <% category.skills.forEach(function (skill) { %>
+                <li class="gd-tool<%= skill.icon ? ' has-icon' : '' %>">
+                  <% if (skill.icon) { %>
+                    <span class="gd-tool-logo" aria-hidden="true"><%- renderIcon(skill.icon, { style: skillIconStyle }) %></span>
+                  <% } %>
+                  <span class="gd-tool-name"><%= skill.name %></span>
+                </li>
+              <% }); %>
+            </ul>
+          </div>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.research && research.length) { %>
+<section class="gd-section" id="research">
+  <div class="gd-shell">
+    <div class="gd-section-head" data-reveal>
+      <h2 class="gd-label"><span class="gd-label-num">04</span><%= titles.research %></h2>
+      <a class="gd-section-link" href="/research">All research <span aria-hidden="true">→</span></a>
+    </div>
+
+    <div class="gd-section-body">
+      <div class="gd-records">
+        <% research.forEach(function (item, index) { %>
+          <%- include('./partials/research-record', { item: item, recordIndex: index }) %>
+        <% }); %>
+      </div>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.education && education.length) { %>
+<section class="gd-section" id="education">
+  <div class="gd-shell">
+    <div class="gd-section-head" data-reveal>
+      <h2 class="gd-label"><span class="gd-label-num">05</span><%= titles.education %></h2>
+    </div>
+
+    <div class="gd-section-body">
+      <ul class="gd-timeline">
+        <% education.forEach(function (item) { %>
+          <li class="gd-timeline-row" data-reveal>
+            <p class="gd-timeline-dates"><%= item.date_range %></p>
+            <div class="gd-timeline-body">
+              <h3 class="gd-timeline-degree">
+                <% if (item.logo) { %>
+                  <span class="gd-timeline-logo"><%- include('shared/image', { media: item.logo, imgSizes: '2rem', imgAlt: '' }) %></span>
+                <% } %>
+                <%= item.degree %>
+              </h3>
+              <% if (item.institution) { %><p class="gd-timeline-school"><%= item.institution %></p><% } %>
+              <% if (item.description) { %>
+                <div class="gd-prose gd-prose-tight"><%- md(item.description) %></div>
+              <% } %>
+            </div>
+          </li>
+        <% }); %>
+      </ul>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.contact) { %>
+<section class="gd-section gd-section-last" id="contact">
+  <div class="gd-shell">
+    <div class="gd-section-head" data-reveal>
+      <h2 class="gd-label"><span class="gd-label-num">06</span><%= titles.contact || 'Contact' %></h2>
+    </div>
+
+    <div class="gd-section-body">
+      <div class="gd-panel gd-contact" data-reveal>
+        <p class="gd-contact-heading"><%= settings.contact.heading %></p>
+
+        <% if (settings.contact.body) { %>
+          <div class="gd-prose gd-contact-body"><%- md(settings.contact.body) %></div>
+        <% } %>
+
+        <div class="gd-contact-actions">
+          <% if (settings.contact.showEmail) { site.emails.forEach(function (address, index) { %>
+            <a class="gd-btn gd-btn-lg<%= index === 0 ? ' gd-btn-accent' : '' %>" href="mailto:<%= address %>"><%= address %></a>
+          <% }); } %>
+          <% if (resume) { %>
+            <a class="gd-btn gd-btn-lg" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
+          <% } %>
+        </div>
+
+        <ul class="gd-contact-links">
+          <% if (safeUrl(site.github)) { %>
+            <li><a href="<%= safeUrl(site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+          <% } %>
+          <% if (safeUrl(site.linkedin)) { %>
+            <li><a href="<%= safeUrl(site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+          <% } %>
+          <% (site.extraLinks || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+            <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+          <% } }); %>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<%- include('./partials/foot') %>

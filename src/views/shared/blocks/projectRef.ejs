@@ -1,0 +1,14 @@
+<div class="block-project-ref">
+  <a class="project-ref-card" href="/projects/<%= block.project.slug %>">
+    <% if (block.project.thumbnail) { %>
+      <div class="project-ref-thumb">
+        <%- include('../image', { media: block.project.thumbnail, imgSizes: '12rem', imgAlt: '' }) %>
+      </div>
+    <% } %>
+    <div class="project-ref-body">
+      <span class="eyebrow">Related project</span>
+      <h3><%= block.project.title %></h3>
+      <% if (block.project.summary) { %><p><%= block.project.summary %></p><% } %>
+    </div>
+  </a>
+</div>

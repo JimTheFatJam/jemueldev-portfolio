@@ -1,0 +1,5 @@
+<figure class="block-code">
+  <% if (block.data.language) { %><div class="block-code-lang"><%= block.data.language %></div><% } %>
+  <pre><code<% if (block.data.language) { %> class="language-<%= block.data.language %>"<% } %>><%= block.data.code %></code></pre>
+  <% if (block.data.caption) { %><figcaption><%= block.data.caption %></figcaption><% } %>
+</figure>

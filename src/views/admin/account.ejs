@@ -1,0 +1,43 @@
+<%- include('./partials/head') %>
+
+<div class="page-title">
+  <h1>Account</h1>
+  <p class="page-sub">Signed in as <strong><%= user.username %></strong>.</p>
+</div>
+
+<% if (error) { %>
+  <div class="alert alert-error" role="alert"><%= error %></div>
+<% } %>
+
+<section class="panel panel-narrow">
+  <div class="panel-head">
+    <div>
+      <h2>Change password</h2>
+      <p class="panel-hint">Changing your password signs out every device, including this one.</p>
+    </div>
+  </div>
+
+  <form method="post" action="/admin/account/password" class="stacked-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+    <div class="field">
+      <label class="field-label" for="current">Current password</label>
+      <input id="current" name="current" type="password" autocomplete="current-password" required>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="password">New password</label>
+      <input id="password" name="password" type="password" autocomplete="new-password" minlength="12" required>
+      <p class="field-help">At least 12 characters.</p>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="confirm">Confirm new password</label>
+      <input id="confirm" name="confirm" type="password" autocomplete="new-password" minlength="12" required>
+    </div>
+
+    <button class="button button-primary" type="submit">Change password</button>
+  </form>
+</section>
+
+<%- include('./partials/foot') %>

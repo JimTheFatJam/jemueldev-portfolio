@@ -1,0 +1,28 @@
+<%
+  // Locals: fieldName, fieldLabel, fieldValue (media object|null), fieldHelp, fieldId
+  const _name = fieldName;
+  const _value = typeof fieldValue !== 'undefined' ? fieldValue : null;
+  const _help = typeof fieldHelp !== 'undefined' ? fieldHelp : '';
+  // Blocks repeat the same field names, so the id must be scoped by the caller.
+  const _id = typeof fieldId !== 'undefined' && fieldId ? fieldId : _name;
+%>
+<div class="field">
+  <span class="field-label" id="label-<%= _id %>"><%= fieldLabel %></span>
+  <div class="media-field" data-media-field>
+    <input type="hidden" name="<%= _name %>" value="<%= _value ? _value.id : '' %>" data-media-input>
+    <div class="media-field-preview" data-media-preview>
+      <% if (_value) { %>
+        <img src="<%= _value.url %>" alt="<%= _value.alt || _value.original_name %>">
+      <% } else { %>
+        <span class="media-field-empty">No image selected</span>
+      <% } %>
+    </div>
+    <div class="media-field-actions">
+      <button type="button" class="button button-small" data-media-choose aria-describedby="label-<%= _id %>">
+        <%= _value ? 'Change' : 'Choose image' %>
+      </button>
+      <button type="button" class="button button-small button-quiet" data-media-clear<%= _value ? '' : ' hidden' %>>Remove</button>
+    </div>
+  </div>
+  <% if (_help) { %><p class="field-help"><%= _help %></p><% } %>
+</div>

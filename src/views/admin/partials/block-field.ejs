@@ -1,0 +1,90 @@
+<%
+  // Locals: block, field — renders one input from the block registry definition.
+  const value = block.data[field.name];
+  const inputId = 'block-' + block.id + '-' + field.name;
+  const rows = field.rows || 4;
+%>
+<% if (field.type === 'media') { %>
+  <%- include('./field-media', {
+        fieldName: field.name,
+        fieldId: inputId,
+        fieldLabel: field.label,
+        fieldValue: value ? (mediaByIds([value]).get(Number(value)) || null) : null,
+        fieldHelp: field.help || ''
+      }) %>
+
+<% } else if (field.type === 'mediaList') { %>
+  <%
+    const ids = Array.isArray(value) ? value.map(Number) : [];
+    const lookup = mediaByIds(ids);
+    const items = ids.map(function (id) { return lookup.get(id); }).filter(Boolean);
+  %>
+  <%- include('./field-gallery', {
+        fieldName: field.name,
+        fieldLabel: field.label,
+        fieldItems: items,
+        fieldHelp: field.help || ''
+      }) %>
+
+<% } else if (field.type === 'select') { %>
+  <div class="field">
+    <label class="field-label" for="<%= inputId %>"><%= field.label %></label>
+    <select id="<%= inputId %>" name="<%= field.name %>">
+      <% field.options.forEach(function (option) { %>
+        <option value="<%= option.value %>"<%= String(value) === option.value ? ' selected' : '' %>><%= option.label %></option>
+      <% }); %>
+    </select>
+    <% if (field.help) { %><p class="field-help"><%= field.help %></p><% } %>
+  </div>
+
+<% } else if (field.type === 'project') { %>
+  <div class="field">
+    <label class="field-label" for="<%= inputId %>"><%= field.label %></label>
+    <select id="<%= inputId %>" name="<%= field.name %>">
+      <option value="">— none —</option>
+      <% pickProjects().forEach(function (project) { %>
+        <option value="<%= project.id %>"<%= Number(value) === project.id ? ' selected' : '' %>>
+          <%= project.title %><%= project.isPublished ? '' : ' (draft)' %>
+        </option>
+      <% }); %>
+    </select>
+    <p class="field-help">Draft projects are hidden from the public page until published.</p>
+  </div>
+
+<% } else if (field.type === 'skillCategory') { %>
+  <div class="field">
+    <label class="field-label" for="<%= inputId %>"><%= field.label %></label>
+    <select id="<%= inputId %>" name="<%= field.name %>">
+      <option value="">— none —</option>
+      <% pickSkillCategories().forEach(function (category) { %>
+        <option value="<%= category.id %>"<%= Number(value) === category.id ? ' selected' : '' %>><%= category.name %></option>
+      <% }); %>
+    </select>
+  </div>
+
+<% } else if (field.type === 'markdown' || field.type === 'textarea' || field.type === 'code') { %>
+  <div class="field">
+    <label class="field-label" for="<%= inputId %>"><%= field.label %></label>
+    <textarea id="<%= inputId %>"
+              name="<%= field.name %>"
+              rows="<%= rows %>"
+              class="<%= field.type === 'code' ? 'input-mono' : '' %>"
+              <%= field.required ? 'required' : '' %>><%= value || '' %></textarea>
+    <% if (field.type === 'markdown') { %>
+      <p class="field-help">Markdown supported: **bold**, _italic_, [links](https://example.com), lists.</p>
+    <% } else if (field.help) { %>
+      <p class="field-help"><%= field.help %></p>
+    <% } %>
+  </div>
+
+<% } else { %>
+  <div class="field">
+    <label class="field-label" for="<%= inputId %>"><%= field.label %></label>
+    <input id="<%= inputId %>"
+           type="<%= field.type === 'url' ? 'url' : 'text' %>"
+           name="<%= field.name %>"
+           value="<%= value || '' %>"
+           <%= field.required ? 'required' : '' %>>
+    <% if (field.help) { %><p class="field-help"><%= field.help %></p><% } %>
+  </div>
+<% } %>

@@ -1,0 +1,86 @@
+<%- include('./partials/head') %>
+
+<article class="ob-detail">
+  <div class="ob-shell">
+    <nav class="ob-crumb" aria-label="Breadcrumb">
+      <a href="/projects"><span aria-hidden="true">←</span> Projects</a>
+    </nav>
+
+    <header class="ob-detail-head">
+      <p class="ob-label">
+        <span class="ob-label-num">P</span>Project
+        <% if (project.year) { %><span class="ob-detail-year"><%= project.year %></span><% } %>
+        <% if (project.featured) { %><span class="ob-tag ob-tag-accent">Featured</span><% } %>
+      </p>
+      <h1 class="ob-detail-title"><%= project.title %></h1>
+      <% if (project.summary) { %><p class="ob-detail-lead"><%= project.summary %></p><% } %>
+
+      <div class="ob-detail-actions">
+        <% if (safeUrl(project.github_url)) { %>
+          <a class="ob-btn ob-btn-accent" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">View source</a>
+        <% } %>
+        <% if (safeUrl(project.demo_url)) { %>
+          <a class="ob-btn" href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
+        <% } %>
+      </div>
+    </header>
+
+    <% if (project.thumbnail) { %>
+      <figure class="ob-detail-figure" data-reveal>
+        <%- include('shared/image', {
+              media: project.thumbnail,
+              imgSizes: '(max-width: 72rem) 100vw, 60rem',
+              imgLoading: 'eager',
+              imgClass: 'ob-detail-img'
+            }) %>
+      </figure>
+    <% } %>
+
+    <div class="ob-detail-layout">
+      <aside class="ob-detail-side">
+        <% if (project.tech.length) { %>
+          <div class="ob-side-block">
+            <p class="ob-label"><span class="ob-label-num">—</span>Stack</p>
+            <ul class="ob-techlist ob-techlist-stacked">
+              <% project.tech.forEach(function (tech) { %><li<%- tech.icon ? ' class="has-icon"' : '' %>><% if (tech.icon) { %><span class="ob-tech-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li><% }); %>
+            </ul>
+          </div>
+        <% } %>
+
+        <div class="ob-side-block">
+          <p class="ob-label"><span class="ob-label-num">—</span>Status</p>
+          <p class="ob-side-value"><%= project.isPublished ? 'Published' : 'Draft' %></p>
+        </div>
+      </aside>
+
+      <div class="ob-detail-content">
+        <% if (project.description) { %>
+          <div class="ob-prose" data-reveal><%- md(project.description) %></div>
+        <% } %>
+
+        <%- include('shared/blocks', { blocks: blocks }) %>
+
+        <% if (project.gallery.length) { %>
+          <section class="ob-detail-block" data-reveal>
+            <p class="ob-label"><span class="ob-label-num">—</span>Gallery</p>
+            <ul class="gallery-grid" data-columns="2">
+              <% project.gallery.forEach(function (image) { %>
+                <li>
+                  <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
+                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 24rem', imgClass: 'gallery-img' }) %>
+                  </a>
+                </li>
+              <% }); %>
+            </ul>
+          </section>
+        <% } %>
+      </div>
+    </div>
+
+    <footer class="ob-detail-foot">
+      <a href="/projects"><span aria-hidden="true">←</span> All projects</a>
+    </footer>
+  </div>
+</article>
+
+<%- include('./partials/foot') %>

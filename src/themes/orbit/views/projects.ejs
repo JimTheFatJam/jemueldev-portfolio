@@ -1,0 +1,27 @@
+<%- include('./partials/head') %>
+
+<section class="ob-section ob-section-first" id="projects">
+  <div class="ob-shell">
+    <div class="ob-page-head">
+      <p class="ob-label"><span class="ob-label-num">02</span>Work</p>
+      <h1 class="ob-page-title">Projects</h1>
+      <p class="ob-page-lead">Things I have designed, built and shipped.</p>
+    </div>
+
+    <div class="ob-section-body">
+      <% if (projects.length) { %>
+        <ul class="ob-card-grid">
+          <% projects.forEach(function (project, index) { %>
+            <%- include('./partials/project-card', { project: project, cardIndex: index }) %>
+          <% }); %>
+        </ul>
+      <% } else { %>
+        <p class="ob-empty">
+          No projects published yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('./partials/foot') %>

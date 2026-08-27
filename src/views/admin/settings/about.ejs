@@ -1,0 +1,66 @@
+<%- include('../partials/head') %>
+<% const about = settings.about; %>
+
+<div class="page-title">
+  <div>
+    <h1>About</h1>
+    <p class="page-sub">A short introduction. Add content blocks below if you need more room.</p>
+  </div>
+</div>
+
+<%- include('../partials/settings-nav') %>
+
+<form method="post" action="/admin/settings/about" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Content</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="heading">Section heading</label>
+        <input id="heading" name="heading" type="text" value="<%= about.heading %>">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="body">About text</label>
+        <textarea id="body" name="body" rows="10"><%= about.body %></textarea>
+        <p class="field-help">Markdown supported. Two or three short paragraphs read best.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="links">Links</label>
+        <textarea id="links" name="links" rows="3" class="input-mono"><%= linksToLines(about.links) %></textarea>
+        <p class="field-help">One per line. Paste a URL on its own, or write <code>Label | https://url</code> to choose the wording.</p>
+      </div>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Images</h2></div></div>
+
+      <%- include('../partials/field-media', {
+            fieldName: 'imageId',
+            fieldLabel: 'Photo',
+            fieldValue: about.imageId ? (mediaByIds([about.imageId]).get(Number(about.imageId)) || null) : null,
+            fieldHelp: 'A portrait crop works best. Falls back to the profile photo in Settings.'
+          }) %>
+
+      <%- include('../partials/field-media', {
+            fieldName: 'secondaryImageId',
+            fieldLabel: 'Second image',
+            fieldValue: about.secondaryImageId ? (mediaByIds([about.secondaryImageId]).get(Number(about.secondaryImageId)) || null) : null,
+            fieldHelp: 'Optional.'
+          }) %>
+
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit">Save about</button>
+      </div>
+    </section>
+  </aside>
+</form>
+
+<%- include('../partials/block-editor', { ownerType: 'about', ownerId: 0, blocks: blocks, blockTypes: blockTypes }) %>
+
+<%- include('../partials/foot') %>

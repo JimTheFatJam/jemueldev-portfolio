@@ -1,0 +1,41 @@
+<%
+  const linkable = project.hasDetailPage;
+  const href = linkable ? project.href : (safeUrl(project.demo_url) || safeUrl(project.github_url) || '');
+%>
+<li class="project-card">
+  <% if (project.thumbnail) { %>
+    <div class="project-thumb">
+      <% if (href) { %><a href="<%= href %>" tabindex="-1" aria-hidden="true"><% } %>
+      <%- include('shared/image', { media: project.thumbnail, imgSizes: '(max-width: 48rem) 100vw, 28rem', imgAlt: project.thumbnail.alt || '' }) %>
+      <% if (href) { %></a><% } %>
+    </div>
+  <% } %>
+
+  <div class="project-body">
+    <div class="project-head">
+      <h3 class="project-title">
+        <% if (href) { %><a href="<%= href %>"><%= project.title %></a><% } else { %><%= project.title %><% } %>
+      </h3>
+      <% if (project.year) { %><span class="project-year"><%= project.year %></span><% } %>
+    </div>
+
+    <% if (!project.isPublished) { %><span class="badge badge-draft">Draft</span><% } %>
+    <% if (project.summary) { %><p class="project-summary"><%= project.summary %></p><% } %>
+
+    <% if (project.tech.length) { %>
+      <ul class="tech-list">
+        <% project.tech.slice(0, 8).forEach(function (tech) { %><li><%= tech.name %></li><% }); %>
+      </ul>
+    <% } %>
+
+    <ul class="project-links">
+      <% if (linkable) { %><li><a href="<%= project.href %>">Case study</a></li><% } %>
+      <% if (safeUrl(project.github_url)) { %>
+        <li><a href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">Code</a></li>
+      <% } %>
+      <% if (safeUrl(project.demo_url)) { %>
+        <li><a href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a></li>
+      <% } %>
+    </ul>
+  </div>
+</li>

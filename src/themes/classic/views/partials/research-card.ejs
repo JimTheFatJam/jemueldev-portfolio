@@ -1,0 +1,30 @@
+<li class="research-item">
+  <div class="research-meta">
+    <% if (item.date) { %><span><%= item.date %></span><% } %>
+    <% if (item.work_status) { %><span class="badge"><%= item.work_status %></span><% } %>
+    <% if (!item.isPublished) { %><span class="badge badge-draft">Draft</span><% } %>
+  </div>
+  <div class="research-body">
+    <h3 class="research-title">
+      <% if (item.hasDetailPage) { %><a href="<%= item.href %>"><%= item.title %></a><% } else { %><%= item.title %><% } %>
+    </h3>
+    <% if (item.authors || item.institution) { %>
+      <p class="research-sub">
+        <%= item.authors %><% if (item.authors && item.institution) { %> · <% } %><%= item.institution %>
+      </p>
+    <% } %>
+    <% if (item.abstract) { %><p class="research-abstract"><%= plain(item.abstract, 260) %></p><% } %>
+    <ul class="project-links">
+      <% if (item.hasDetailPage) { %><li><a href="<%= item.href %>">Details</a></li><% } %>
+      <% if (safeUrl(item.paper_url)) { %>
+        <li><a href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Paper</a></li>
+      <% } %>
+      <% if (safeUrl(item.github_url)) { %>
+        <li><a href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">Code</a></li>
+      <% } %>
+      <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+  </div>
+</li>

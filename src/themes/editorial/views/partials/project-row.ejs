@@ -1,0 +1,55 @@
+<%
+  // Locals: project, rowIndex (0-based). Projects lead with a large image.
+  const linkable = project.hasDetailPage;
+  const href = linkable ? project.href : (safeUrl(project.demo_url) || safeUrl(project.github_url) || '');
+  const num = String((typeof rowIndex !== 'undefined' ? rowIndex : 0) + 1).padStart(2, '0');
+%>
+<li class="ed-project" data-reveal>
+  <div class="ed-project-head">
+    <span class="ed-project-num" aria-hidden="true"><%= num %></span>
+    <div class="ed-project-titles">
+      <h3 class="ed-project-title">
+        <% if (href) { %><a class="ed-link-sweep" href="<%= href %>"><%= project.title %></a><% } else { %><%= project.title %><% } %>
+      </h3>
+      <p class="ed-project-meta">
+        <% if (project.year) { %><span><%= project.year %></span><% } %>
+        <% if (!project.isPublished) { %><span class="ed-flag">Draft</span><% } %>
+      </p>
+    </div>
+  </div>
+
+  <% if (project.thumbnail) { %>
+    <div class="ed-project-figure">
+      <% if (href) { %><a href="<%= href %>" tabindex="-1" aria-hidden="true" class="ed-project-figure-link"><% } %>
+      <%- include('shared/image', {
+            media: project.thumbnail,
+            imgSizes: '(max-width: 60rem) 100vw, 44rem',
+            imgAlt: project.thumbnail.alt || '',
+            imgClass: 'ed-project-img'
+          }) %>
+      <% if (href) { %></a><% } %>
+    </div>
+  <% } %>
+
+  <div class="ed-project-body">
+    <% if (project.summary) { %><p class="ed-project-summary"><%= project.summary %></p><% } %>
+
+    <% if (project.tech.length) { %>
+      <ul class="ed-tech">
+        <% project.tech.slice(0, 8).forEach(function (tech) { %><li><%= tech.name %></li><% }); %>
+      </ul>
+    <% } %>
+
+    <ul class="ed-actions">
+      <% if (linkable) { %>
+        <li><a class="ed-link-sweep" href="<%= project.href %>">Read the case study</a></li>
+      <% } %>
+      <% if (safeUrl(project.github_url)) { %>
+        <li><a class="ed-link-sweep" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a></li>
+      <% } %>
+      <% if (safeUrl(project.demo_url)) { %>
+        <li><a class="ed-link-sweep" href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a></li>
+      <% } %>
+    </ul>
+  </div>
+</li>

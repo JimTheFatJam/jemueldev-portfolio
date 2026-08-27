@@ -1,0 +1,23 @@
+<%- include('./partials/head') %>
+
+<section class="ed-page-head">
+  <p class="ed-label"><span class="ed-label-num">02</span>Work</p>
+  <h1 class="ed-page-title">Projects</h1>
+  <p class="ed-page-lead">Things I have designed, built and shipped.</p>
+</section>
+
+<section class="ed-section ed-section-flush">
+  <% if (projects.length) { %>
+    <ol class="ed-projects">
+      <% projects.forEach(function (project, index) { %>
+        <%- include('./partials/project-row', { project: project, rowIndex: index }) %>
+      <% }); %>
+    </ol>
+  <% } else { %>
+    <p class="ed-empty">
+      No projects published yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+    </p>
+  <% } %>
+</section>
+
+<%- include('./partials/foot') %>

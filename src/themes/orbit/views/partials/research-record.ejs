@@ -1,0 +1,38 @@
+<% const num = String((typeof recordIndex !== 'undefined' ? recordIndex : 0) + 1).padStart(2, '0'); %>
+<article class="ob-record" data-reveal>
+  <div class="ob-record-meta">
+    <span class="ob-record-num"><%= num %></span>
+    <% if (item.date) { %><span class="ob-record-year"><%= item.date %></span><% } %>
+    <% if (item.work_status) { %><span class="ob-tag ob-tag-accent"><%= item.work_status %></span><% } %>
+    <% if (!item.isPublished) { %><span class="ob-tag ob-tag-draft">Draft</span><% } %>
+  </div>
+
+  <div class="ob-record-body">
+    <h3 class="ob-record-title">
+      <% if (item.hasDetailPage) { %>
+        <a href="<%= item.href %>"><%= item.title %><span class="ob-card-arrow" aria-hidden="true">→</span></a>
+      <% } else { %><%= item.title %><% } %>
+    </h3>
+
+    <% if (item.authors || item.institution) { %>
+      <p class="ob-record-byline">
+        <%= item.authors %><% if (item.authors && item.institution) { %> · <% } %><%= item.institution %>
+      </p>
+    <% } %>
+
+    <% if (item.abstract) { %><p class="ob-record-abstract"><%= plain(item.abstract, 260) %></p><% } %>
+
+    <ul class="ob-linkrow">
+      <% if (item.hasDetailPage) { %><li><a href="<%= item.href %>">Read record</a></li><% } %>
+      <% if (safeUrl(item.paper_url)) { %>
+        <li><a href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Paper</a></li>
+      <% } %>
+      <% if (safeUrl(item.github_url)) { %>
+        <li><a href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">Code</a></li>
+      <% } %>
+      <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+  </div>
+</article>

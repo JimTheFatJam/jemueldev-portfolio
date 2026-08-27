@@ -1,0 +1,5 @@
+<p class="block-button">
+  <a class="button <%= block.data.style === 'primary' ? 'button-primary' : 'button-secondary' %>"
+     href="<%= safeUrl(block.data.url) %>"
+     <% if (/^https?:/.test(safeUrl(block.data.url))) { %>target="_blank" rel="noopener noreferrer"<% } %>><%= block.data.label %></a>
+</p>

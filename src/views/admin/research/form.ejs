@@ -1,0 +1,180 @@
+<%- include('../partials/head') %>
+
+<div class="page-title">
+  <div>
+    <p class="breadcrumb-admin"><a href="/admin/research">← Research</a></p>
+    <h1><%= isNew ? 'New research item' : item.title %></h1>
+    <% if (!isNew) { %>
+      <p class="page-sub">
+        <span class="tag <%= item.isPublished ? 'tag-live' : 'tag-draft' %>"><%= item.isPublished ? 'Published' : 'Draft' %></span>
+        <a href="<%= item.href %>" target="_blank" rel="noopener">View page</a>
+        ·
+        <a href="/admin/preview?path=<%= encodeURIComponent(item.href) %>">Preview</a>
+      </p>
+    <% } %>
+  </div>
+</div>
+
+<form method="post" action="<%= isNew ? '/admin/research' : '/admin/research/' + item.id %>" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Details</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="title">Title</label>
+        <input id="title" name="title" type="text" value="<%= item.title %>" required data-slug-source>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="slug">URL slug</label>
+        <div class="input-prefix">
+          <span>/research/</span>
+          <input id="slug" name="slug" type="text" value="<%= item.slug %>" data-slug-target>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="abstract">Abstract / description</label>
+        <textarea id="abstract" name="abstract" rows="8"><%= item.abstract %></textarea>
+        <p class="field-help">Markdown supported.</p>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="authors">Authors</label>
+          <input id="authors" name="authors" type="text" value="<%= item.authors %>" placeholder="A. Author, B. Author">
+        </div>
+        <div class="field">
+          <label class="field-label" for="institution">Institution</label>
+          <input id="institution" name="institution" type="text" value="<%= item.institution %>">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="date">Date</label>
+          <input id="date" name="date" type="text" value="<%= item.date %>" placeholder="2025 or May 2025">
+        </div>
+        <div class="field">
+          <label class="field-label" for="work_status">Status</label>
+          <input id="work_status" name="work_status" type="text" value="<%= item.work_status %>" placeholder="In progress / Under review / Published">
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label class="field-label" for="paper_url">Paper URL</label>
+          <input id="paper_url" name="paper_url" type="url" value="<%= item.paper_url %>">
+        </div>
+        <div class="field">
+          <label class="field-label" for="github_url">Code URL</label>
+          <input id="github_url" name="github_url" type="url" value="<%= item.github_url %>">
+        </div>
+      </div>
+
+      <div class="field">
+        <span class="field-label">Keywords</span>
+        <div class="chips-field" data-chips-field>
+          <input type="hidden" name="keywords" value="<%= JSON.stringify(item.keywords || []) %>" data-chips-input>
+
+          <ul class="chips-list" data-chips-list>
+            <% (item.keywords || []).forEach(function (keyword) { %>
+              <li data-chip-value="<%= keyword %>">
+                <span class="chip-text"><%= keyword %></span>
+                <button type="button" class="icon-button icon-button-danger" data-chip-remove aria-label="Remove <%= keyword %>">✕</button>
+              </li>
+            <% }); %>
+          </ul>
+
+          <p class="chips-empty" data-chips-empty<%= (item.keywords || []).length ? ' hidden' : '' %>>No keywords yet.</p>
+
+          <div class="chips-add">
+            <label class="visually-hidden" for="keyword-input">Add a keyword</label>
+            <input id="keyword-input" type="text" data-chip-input placeholder="e.g. PM2.5, Air Quality">
+            <button type="button" class="button button-small button-primary" data-chip-add>Add</button>
+          </div>
+        </div>
+        <p class="field-help">Press Enter or Add after each one. Paste several separated by commas to add them at once.</p>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="links">Other links</label>
+        <textarea id="links" name="links" rows="3" class="input-mono"><%= (item.links || []).map(function (l) { return l.label + ' | ' + l.url; }).join('\n') %></textarea>
+        <p class="field-help">One per line, as <code>Label | https://url</code>.</p>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><div><h2>Images</h2></div></div>
+      <%- include('../partials/field-media', {
+            fieldName: 'thumbnail_id',
+            fieldLabel: 'Header image',
+            fieldValue: item.thumbnail,
+            fieldHelp: 'Optional. A figure or diagram works well.'
+          }) %>
+      <%- include('../partials/field-gallery', {
+            fieldName: 'gallery',
+            fieldLabel: 'Figures',
+            fieldItems: item.gallery,
+            fieldHelp: 'Shown at the bottom of the research page.'
+          }) %>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Publishing</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="status">Status</label>
+        <select id="status" name="status">
+          <option value="draft"<%= item.status === 'draft' ? ' selected' : '' %>>Draft — only visible to you</option>
+          <option value="published"<%= item.status === 'published' ? ' selected' : '' %>>Published — visible to everyone</option>
+        </select>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" name="featured" value="1"<%= item.featured ? ' checked' : '' %>>
+        <span>Show on the homepage</span>
+      </label>
+
+      <label class="checkbox">
+        <input type="checkbox" name="has_detail_page" value="1"<%= item.hasDetailPage ? ' checked' : '' %>>
+        <span>Give this item its own page</span>
+      </label>
+
+      <div class="field">
+        <label class="field-label" for="meta_description">Search/meta description</label>
+        <textarea id="meta_description" name="meta_description" rows="3" maxlength="300"><%= item.meta_description %></textarea>
+      </div>
+
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit"><%= isNew ? 'Create item' : 'Save changes' %></button>
+      </div>
+    </section>
+
+    <% if (!isNew) { %>
+      <section class="panel">
+        <div class="panel-head"><div><h2>Other actions</h2></div></div>
+        <button class="button button-block button-danger" type="submit" form="delete-form">Delete research item</button>
+      </section>
+    <% } %>
+  </aside>
+</form>
+
+<% if (!isNew) { %>
+  <form method="post" action="/admin/research/<%= item.id %>/delete" id="delete-form" hidden
+        data-confirm="Delete “<%= item.title %>”? This cannot be undone.">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  </form>
+
+  <%- include('../partials/block-editor', { ownerType: 'research', ownerId: item.id, blocks: blocks, blockTypes: blockTypes }) %>
+<% } else { %>
+  <section class="panel">
+    <p class="empty-state">Create the item first — then you can add content blocks and figures.</p>
+  </section>
+<% } %>
+
+<%- include('../partials/foot') %>

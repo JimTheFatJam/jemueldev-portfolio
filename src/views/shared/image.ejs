@@ -1,0 +1,16 @@
+<%
+  // Locals: media (required), imgAlt, imgClass, imgSizes, imgLoading, imgFetchPriority
+  const _m = typeof media !== 'undefined' ? media : null;
+  const _alt = typeof imgAlt !== 'undefined' && imgAlt !== null ? imgAlt : (_m && _m.alt) || '';
+  const _class = typeof imgClass !== 'undefined' ? imgClass : '';
+  const _sizes = typeof imgSizes !== 'undefined' ? imgSizes : '100vw';
+  const _loading = typeof imgLoading !== 'undefined' ? imgLoading : 'lazy';
+  const _set = _m ? srcset(_m) : '';
+%><% if (_m && _m.isImage) { %><img
+  src="<%= _m.url %>"
+  <% if (_set) { %>srcset="<%= _set %>" sizes="<%= _sizes %>"<% } %>
+  <% if (_m.width) { %>width="<%= _m.width %>" height="<%= _m.height %>"<% } %>
+  alt="<%= _alt %>"
+  loading="<%= _loading %>"
+  decoding="async"
+  <% if (_class) { %>class="<%= _class %>"<% } %>><% } %>

@@ -1,0 +1,116 @@
+<%
+  const site = settings.site;
+  const siteName = site.name || 'Portfolio';
+  const fullTitle = pageTitle
+    ? pageTitle + ' — ' + siteName
+    : (site.title || (site.tagline ? siteName + ' — ' + site.tagline : siteName));
+  const description = metaDescription || site.metaDescription || site.description || '';
+  const base = (site.baseUrl || '').replace(/\/$/, '');
+  const canonical = base ? base + (canonicalPath || '/') : '';
+  const favicon = site.faviconId ? (mediaByIds([site.faviconId]).get(Number(site.faviconId)) || null) : null;
+  const shareImage = ogImage || (site.ogImageId ? mediaByIds([site.ogImageId]).get(Number(site.ogImageId)) : null);
+  const shareImageUrl = shareImage && base ? base + shareImage.url : (shareImage ? shareImage.url : '');
+  const isHome = currentPath === '/';
+  const anchor = (id) => (isHome ? '#' + id : '/#' + id);
+  const resume = safeUrl(site.resumeUrl);
+
+  const initials = siteName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
+%><!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= fullTitle %></title>
+<% if (description) { %><meta name="description" content="<%= description %>"><% } %>
+<% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+<meta name="theme-color" content="#070b14">
+<meta property="og:type" content="website">
+<meta property="og:title" content="<%= fullTitle %>">
+<% if (description) { %><meta property="og:description" content="<%= description %>"><% } %>
+<% if (canonical) { %><meta property="og:url" content="<%= canonical %>"><% } %>
+<% if (shareImageUrl) { %><meta property="og:image" content="<%= shareImageUrl %>">
+<meta name="twitter:card" content="summary_large_image"><% } else { %>
+<meta name="twitter:card" content="summary"><% } %>
+<meta name="twitter:title" content="<%= fullTitle %>">
+<% if (description) { %><meta name="twitter:description" content="<%= description %>"><% } %>
+<link rel="icon" href="<%= favicon ? favicon.url : '/favicon.svg' %>"<%- favicon ? '' : ' type="image/svg+xml"' %>>
+<link rel="stylesheet" href="<%= themeAssets %>/theme.css">
+<%# Blocking on purpose: the palette has to be on the document before the
+    first paint, or the wrong one flashes. It does nothing else. %>
+<script src="<%= themeAssets %>/theme-boot.js"></script>
+</head>
+<body class="ob<%= bodyClass ? ' ob-' + bodyClass : '' %>">
+<a class="ob-skip" href="#main">Skip to content</a>
+
+<% if (typeof isDraft !== 'undefined' && isDraft) { %>
+<div class="ob-draft" role="status">
+  <span class="ob-draft-tag">Draft</span>
+  <span>Not published — only you can see this page.</span>
+</div>
+<% } %>
+
+<header class="ob-header" id="ob-header">
+  <div class="ob-shell ob-header-inner">
+    <a class="ob-mark" href="/">
+      <span class="ob-mark-badge" aria-hidden="true"><%= initials || 'PF' %></span>
+      <span class="ob-mark-name"><%= siteName %></span>
+    </a>
+
+    <div class="ob-header-tools">
+      <button class="ob-theme" type="button" data-theme-toggle aria-label="Switch to dark theme" title="Switch theme">
+        <svg class="ob-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"></path>
+        </svg>
+        <svg class="ob-theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="4.1"></circle>
+          <path d="M12 2.6v2.1M12 19.3v2.1M4.2 4.2l1.5 1.5M18.3 18.3l1.5 1.5M2.6 12h2.1M19.3 12h2.1M4.2 19.8l1.5-1.5M18.3 5.7l1.5-1.5"></path>
+        </svg>
+      </button>
+
+      <button class="ob-nav-toggle" type="button" aria-expanded="false" aria-controls="ob-nav">
+        <span>Menu</span>
+        <span class="ob-nav-toggle-bars" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    <nav class="ob-nav" id="ob-nav" aria-label="Main">
+      <ul>
+        <li><a href="/"<%- isHome ? ' aria-current="page"' : '' %>>Home</a></li>
+        <% if (settings.sections.about) { %>
+          <li><a href="<%= anchor('about') %>" data-nav-section="about">About</a></li>
+        <% } %>
+        <% if (settings.sections.projects) { %>
+          <li><a href="/projects"<%- currentPath.startsWith('/projects') ? ' aria-current="page"' : '' %> data-nav-section="projects">Work</a></li>
+        <% } %>
+        <% if (settings.sections.skills) { %>
+          <li><a href="<%= anchor('skills') %>" data-nav-section="skills">Toolkit</a></li>
+        <% } %>
+        <% if (settings.sections.research) { %>
+          <li><a href="/research"<%- currentPath.startsWith('/research') ? ' aria-current="page"' : '' %> data-nav-section="research">Research</a></li>
+        <% } %>
+        <% navPages.forEach(function (page) { %>
+          <li><a href="<%= page.href %>"<%- currentPath === page.href ? ' aria-current="page"' : '' %>><%= page.title %></a></li>
+        <% }); %>
+      </ul>
+
+      <div class="ob-nav-actions">
+        <% if (resume) { %>
+          <a class="ob-btn ob-btn-quiet" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
+        <% } %>
+        <% if (settings.sections.contact) { %>
+          <a class="ob-btn ob-btn-accent" href="<%= anchor('contact') %>">Get in touch</a>
+        <% } else if (site.email) { %>
+          <a class="ob-btn ob-btn-accent" href="mailto:<%= site.email %>">Email</a>
+        <% } %>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="ob-main" id="main">

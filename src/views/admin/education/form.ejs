@@ -1,0 +1,77 @@
+<%- include('../partials/head') %>
+
+<div class="page-title">
+  <div>
+    <p class="breadcrumb-admin"><a href="/admin/education">← Education</a></p>
+    <h1><%= isNew ? 'Add education' : item.degree %></h1>
+  </div>
+</div>
+
+<form method="post" action="<%= isNew ? '/admin/education' : '/admin/education/' + item.id %>" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Details</h2></div></div>
+
+      <div class="field">
+        <label class="field-label" for="degree">Degree or programme</label>
+        <input id="degree" name="degree" type="text" value="<%= item.degree %>" required
+               placeholder="BSc Computer Science">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="institution">Institution</label>
+        <input id="institution" name="institution" type="text" value="<%= item.institution %>">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="date_range">Date range</label>
+        <input id="date_range" name="date_range" type="text" value="<%= item.date_range %>" placeholder="2022 — 2026">
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="description">Description</label>
+        <textarea id="description" name="description" rows="6"><%= item.description %></textarea>
+        <p class="field-help">Markdown supported. Relevant coursework, thesis topic, honours — keep it short.</p>
+      </div>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Display</h2></div></div>
+
+      <label class="checkbox">
+        <input type="checkbox" name="visible" value="1"<%= item.visible ? ' checked' : '' %>>
+        <span>Show on the homepage</span>
+      </label>
+
+      <%- include('../partials/field-media', {
+            fieldName: 'logo_id',
+            fieldLabel: 'Logo',
+            fieldValue: item.logo,
+            fieldHelp: 'Optional institution logo.'
+          }) %>
+
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit"><%= isNew ? 'Add entry' : 'Save changes' %></button>
+      </div>
+    </section>
+
+    <% if (!isNew) { %>
+      <section class="panel">
+        <button class="button button-block button-danger" type="submit" form="delete-form">Delete entry</button>
+      </section>
+    <% } %>
+  </aside>
+</form>
+
+<% if (!isNew) { %>
+  <form method="post" action="/admin/education/<%= item.id %>/delete" id="delete-form" hidden
+        data-confirm="Delete “<%= item.degree %>”?">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  </form>
+<% } %>
+
+<%- include('../partials/foot') %>

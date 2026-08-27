@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Sign in · Admin</title>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/css/admin.css">
+</head>
+<body class="admin admin-auth">
+<main class="auth-card">
+  <h1>Sign in</h1>
+  <p class="auth-sub">Portfolio admin for <%= settings.site.name || 'this site' %>.</p>
+
+  <% if (flash) { %>
+    <div class="alert alert-<%= flash.type === 'error' ? 'error' : 'success' %>" role="status"><%= flash.message %></div>
+  <% } %>
+  <% if (error) { %>
+    <div class="alert alert-error" role="alert"><%= error %></div>
+  <% } %>
+
+  <form method="post" action="/admin/login" class="auth-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <input type="hidden" name="next" value="<%= next %>">
+
+    <div class="field">
+      <label class="field-label" for="username">Username</label>
+      <input id="username" name="username" type="text" value="<%= username %>" autocomplete="username" required autofocus>
+    </div>
+
+    <div class="field">
+      <label class="field-label" for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+    </div>
+
+    <button class="button button-primary button-block" type="submit">Sign in</button>
+  </form>
+
+  <p class="auth-foot"><a href="/">← Back to the site</a></p>
+</main>
+</body>
+</html>

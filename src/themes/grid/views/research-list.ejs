@@ -1,0 +1,27 @@
+<%- include('./partials/head') %>
+
+<section class="gd-section gd-section-first" id="research">
+  <div class="gd-shell">
+    <div class="gd-page-head">
+      <p class="gd-label"><span class="gd-label-num">04</span>Research</p>
+      <h1 class="gd-page-title">Research</h1>
+      <p class="gd-page-lead">Academic work, studies and ongoing investigations.</p>
+    </div>
+
+    <div class="gd-section-body">
+      <% if (items.length) { %>
+        <div class="gd-records">
+          <% items.forEach(function (item, index) { %>
+            <%- include('./partials/research-record', { item: item, recordIndex: index }) %>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="gd-empty">
+          Nothing published here yet.<% if (user) { %> <a href="/admin/research">Add research in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
+  </div>
+</section>
+
+<%- include('./partials/foot') %>

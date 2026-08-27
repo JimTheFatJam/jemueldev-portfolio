@@ -1,0 +1,174 @@
+<%- include('./partials/head') %>
+<%
+  const site = settings.site;
+  const titles = settings.sectionTitles;
+  const heroName = hero.headline || site.name;
+  const resume = safeUrl(site.resumeUrl);
+%>
+
+<section class="hero">
+  <div class="container hero-inner">
+    <% if (hero.identity) { %><p class="eyebrow"><%= hero.identity %></p><% } %>
+    <h1 class="hero-name"><%= heroName %></h1>
+    <% if (hero.intro) { %><p class="lead"><%- mdInline(hero.intro) %></p><% } %>
+
+    <div class="hero-actions">
+      <% if (hero.ctaLabel && safeUrl(hero.ctaHref)) { %>
+        <a class="button button-primary" href="<%= safeUrl(hero.ctaHref) %>"><%= hero.ctaLabel %></a>
+      <% } %>
+      <% if (hero.secondaryCtaLabel && safeUrl(hero.secondaryCtaHref)) { %>
+        <a class="button button-secondary" href="<%= safeUrl(hero.secondaryCtaHref) %>"><%= hero.secondaryCtaLabel %></a>
+      <% } %>
+    </div>
+
+    <ul class="hero-links">
+      <% if (safeUrl(site.github)) { %>
+        <li><a href="<%= safeUrl(site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+      <% } %>
+      <% if (safeUrl(site.linkedin)) { %>
+        <li><a href="<%= safeUrl(site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+      <% } %>
+      <% if (resume) { %>
+        <li><a href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a></li>
+      <% } %>
+      <% if (site.email) { %><li><a href="mailto:<%= site.email %>"><%= site.email %></a></li><% } %>
+    </ul>
+  </div>
+</section>
+
+<% if (sections.about && (about.body || aboutImage || aboutBlocks.length)) { %>
+<section class="section" id="about">
+  <div class="container">
+    <h2 class="section-title"><%= about.heading || 'About' %></h2>
+    <div class="about-layout">
+      <% if (aboutImage) { %>
+        <div class="about-media">
+          <%- include('shared/image', { media: aboutImage, imgSizes: '(max-width: 48rem) 40vw, 16rem', imgClass: 'about-photo', imgLoading: 'eager' }) %>
+          <% if (aboutSecondaryImage) { %>
+            <%- include('shared/image', { media: aboutSecondaryImage, imgSizes: '(max-width: 48rem) 40vw, 16rem', imgClass: 'about-photo about-photo-secondary' }) %>
+          <% } %>
+        </div>
+      <% } %>
+      <div class="about-body prose">
+        <%- md(about.body) %>
+        <% if ((about.links || []).length) { %>
+          <ul class="inline-links">
+            <% about.links.forEach(function (link) { if (safeUrl(link.url)) { %>
+              <li><a href="<%= safeUrl(link.url) %>"<%- /^https?:/.test(safeUrl(link.url)) ? ' target="_blank" rel="noopener noreferrer"' : '' %>><%= link.label %></a></li>
+            <% } }); %>
+          </ul>
+        <% } %>
+      </div>
+    </div>
+    <%- include('shared/blocks', { blocks: aboutBlocks }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.projects) { %>
+<section class="section" id="projects">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title"><%= titles.projects %></h2>
+      <a class="section-link" href="/projects">All projects</a>
+    </div>
+
+    <% if (projects.length) { %>
+      <ul class="project-grid">
+        <% projects.forEach(function (project) { %>
+          <%- include('./partials/project-card', { project: project }) %>
+        <% }); %>
+      </ul>
+    <% } else { %>
+      <p class="empty-note">
+        No featured projects yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+      </p>
+    <% } %>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.skills && skillCategories.length) { %>
+<section class="section" id="skills">
+  <div class="container">
+    <h2 class="section-title"><%= titles.skills %></h2>
+    <dl class="skills-list">
+      <% skillCategories.forEach(function (category) { if (category.skills.length) { %>
+        <div class="skills-row">
+          <dt><%= category.name %></dt>
+          <dd>
+            <ul class="skill-list">
+              <% category.skills.forEach(function (skill) { %>
+                <%- include('shared/skill-chip', { skill: skill }) %>
+              <% }); %>
+            </ul>
+          </dd>
+        </div>
+      <% } }); %>
+    </dl>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.education && education.length) { %>
+<section class="section" id="education">
+  <div class="container">
+    <h2 class="section-title"><%= titles.education %></h2>
+    <ul class="timeline">
+      <% education.forEach(function (item) { %>
+        <li class="timeline-item">
+          <div class="timeline-meta"><%= item.date_range %></div>
+          <div class="timeline-body">
+            <h3>
+              <% if (item.logo) { %><span class="timeline-logo"><%- include('shared/image', { media: item.logo, imgSizes: '2rem', imgAlt: '' }) %></span><% } %>
+              <%= item.degree %>
+            </h3>
+            <% if (item.institution) { %><p class="timeline-sub"><%= item.institution %></p><% } %>
+            <% if (item.description) { %><div class="prose prose-compact"><%- md(item.description) %></div><% } %>
+          </div>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.research && research.length) { %>
+<section class="section" id="research">
+  <div class="container">
+    <div class="section-head">
+      <h2 class="section-title"><%= titles.research %></h2>
+      <a class="section-link" href="/research">All research</a>
+    </div>
+    <ul class="research-list">
+      <% research.forEach(function (item) { %>
+        <%- include('./partials/research-card', { item: item }) %>
+      <% }); %>
+    </ul>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.contact) { %>
+<section class="section section-contact" id="contact">
+  <div class="container">
+    <h2 class="section-title"><%= settings.contact.heading %></h2>
+    <% if (settings.contact.body) { %>
+      <div class="prose contact-body"><%- md(settings.contact.body) %></div>
+    <% } %>
+    <ul class="contact-links">
+      <% if (settings.contact.showEmail) { site.emails.forEach(function (address) { %>
+        <li><a class="contact-email" href="mailto:<%= address %>"><%= address %></a></li>
+      <% }); } %>
+      <% if (safeUrl(site.github)) { %><li><a href="<%= safeUrl(site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li><% } %>
+      <% if (safeUrl(site.linkedin)) { %><li><a href="<%= safeUrl(site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li><% } %>
+      <% if (resume) { %><li><a href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a></li><% } %>
+      <% (site.extraLinks || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+  </div>
+</section>
+<% } %>
+
+<%- include('./partials/foot') %>

@@ -1,0 +1,45 @@
+<div class="picker" data-multiple="<%= multiple ? '1' : '0' %>">
+  <form class="picker-upload" data-picker-upload enctype="multipart/form-data" method="post" action="/admin/media/upload">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="field-label" for="picker-files">Upload new</label>
+    <div class="picker-upload-row">
+      <input id="picker-files" name="files" type="file" accept="image/jpeg,image/png,image/webp,image/avif,image/gif" multiple>
+      <button class="button button-small" type="submit">Upload</button>
+    </div>
+    <p class="field-help" data-picker-status role="status"></p>
+  </form>
+
+  <form class="row-form row-form-tight picker-search" data-picker-search method="get" action="/admin/media/picker">
+    <label class="visually-hidden" for="picker-q">Search images</label>
+    <input id="picker-q" name="q" type="search" value="<%= search %>" placeholder="Search images">
+    <button class="button button-small" type="submit">Search</button>
+  </form>
+
+  <% if (items.length === 0) { %>
+    <p class="empty-state">No images yet. Upload one above.</p>
+  <% } else { %>
+    <ul class="picker-grid">
+      <% items.forEach(function (item) { %>
+        <li>
+          <button type="button"
+                  class="picker-item"
+                  data-picker-item
+                  data-id="<%= item.id %>"
+                  data-url="<%= item.url %>"
+                  data-name="<%= item.original_name %>"
+                  data-alt="<%= item.alt %>">
+            <img src="<%= item.url %>" alt="" loading="lazy">
+            <span class="picker-item-name"><%= item.original_name %></span>
+          </button>
+        </li>
+      <% }); %>
+    </ul>
+  <% } %>
+
+  <% if (multiple) { %>
+    <div class="picker-footer">
+      <p class="field-help"><span data-picker-count>0</span> selected</p>
+      <button type="button" class="button button-small button-primary" data-picker-confirm>Add selected</button>
+    </div>
+  <% } %>
+</div>

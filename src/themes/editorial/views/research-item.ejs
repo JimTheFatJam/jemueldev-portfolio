@@ -1,0 +1,79 @@
+<%- include('./partials/head') %>
+
+<article class="ed-detail">
+  <nav class="ed-breadcrumb" aria-label="Breadcrumb">
+    <a class="ed-link-sweep" href="/research">← Research</a>
+  </nav>
+
+  <header class="ed-detail-head">
+    <p class="ed-label">
+      <% if (item.date) { %><span><%= item.date %></span><% } %>
+      <% if (item.work_status) { %><span class="ed-flag ed-flag-quiet"><%= item.work_status %></span><% } %>
+    </p>
+    <h1 class="ed-detail-title"><%= item.title %></h1>
+    <% if (item.authors) { %><p class="ed-detail-authors"><%= item.authors %></p><% } %>
+    <% if (item.institution) { %><p class="ed-detail-lead"><%= item.institution %></p><% } %>
+
+    <ul class="ed-actions ed-detail-actions">
+      <% if (safeUrl(item.paper_url)) { %>
+        <li><a class="ed-button" href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Read the paper</a></li>
+      <% } %>
+      <% if (safeUrl(item.github_url)) { %>
+        <li><a class="ed-button" href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">View code</a></li>
+      <% } %>
+      <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a class="ed-button" href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+  </header>
+
+  <% if (item.thumbnail) { %>
+    <figure class="ed-detail-figure" data-reveal>
+      <%- include('shared/image', {
+            media: item.thumbnail,
+            imgSizes: '(max-width: 60rem) 100vw, 52rem',
+            imgLoading: 'eager',
+            imgClass: 'ed-detail-img'
+          }) %>
+    </figure>
+  <% } %>
+
+  <% if (item.abstract) { %>
+    <section class="ed-detail-block" data-reveal>
+      <h2 class="ed-sub-label">Abstract</h2>
+      <div class="ed-prose"><%- md(item.abstract) %></div>
+    </section>
+  <% } %>
+
+  <% if (item.keywords.length) { %>
+    <section class=ed-detail-block data-reveal>
+      <h2 class=ed-sub-label>Keywords</h2>
+      <ul class=ed-keywords>
+        <% item.keywords.forEach(function (keyword) { %><li><%= keyword %></li><% }); %>
+      </ul>
+    </section>
+  <% } %>
+
+  <%- include('shared/blocks', { blocks: blocks }) %>
+
+  <% if (item.gallery.length) { %>
+    <section class="ed-detail-block" data-reveal>
+      <h2 class="ed-sub-label">Figures</h2>
+      <ul class="gallery-grid" data-columns="2">
+        <% item.gallery.forEach(function (image) { %>
+          <li>
+            <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
+              <%- include('shared/image', { media: image, imgSizes: '(max-width: 40rem) 100vw, 26rem', imgClass: 'gallery-img' }) %>
+            </a>
+          </li>
+        <% }); %>
+      </ul>
+    </section>
+  <% } %>
+
+  <footer class="ed-detail-foot">
+    <a class="ed-link-sweep" href="/research">← All research</a>
+  </footer>
+</article>
+
+<%- include('./partials/foot') %>

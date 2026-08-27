@@ -1,0 +1,101 @@
+<%
+  const site = settings.site;
+  const siteName = site.name || 'Portfolio';
+  const fullTitle = pageTitle
+    ? pageTitle + ' — ' + siteName
+    : (site.title || (site.tagline ? siteName + ' — ' + site.tagline : siteName));
+  const description = metaDescription || site.metaDescription || site.description || '';
+  const base = (site.baseUrl || '').replace(/\/$/, '');
+  const canonical = base ? base + (canonicalPath || '/') : '';
+  const favicon = site.faviconId ? (mediaByIds([site.faviconId]).get(Number(site.faviconId)) || null) : null;
+  const shareImage = ogImage || (site.ogImageId ? mediaByIds([site.ogImageId]).get(Number(site.ogImageId)) : null);
+  const shareImageUrl = shareImage && base ? base + shareImage.url : (shareImage ? shareImage.url : '');
+  const isHome = currentPath === '/';
+  const anchor = (id) => (isHome ? '#' + id : '/#' + id);
+  const resume = safeUrl(site.resumeUrl);
+
+  // Initials from the configured name, for the compact header mark.
+  const initials = siteName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase();
+%><!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><%= fullTitle %></title>
+<% if (description) { %><meta name="description" content="<%= description %>"><% } %>
+<% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+<meta property="og:type" content="website">
+<meta property="og:title" content="<%= fullTitle %>">
+<% if (description) { %><meta property="og:description" content="<%= description %>"><% } %>
+<% if (canonical) { %><meta property="og:url" content="<%= canonical %>"><% } %>
+<% if (shareImageUrl) { %><meta property="og:image" content="<%= shareImageUrl %>">
+<meta name="twitter:card" content="summary_large_image"><% } else { %>
+<meta name="twitter:card" content="summary"><% } %>
+<meta name="twitter:title" content="<%= fullTitle %>">
+<% if (description) { %><meta name="twitter:description" content="<%= description %>"><% } %>
+<link rel="icon" href="<%= favicon ? favicon.url : '/favicon.svg' %>"<%- favicon ? '' : ' type="image/svg+xml"' %>>
+<link rel="stylesheet" href="<%= themeAssets %>/theme.css">
+</head>
+<body class="gd<%= bodyClass ? ' gd-' + bodyClass : '' %>">
+<a class="gd-skip" href="#main">Skip to content</a>
+
+<% if (typeof isDraft !== 'undefined' && isDraft) { %>
+<div class="gd-draft" role="status">
+  <span class="gd-draft-tag">Draft</span>
+  <span>Not published — only you can see this page.</span>
+</div>
+<% } %>
+
+<header class="gd-header">
+  <div class="gd-shell gd-header-inner">
+    <a class="gd-mark" href="/">
+      <span class="gd-mark-badge" aria-hidden="true"><%= initials || 'PF' %></span>
+      <span class="gd-mark-name"><%= siteName %></span>
+    </a>
+
+    <button class="gd-nav-toggle" type="button" aria-expanded="false" aria-controls="gd-nav">
+      <span>Menu</span>
+      <span class="gd-nav-toggle-bars" aria-hidden="true"></span>
+    </button>
+
+    <nav class="gd-nav" id="gd-nav" aria-label="Main">
+      <ul>
+        <li><a href="/"<%- isHome ? ' aria-current="page"' : '' %>>Home</a></li>
+        <% if (settings.sections.about) { %>
+          <li><a href="<%= anchor('about') %>" data-nav-section="about">About</a></li>
+        <% } %>
+        <% if (settings.sections.projects) { %>
+          <li><a href="/projects"<%- currentPath.startsWith('/projects') ? ' aria-current="page"' : '' %> data-nav-section="projects">Work</a></li>
+        <% } %>
+        <% if (settings.sections.skills) { %>
+          <li><a href="<%= anchor('skills') %>" data-nav-section="skills">Toolkit</a></li>
+        <% } %>
+        <% if (settings.sections.research) { %>
+          <li><a href="/research"<%- currentPath.startsWith('/research') ? ' aria-current="page"' : '' %> data-nav-section="research">Research</a></li>
+        <% } %>
+        <% navPages.forEach(function (page) { %>
+          <li><a href="<%= page.href %>"<%- currentPath === page.href ? ' aria-current="page"' : '' %>><%= page.title %></a></li>
+        <% }); %>
+      </ul>
+
+      <div class="gd-nav-actions">
+        <% if (resume) { %>
+          <a class="gd-btn gd-btn-quiet" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
+        <% } %>
+        <% if (settings.sections.contact) { %>
+          <a class="gd-btn gd-btn-accent" href="<%= anchor('contact') %>">Get in touch</a>
+        <% } else if (site.email) { %>
+          <a class="gd-btn gd-btn-accent" href="mailto:<%= site.email %>">Email</a>
+        <% } %>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="gd-main" id="main">

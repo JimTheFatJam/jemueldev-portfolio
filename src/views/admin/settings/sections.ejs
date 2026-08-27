@@ -1,0 +1,136 @@
+<%- include('../partials/head') %>
+<% const sections = settings.sections; const titles = settings.sectionTitles; const appearance = settings.appearance; %>
+
+<div class="page-title">
+  <div>
+    <h1>Sections</h1>
+    <p class="page-sub">Hide a section while you fill it in, and rename the headings.</p>
+  </div>
+</div>
+
+<%- include('../partials/settings-nav') %>
+
+<form method="post" action="/admin/settings/sections" class="editor-layout">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+
+  <div class="editor-main">
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Homepage sections</h2>
+          <p class="panel-hint">A section is also hidden automatically when it has no content.</p>
+        </div>
+      </div>
+
+      <label class="checkbox">
+        <input type="checkbox" name="about" value="1"<%= sections.about ? ' checked' : '' %>>
+        <span>About</span>
+      </label>
+
+      <div class="section-toggle">
+        <label class="checkbox">
+          <input type="checkbox" name="projects" value="1"<%= sections.projects ? ' checked' : '' %>>
+          <span>Projects</span>
+        </label>
+        <div class="field">
+          <label class="field-label" for="titleProjects">Heading</label>
+          <input id="titleProjects" name="titleProjects" type="text" value="<%= titles.projects %>">
+        </div>
+      </div>
+
+      <div class="section-toggle">
+        <label class="checkbox">
+          <input type="checkbox" name="skills" value="1"<%= sections.skills ? ' checked' : '' %>>
+          <span>Skills</span>
+        </label>
+        <div class="field">
+          <label class="field-label" for="titleSkills">Heading</label>
+          <input id="titleSkills" name="titleSkills" type="text" value="<%= titles.skills %>">
+        </div>
+      </div>
+
+      <div class="section-toggle">
+        <label class="checkbox">
+          <input type="checkbox" name="education" value="1"<%= sections.education ? ' checked' : '' %>>
+          <span>Education</span>
+        </label>
+        <div class="field">
+          <label class="field-label" for="titleEducation">Heading</label>
+          <input id="titleEducation" name="titleEducation" type="text" value="<%= titles.education %>">
+        </div>
+      </div>
+
+      <div class="section-toggle">
+        <label class="checkbox">
+          <input type="checkbox" name="research" value="1"<%= sections.research ? ' checked' : '' %>>
+          <span>Research</span>
+        </label>
+        <div class="field">
+          <label class="field-label" for="titleResearch">Heading</label>
+          <input id="titleResearch" name="titleResearch" type="text" value="<%= titles.research %>">
+        </div>
+      </div>
+
+      <div class="section-toggle">
+        <label class="checkbox">
+          <input type="checkbox" name="contact" value="1"<%= sections.contact ? ' checked' : '' %>>
+          <span>Contact</span>
+        </label>
+        <p class="field-help">The contact heading is edited on the Contact tab.</p>
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Public website design</h2>
+          <p class="panel-hint">Which theme renders the public site. Your content is untouched either way — this only changes how it looks.</p>
+        </div>
+      </div>
+
+      <ul class="theme-choices">
+        <% themes.forEach(function (option) { %>
+          <li>
+            <label class="theme-choice">
+              <input type="radio" name="publicTheme" value="<%= option.id %>"<%= appearance.publicTheme === option.id ? ' checked' : '' %>>
+              <span class="theme-choice-body">
+                <span class="theme-choice-name"><%= option.label %></span>
+                <span class="theme-choice-desc"><%= option.description %></span>
+              </span>
+            </label>
+          </li>
+        <% }); %>
+      </ul>
+      <p class="field-help">Saving takes effect immediately. Check it with <a href="/admin/preview">Preview</a>.</p>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head">
+        <div>
+          <h2>Skill logos</h2>
+          <p class="panel-hint">How technology logos render beside your skills. One setting for the whole site, so it stays consistent.</p>
+        </div>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="skillIconStyle">Logo style</label>
+        <select id="skillIconStyle" name="skillIconStyle">
+          <option value="color"<%= appearance.skillIconStyle === 'color' ? ' selected' : '' %>>Full colour — the official brand logos</option>
+          <option value="mono"<%= appearance.skillIconStyle === 'mono' ? ' selected' : '' %>>Monochrome — logos in the text colour</option>
+        </select>
+        <p class="field-help">Pick each skill's logo under <a href="/admin/skills">Skills</a>.</p>
+      </div>
+    </section>
+  </div>
+
+  <aside class="editor-side">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Save</h2></div></div>
+      <div class="editor-actions">
+        <button class="button button-primary button-block" type="submit">Save sections</button>
+        <a class="button button-block" href="/admin/preview">Preview homepage</a>
+      </div>
+    </section>
+  </aside>
+</form>
+
+<%- include('../partials/foot') %>

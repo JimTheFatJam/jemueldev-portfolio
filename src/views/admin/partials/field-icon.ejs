@@ -1,0 +1,18 @@
+<%
+  // Locals: fieldName, fieldValue (stored devicon name), fieldId, fieldLabel
+  const _name = fieldName;
+  const _value = typeof fieldValue !== 'undefined' && fieldValue ? fieldValue : '';
+  const _id = typeof fieldId !== 'undefined' && fieldId ? fieldId : _name;
+  const _label = typeof fieldLabel !== 'undefined' ? fieldLabel : 'Icon';
+  const _style = settings.appearance.skillIconStyle === 'mono' ? 'mono' : 'color';
+%>
+<span class="icon-field" data-icon-field>
+  <input type="hidden" name="<%= _name %>" value="<%= _value %>" data-icon-input>
+  <button type="button" class="icon-trigger" data-icon-choose
+          aria-label="<%= _label %><%= _value ? ': ' + _value : ': none selected' %>. Choose a logo">
+    <span class="icon-trigger-art" data-icon-preview>
+      <% if (_value) { %><%- renderIcon(_value, { style: _style }) %><% } %>
+    </span>
+    <span class="icon-trigger-label" data-icon-label><%= _value || 'Choose logo' %></span>
+  </button>
+</span>
