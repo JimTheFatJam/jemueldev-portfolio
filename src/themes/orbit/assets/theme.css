@@ -1242,6 +1242,7 @@ body.ob-home .ob-header { animation: ob-header-hold 320ms linear; }
 
   .ob-scene {
     max-width: none;
+    max-height: none;
     aspect-ratio: auto;
     perspective: none;
     position: static;
@@ -1322,6 +1323,9 @@ body.ob-home .ob-header { animation: ob-header-hold 320ms linear; }
   .ob-orb { height: auto; justify-self: center; animation: none; }
   .ob-body-tag { animation: none; }
   .ob-scene { cursor: auto; }
+
+  /* Follows the list, aligned to it. */
+  .ob-scroll-cue { justify-self: start; margin-top: 0.5rem; padding-left: 0; }
   .ob-body-tag { background: none; padding: 0; justify-items: start; }
   .ob-body-note { opacity: 1; height: auto; }
 }
