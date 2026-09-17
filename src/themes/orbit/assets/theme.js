@@ -1,6 +1,7 @@
 /* Orbit theme — mobile nav, scroll reveals, section tracking, a header that
    stays out of the way over the map, the hero typing reveal, randomised
-   orbital phases and the camera controls for the orbital map.
+   orbital phases, the camera controls for the orbital map, and a lightbox
+   for the galleries.
 
    Progressive enhancement throughout: with JavaScript off the header is solid,
    every reveal target is visible, the heading is plain text, and the orbital
@@ -384,6 +385,239 @@
     }
   } catch (error) {
     /* the stylesheet's own starting phases stand */
+  }
+
+  // --- gallery lightbox -----------------------------------------------------
+  // Every gallery on the site — the gallery content block and the project or
+  // research gallery field — renders the same links, so one delegated handler
+  // covers all of them. With script off, or on a modified click, the link still
+  // opens the file in a new tab exactly as it always did.
+  try {
+    var galleryLinks = document.querySelectorAll('.gallery-grid .gallery-item[href]');
+
+    if (galleryLinks.length) {
+      var ICON = {
+        close: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+        prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M15 5l-7 7 7 7"/></svg>',
+        next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M9 5l7 7-7 7"/></svg>'
+      };
+
+      var el = function (tag, className, attrs) {
+        var node = document.createElement(tag);
+        if (className) node.className = className;
+        Object.keys(attrs || {}).forEach(function (key) { node.setAttribute(key, attrs[key]); });
+        return node;
+      };
+
+      // Built once, reused for every gallery on the page.
+      var box = el('div', 'ob-lightbox', { role: 'dialog', 'aria-modal': 'true', 'aria-label': 'Image viewer', hidden: '' });
+      var figure = el('figure', 'ob-lightbox-figure');
+      var picture = el('img', 'ob-lightbox-img', { decoding: 'async' });
+      var caption = el('figcaption', 'ob-lightbox-caption');
+      var count = el('p', 'ob-lightbox-count', { 'aria-live': 'polite' });
+      var closeBtn = el('button', 'ob-lightbox-btn ob-lightbox-close', { type: 'button', 'aria-label': 'Close' });
+      var prevBtn = el('button', 'ob-lightbox-btn ob-lightbox-prev', { type: 'button', 'aria-label': 'Previous image' });
+      var nextBtn = el('button', 'ob-lightbox-btn ob-lightbox-next', { type: 'button', 'aria-label': 'Next image' });
+      closeBtn.innerHTML = ICON.close;
+      prevBtn.innerHTML = ICON.prev;
+      nextBtn.innerHTML = ICON.next;
+      figure.appendChild(picture);
+      figure.appendChild(caption);
+      box.appendChild(count);
+      box.appendChild(closeBtn);
+      box.appendChild(prevBtn);
+      box.appendChild(figure);
+      box.appendChild(nextBtn);
+      document.body.appendChild(box);
+
+      var items = [];
+      var index = 0;
+      var trigger = null;
+      var galleryCaption = '';
+      var inertSiblings = [];
+      var savedOverflow = '';
+      var savedPadding = '';
+
+      // Everything a gallery link knows about its picture, read off the DOM.
+      var readGallery = function (link) {
+        var grid = link.closest('.gallery-grid');
+        var links = slice(grid.querySelectorAll('.gallery-item[href]'));
+        var figureEl = grid.closest('figure');
+        var figCap = figureEl && figureEl.querySelector(':scope > figcaption');
+        return {
+          items: links.map(function (a) {
+            var img = a.querySelector('img');
+            return {
+              src: a.getAttribute('href'),
+              srcset: img ? img.getAttribute('srcset') || '' : '',
+              alt: img ? img.getAttribute('alt') || '' : '',
+              width: img ? img.getAttribute('width') : null,
+              height: img ? img.getAttribute('height') : null
+            };
+          }),
+          index: Math.max(0, links.indexOf(link)),
+          caption: figCap ? figCap.textContent.trim() : ''
+        };
+      };
+
+      var pad2 = function (n) { return String(n).padStart(2, '0'); };
+
+      var show = function (next) {
+        index = (next + items.length) % items.length;
+        var item = items[index];
+        picture.removeAttribute('srcset');
+        picture.removeAttribute('sizes');
+        if (item.width && item.height) {
+          picture.setAttribute('width', item.width);
+          picture.setAttribute('height', item.height);
+        } else {
+          picture.removeAttribute('width');
+          picture.removeAttribute('height');
+        }
+        picture.alt = item.alt;
+        picture.src = item.src;
+        if (item.srcset) {
+          picture.setAttribute('srcset', item.srcset);
+          picture.setAttribute('sizes', '100vw');
+        }
+
+        // The picture's own alt is its caption; the gallery's caption, if it
+        // has one, sits under that in a quieter line.
+        caption.textContent = '';
+        if (item.alt) caption.appendChild(document.createTextNode(item.alt));
+        if (galleryCaption && galleryCaption !== item.alt) {
+          var sub = document.createElement('small');
+          sub.textContent = galleryCaption;
+          caption.appendChild(sub);
+        }
+
+        count.textContent = '';
+        var strong = document.createElement('b');
+        strong.textContent = pad2(index + 1);
+        count.appendChild(strong);
+        count.appendChild(document.createTextNode(' / ' + pad2(items.length)));
+
+        // Neighbours in the cache, so the next press does not wait.
+        [index + 1, index - 1].forEach(function (i) {
+          var neighbour = items[(i + items.length) % items.length];
+          if (neighbour && neighbour !== item) new Image().src = neighbour.src;
+        });
+      };
+
+      var lockScroll = function () {
+        var root = document.documentElement;
+        var gutter = window.innerWidth - root.clientWidth;
+        savedOverflow = root.style.overflow;
+        savedPadding = root.style.paddingRight;
+        root.style.overflow = 'hidden';
+        // Keeps the page from shifting sideways when the scrollbar goes.
+        if (gutter > 0) root.style.paddingRight = gutter + 'px';
+      };
+
+      var unlockScroll = function () {
+        var root = document.documentElement;
+        root.style.overflow = savedOverflow;
+        root.style.paddingRight = savedPadding;
+      };
+
+      var open = function (gallery, from) {
+        items = gallery.items;
+        galleryCaption = gallery.caption;
+        trigger = from;
+        var single = items.length < 2;
+        prevBtn.hidden = single;
+        nextBtn.hidden = single;
+        count.hidden = single;
+        show(gallery.index);
+
+        // Only the viewer is reachable while it is up: the rest of the page is
+        // inert to assistive technology and to Tab alike.
+        inertSiblings = slice(document.body.children).filter(function (child) {
+          return child !== box;
+        });
+        inertSiblings.forEach(function (child) { child.setAttribute('inert', ''); });
+
+        lockScroll();
+        box.hidden = false;
+        // Two frames: one for display to apply, one for the transition to see it.
+        window.requestAnimationFrame(function () {
+          window.requestAnimationFrame(function () { box.classList.add('is-open'); });
+        });
+        closeBtn.focus();
+      };
+
+      var close = function () {
+        if (box.hidden) return;
+        box.classList.remove('is-open');
+        box.hidden = true;
+        inertSiblings.forEach(function (child) { child.removeAttribute('inert'); });
+        inertSiblings = [];
+        unlockScroll();
+        // Free the frame between galleries.
+        picture.removeAttribute('src');
+        picture.removeAttribute('srcset');
+        if (trigger && typeof trigger.focus === 'function') trigger.focus();
+        trigger = null;
+      };
+
+      document.addEventListener('click', function (event) {
+        var link = event.target.closest('.gallery-grid .gallery-item[href]');
+        if (!link) return;
+        // A modified click is a request for the browser's own behaviour.
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        open(readGallery(link), link);
+      });
+
+      closeBtn.addEventListener('click', close);
+      prevBtn.addEventListener('click', function () { show(index - 1); });
+      nextBtn.addEventListener('click', function () { show(index + 1); });
+
+      // Anywhere on the scrim that is not the picture or a control closes it.
+      box.addEventListener('click', function (event) {
+        if (event.target === box || event.target === figure) close();
+      });
+
+      document.addEventListener('keydown', function (event) {
+        if (box.hidden) return;
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          close();
+        } else if (event.key === 'ArrowLeft' && items.length > 1) {
+          event.preventDefault();
+          show(index - 1);
+        } else if (event.key === 'ArrowRight' && items.length > 1) {
+          event.preventDefault();
+          show(index + 1);
+        } else if (event.key === 'Tab') {
+          // Cycle within the viewer's own controls.
+          var focusable = [closeBtn, prevBtn, nextBtn].filter(function (b) { return !b.hidden; });
+          var at = focusable.indexOf(document.activeElement);
+          var to = event.shiftKey
+            ? (at <= 0 ? focusable[focusable.length - 1] : focusable[at - 1])
+            : (at < 0 || at === focusable.length - 1 ? focusable[0] : focusable[at + 1]);
+          event.preventDefault();
+          to.focus();
+        }
+      });
+
+      // A horizontal swipe across the picture steps through the gallery.
+      var swipeStart = null;
+      figure.addEventListener('pointerdown', function (event) {
+        if (event.pointerType === 'mouse' && event.button !== 0) return;
+        swipeStart = { x: event.clientX, y: event.clientY };
+      });
+      figure.addEventListener('pointerup', function (event) {
+        if (!swipeStart || items.length < 2) { swipeStart = null; return; }
+        var dx = event.clientX - swipeStart.x;
+        var dy = event.clientY - swipeStart.y;
+        swipeStart = null;
+        if (Math.abs(dx) > 48 && Math.abs(dx) > Math.abs(dy) * 1.5) show(dx < 0 ? index + 1 : index - 1);
+      });
+      figure.addEventListener('pointercancel', function () { swipeStart = null; });
+    }
+  } catch (error) {
+    /* the gallery links keep their ordinary new-tab behaviour */
   }
 
   // --- camera controls: wheel to zoom, drag to orbit ----------------------

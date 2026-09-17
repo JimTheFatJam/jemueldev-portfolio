@@ -1057,6 +1057,70 @@ describe('orbit theme', () => {
     assert.ok(blocks[0].includes('sun.webp'), 'the night sun lost its texture');
   });
 
+  test('gallery pictures open in a lightbox, and still open in a tab without script', async () => {
+    const js = await (await new Client().get('/themes/orbit/theme.js')).text();
+    const css = await (await new Client().get('/themes/orbit/theme.css')).text();
+
+    // The viewer is built by script and hung off the gallery links by
+    // delegation, so the shared template is untouched and Designs 1–3 keep
+    // their own behaviour. The markup must therefore still be the plain link.
+    const { body } = await new Client().html('/projects/example-pm25-prediction');
+    assert.match(body, /<a class="gallery-item" href="\/uploads\/[^"]+" target="_blank" rel="noopener noreferrer">/);
+    assert.doesNotMatch(body, /ob-lightbox/, 'the viewer must not be server-rendered');
+
+    // A proper dialog: modal, labelled, the rest of the page made inert.
+    assert.match(js, /role: 'dialog'/);
+    assert.match(js, /'aria-modal': 'true'/);
+    assert.match(js, /setAttribute\('inert', ''\)/);
+    assert.match(js, /removeAttribute\('inert'\)/);
+
+    // Keyboard: Escape closes, arrows step, Tab stays inside.
+    assert.match(js, /event\.key === 'Escape'/);
+    assert.match(js, /event\.key === 'ArrowLeft'/);
+    assert.match(js, /event\.key === 'ArrowRight'/);
+    assert.match(js, /event\.key === 'Tab'/);
+
+    // Focus goes in on open and back to the link on close.
+    assert.match(js, /closeBtn\.focus\(\)/);
+    assert.match(js, /trigger\.focus\(\)/);
+
+    // A modified click is the browser's, not ours; a plain one is intercepted.
+    assert.match(js, /event\.metaKey \|\| event\.ctrlKey \|\| event\.shiftKey \|\| event\.altKey\) return;/);
+
+    // Scroll is locked without a sideways shift, and always unlocked again.
+    assert.match(js, /root\.style\.overflow = 'hidden'/);
+    assert.match(js, /root\.style\.paddingRight = gutter \+ 'px'/);
+    assert.match(js, /var unlockScroll = function/);
+
+    // Captions come from what the gallery already provides: the picture's own
+    // alt, then the gallery's caption under it.
+    assert.match(js, /caption\.appendChild\(document\.createTextNode\(item\.alt\)\)/);
+    assert.match(js, /sub\.textContent = galleryCaption/);
+
+    // The picture is bounded by the viewport itself, both ways, so any aspect
+    // ratio fits without cropping and without depending on a parent's height.
+    assert.match(css, /\.ob-lightbox-img \{[\s\S]*?max-width: calc\(100vw - 2 \* var\(--ob-lb-gutter\) - 2 \* var\(--ob-lb-side\)\);/);
+    assert.match(css, /max-height: calc\(100dvh - var\(--ob-lb-top\) - var\(--ob-lb-bottom\) - 3rem\);/);
+    // Above the sticky header.
+    const lightboxZ = Number((css.match(/\.ob-lightbox \{[\s\S]*?z-index: (\d+);/) || [])[1]);
+    const headerZ = Number((css.match(/\.ob-header \{[\s\S]*?z-index: (\d+);/) || [])[1]);
+    assert.ok(lightboxZ > headerZ, `lightbox z ${lightboxZ} must exceed header z ${headerZ}`);
+
+    // Side arrows only where there is room for them; a bottom bar below that.
+    assert.match(css, /--ob-lb-side: 3\.4rem;/);
+    assert.match(css, /@media \(max-width: 48rem\) \{\n  \.ob-lightbox \{[^}]*--ob-lb-side: 0px; \}/);
+
+    // Both palettes carry a scrim, and the night lists still agree.
+    const blocks = [...css.matchAll(/(?:\[data-ob-theme="dark"\]|:root:not\(\[data-ob-theme="light"\]\)) \{\n([\s\S]*?)\n\s*\}/g)]
+      .map((m) => m[1].replace(/\s+/g, ' ').trim());
+    assert.equal(blocks[0], blocks[1], 'the dark palettes have drifted apart');
+    assert.ok(blocks[0].includes('--ob-scrim:'), 'the night palette has no scrim');
+    assert.match(css, /--ob-scrim: rgba\(242, 242, 239, 0\.94\);/);
+
+    // Reduced motion: no fade, no settle.
+    assert.match(css, /\.ob-lightbox, \.ob-lightbox-img \{ transition: none !important; transform: none !important; \}/);
+  });
+
   test('the colophon carries the texture credit the licence asks for', async () => {
     const { body } = await new Client().html('/');
 

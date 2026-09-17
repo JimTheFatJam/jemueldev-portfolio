@@ -36,6 +36,7 @@
   --ob-header-bg-focus: rgba(242, 242, 239, 0.95);
   --ob-panel-glass: rgba(255, 255, 255, 0.74);
   --ob-plate: rgba(242, 242, 239, 0.82);
+  --ob-scrim: rgba(242, 242, 239, 0.94);
   --ob-halo: rgba(194, 65, 12, 0.07);
   --ob-contact-glow: rgba(194, 65, 12, 0.06);
 
@@ -203,6 +204,7 @@ body.ob::before {
   --ob-header-bg-focus: rgba(16, 16, 20, 0.97);
   --ob-panel-glass: rgba(27, 27, 33, 0.8);
   --ob-plate: rgba(16, 16, 20, 0.84);
+  --ob-scrim: rgba(16, 16, 20, 0.94);
   --ob-halo: rgba(240, 122, 42, 0.1);
   --ob-contact-glow: rgba(240, 122, 42, 0.08);
 
@@ -249,6 +251,7 @@ body.ob::before {
   --ob-header-bg-focus: rgba(16, 16, 20, 0.97);
   --ob-panel-glass: rgba(27, 27, 33, 0.8);
   --ob-plate: rgba(16, 16, 20, 0.84);
+  --ob-scrim: rgba(16, 16, 20, 0.94);
   --ob-halo: rgba(240, 122, 42, 0.1);
   --ob-contact-glow: rgba(240, 122, 42, 0.08);
 
@@ -2001,6 +2004,148 @@ body.ob-home .ob-header { animation: ob-header-hold 320ms linear; }
 .ob .skill-icon .icon-svg { height: 100%; width: auto; max-width: 2.4em; display: block; }
 
 /* --------------------------------------------------------------------------
+   Gallery lightbox
+   Progressive enhancement over the gallery links. With script, a picture opens
+   in place with previous/next; without it the link still opens the file in a
+   new tab exactly as before, so nothing depends on this existing.
+   The image is bounded by the viewport directly — not by its container — so
+   any aspect ratio fits both ways with no cropping and no reliance on a
+   definite parent height.
+   -------------------------------------------------------------------------- */
+
+.ob-lightbox {
+  --ob-lb-gutter: clamp(1rem, 3vw, 2.5rem);
+  --ob-lb-top: 4rem;      /* room for the counter and the close control */
+  --ob-lb-bottom: 2rem;
+  /* Room for the side arrows, so a wide picture can never run underneath
+     them. Zero where the arrows live in the bottom bar instead. */
+  --ob-lb-side: 3.4rem;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--ob-lb-top) var(--ob-lb-gutter) var(--ob-lb-bottom);
+  background: var(--ob-scrim);
+  opacity: 0;
+  transition: opacity 0.22s var(--ob-ease);
+  /* Not clickable through, and never scrolls the page underneath. */
+  overscroll-behavior: contain;
+}
+.ob-lightbox[hidden] { display: none; }
+.ob-lightbox.is-open { opacity: 1; }
+@supports (backdrop-filter: blur(1px)) {
+  .ob-lightbox { backdrop-filter: blur(12px) saturate(140%); }
+}
+
+.ob-lightbox-figure {
+  margin: 0;
+  display: grid;
+  gap: 0.8rem;
+  justify-items: center;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.ob-lightbox-img {
+  display: block;
+  width: auto;
+  height: auto;
+  /* Both bounds are viewport-relative, so a portrait, a panorama and a square
+     all scale to the largest size that fits without ever being cut. */
+  max-width: calc(100vw - 2 * var(--ob-lb-gutter) - 2 * var(--ob-lb-side));
+  max-height: calc(100vh - var(--ob-lb-top) - var(--ob-lb-bottom) - 3rem);
+  max-height: calc(100dvh - var(--ob-lb-top) - var(--ob-lb-bottom) - 3rem);
+  background: var(--ob-panel);
+  border-radius: var(--ob-radius);
+  box-shadow: 0 0 0 1px var(--ob-line), 0 1.5rem 3rem rgba(0, 0, 0, 0.18);
+  transform: scale(0.985);
+  transition: transform 0.28s var(--ob-ease);
+  /* A picture with no alt of its own still shows something in the frame. */
+  color: var(--ob-muted);
+}
+.ob-lightbox.is-open .ob-lightbox-img { transform: none; }
+
+.ob-lightbox-caption {
+  margin: 0;
+  max-width: 44rem;
+  max-height: 3rem;
+  overflow: auto;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  text-align: center;
+  color: var(--ob-muted);
+  overflow-wrap: anywhere;
+}
+.ob-lightbox-caption:empty { display: none; }
+.ob-lightbox-caption small {
+  display: block;
+  font-size: 0.6875rem;
+  color: var(--ob-faint);
+}
+
+/* Controls share the toggle's vocabulary: a small disc, a hairline, mono type. */
+.ob-lightbox-btn {
+  position: fixed;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--ob-line-strong);
+  border-radius: 50%;
+  background: var(--ob-panel);
+  color: var(--ob-ink);
+  cursor: pointer;
+  transition: color 0.18s var(--ob-ease), border-color 0.18s var(--ob-ease),
+              transform 0.18s var(--ob-ease);
+}
+.ob-lightbox-btn:hover { color: var(--ob-accent); border-color: var(--ob-accent); }
+.ob-lightbox-btn:active { transform: scale(0.94); }
+.ob-lightbox-btn svg { width: 1.1rem; height: 1.1rem; display: block; }
+.ob-lightbox-btn[hidden] { display: none; }
+
+.ob-lightbox-close { top: var(--ob-lb-gutter); right: var(--ob-lb-gutter); }
+.ob-lightbox-prev { left: var(--ob-lb-gutter); top: 50%; transform: translateY(-50%); }
+.ob-lightbox-next { right: var(--ob-lb-gutter); top: 50%; transform: translateY(-50%); }
+.ob-lightbox-prev:active { transform: translateY(-50%) scale(0.94); }
+.ob-lightbox-next:active { transform: translateY(-50%) scale(0.94); }
+
+.ob-lightbox-count {
+  position: fixed;
+  top: calc(var(--ob-lb-gutter) + 0.6rem);
+  left: var(--ob-lb-gutter);
+  margin: 0;
+  font-family: var(--ob-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--ob-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ob-lightbox-count b { font-weight: 500; color: var(--ob-accent); }
+.ob-lightbox-count[hidden] { display: none; }
+
+/* Below the tablet breakpoint the side arrows would sit on the picture, so
+   they move to a bar along the bottom with the counter between them, and the
+   frame keeps clear of that bar. */
+@media (max-width: 48rem) {
+  .ob-lightbox { --ob-lb-top: 3.75rem; --ob-lb-bottom: 4.75rem; --ob-lb-side: 0px; }
+  .ob-lightbox-prev,
+  .ob-lightbox-next { top: auto; bottom: var(--ob-lb-gutter); transform: none; }
+  .ob-lightbox-prev:active,
+  .ob-lightbox-next:active { transform: scale(0.94); }
+  .ob-lightbox-count {
+    top: auto;
+    bottom: calc(var(--ob-lb-gutter) + 0.7rem);
+    left: 50%;
+    transform: translateX(-50%);
+  }
+}
+
+/* --------------------------------------------------------------------------
    Draft banner
    -------------------------------------------------------------------------- */
 
@@ -2099,6 +2244,7 @@ body.ob-home .ob-header { animation: ob-header-hold 320ms linear; }
   .ob-scroll-arrow { animation: none !important; }
   .ob-typing .ob-char { opacity: 1; animation: none !important; }
   .ob-launch-caret.is-blinking { animation: none !important; }
+  .ob-lightbox, .ob-lightbox-img { transition: none !important; transform: none !important; }
   .ob-js .ob-launch-profile[data-reveal],
   .ob-js .ob-launch-hint[data-reveal] { transition-delay: 0s; }
 
