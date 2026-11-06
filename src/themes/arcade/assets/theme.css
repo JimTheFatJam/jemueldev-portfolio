@@ -16,98 +16,143 @@
 :root {
   color-scheme: dark;
 
-  /* Night. */
-  --ar-bg: #0d0b1a;
-  --ar-bg-alt: #141129;
-  --ar-panel: #1b1736;
-  --ar-panel-alt: #241e45;
-  --ar-line: #3f3578;
-  --ar-line-strong: #6054ad;
-  --ar-ink: #f4f1ff;
-  --ar-muted: #bdb5ea;
-  --ar-faint: #9a92cb;
+  /* Night, and the native mode. Deep navy rather than purple: the background
+     is almost black with a blue cast, panels are indigo, and all the colour
+     comes from cyan for structure and yellow for emphasis. */
+  --ar-bg: #080a1c;
+  --ar-bg-alt: #0e1230;
+  --ar-panel: #141937;
+  --ar-panel-alt: #1b2146;
+  --ar-line: #2b3468;
+  --ar-line-strong: #46539e;
+  --ar-ink: #eef1ff;
+  --ar-muted: #a9b3e4;
+  --ar-faint: #7d88c0;
 
-  --ar-accent: #ffcc33;
-  --ar-accent-alt: #ff6fa5;
-  --ar-accent-cool: #4fdcd4;
-  --ar-on-accent: #19132e;
+  /* Cyan leads; yellow and orange mark what matters; green and red are kept
+     for states that mean go and stop. */
+  --ar-accent: #2ee6d6;
+  --ar-accent-strong: #5ff2e6;
+  --ar-accent-warm: #ffd029;
+  --ar-accent-warm-fill: #ffd029;
+  --ar-accent-hot: #ff8c21;
+  --ar-accent-go: #27d07a;
+  --ar-accent-stop: #ff4d5e;
+  --ar-accent-link: #6f86ff;
+  --ar-on-accent: #04121a;
+  --ar-on-warm: #2a2000;
 
-  --ar-star: rgba(255, 255, 255, 0.85);
-  --ar-star-dim: rgba(190, 210, 255, 0.5);
-  --ar-orbit: rgba(130, 118, 210, 0.5);
-  --ar-shadow: #07060f;
-  --ar-glow: rgba(255, 204, 51, 0.22);
-  --ar-scrim: rgba(13, 11, 26, 0.94);
+  --ar-grid: rgba(90, 112, 200, 0.10);
+  --ar-star: rgba(226, 236, 255, 0.90);
+  --ar-star-dim: rgba(140, 170, 235, 0.55);
+  --ar-orbit: rgba(80, 100, 180, 0.55);
+  --ar-orbit-lit: rgba(46, 230, 214, 0.65);
+  --ar-void: #050714;
+  --ar-shadow: #03040e;
+  --ar-glow: rgba(46, 230, 214, 0.20);
+  --ar-scrim: rgba(8, 10, 28, 0.95);
 
   --ar-pixel: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SF Mono", Menlo,
     Consolas, "Liberation Mono", monospace;
-  --ar-body: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-    Helvetica, Arial, sans-serif;
+  --ar-body: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SF Mono", Menlo,
+    Consolas, "Liberation Mono", monospace;
 
-  --ar-shell: 78rem;
-  --ar-measure: 42rem;
+  --ar-shell: 80rem;
+  --ar-measure: 44rem;
   --ar-gutter: clamp(1rem, 3vw, 2.25rem);
   --ar-pad: clamp(1rem, 2.2vw, 1.5rem);
   /* The grid every border and shadow snaps to. */
-  --ar-unit: 4px;
+  --ar-unit: 2px;
   --ar-step: steps(8, end);
+
+  /* Camera rest state. The script overwrites these; without it they are the
+     view everyone gets, which is a deliberately good one. */
+  --ar-zoom: 1;
+  --ar-spin: 0deg;
+  --ar-unspin: 0deg;
+  --ar-flat: 0.62;
+  --ar-unflat: 1.6129;
 }
 
-/* Day. Applied when asked for, and by default when the system asks and the
-   visitor has not. An explicit "dark" always wins. The two lists are
+/* Day is applied when asked for, and by default when the system asks and
+   the visitor has not. An explicit "dark" always wins. The two lists are
    identical by construction. */
 @media (prefers-color-scheme: light) {
   :root:not([data-ar-theme="dark"]) {
     color-scheme: light;
 
-    --ar-bg: #eceaff;
-    --ar-bg-alt: #e2ddfa;
+    /* Day. A clean, neutral counterpart: off-white paper, white panels,
+       charcoal-navy ink. The accents carry over but are darkened to the point
+       where they pass AA on paper — the palette changes value, not identity. */
+    --ar-bg: #f5f7fb;
+    --ar-bg-alt: #e9edf6;
     --ar-panel: #ffffff;
-    --ar-panel-alt: #f6f3ff;
-    --ar-line: #c4b9ec;
-    --ar-line-strong: #8779cd;
-    --ar-ink: #1b1540;
-    --ar-muted: #4d4480;
-    --ar-faint: #635a94;
+    --ar-panel-alt: #f1f4fa;
+    --ar-line: #ccd4e6;
+    --ar-line-strong: #5d6a93;
+    --ar-ink: #111730;
+    --ar-muted: #3f4a6e;
+    --ar-faint: #5e6a8f;
 
-    --ar-accent: #b02a66;
-    --ar-accent-alt: #6d35cc;
-    --ar-accent-cool: #0d7078;
+    --ar-accent: #0d7a73;
+    --ar-accent-strong: #0a615b;
+    --ar-accent-warm: #a85c00;
+    --ar-accent-warm-fill: #ffc21a;
+    --ar-accent-hot: #c03a12;
+    --ar-accent-go: #10763a;
+    --ar-accent-stop: #bb1b28;
+    --ar-accent-link: #2740c7;
     --ar-on-accent: #ffffff;
+    --ar-on-warm: #2a1c00;
 
-    --ar-star: rgba(90, 70, 160, 0.5);
-    --ar-star-dim: rgba(120, 100, 180, 0.3);
-    --ar-orbit: rgba(120, 104, 190, 0.45);
-    --ar-shadow: #b3a9dd;
-    --ar-glow: rgba(176, 42, 102, 0.14);
-    --ar-scrim: rgba(236, 234, 255, 0.95);
+    --ar-grid: rgba(70, 90, 140, 0.11);
+    --ar-star: rgba(60, 80, 130, 0.42);
+    --ar-star-dim: rgba(80, 100, 150, 0.24);
+    --ar-orbit: rgba(70, 90, 140, 0.42);
+    --ar-orbit-lit: rgba(13, 122, 115, 0.55);
+    --ar-void: #e4e9f4;
+    --ar-shadow: #c3ccdf;
+    --ar-glow: rgba(13, 122, 115, 0.14);
+    --ar-scrim: rgba(245, 247, 251, 0.95);
   }
 }
 
 :root[data-ar-theme="light"] {
   color-scheme: light;
 
-  --ar-bg: #eceaff;
-  --ar-bg-alt: #e2ddfa;
+  /* Day. A clean, neutral counterpart: off-white paper, white panels,
+     charcoal-navy ink. The accents carry over but are darkened to the point
+     where they pass AA on paper — the palette changes value, not identity. */
+  --ar-bg: #f5f7fb;
+  --ar-bg-alt: #e9edf6;
   --ar-panel: #ffffff;
-  --ar-panel-alt: #f6f3ff;
-  --ar-line: #c4b9ec;
-  --ar-line-strong: #8779cd;
-  --ar-ink: #1b1540;
-  --ar-muted: #4d4480;
-  --ar-faint: #635a94;
+  --ar-panel-alt: #f1f4fa;
+  --ar-line: #ccd4e6;
+  --ar-line-strong: #5d6a93;
+  --ar-ink: #111730;
+  --ar-muted: #3f4a6e;
+  --ar-faint: #5e6a8f;
 
-  --ar-accent: #b02a66;
-  --ar-accent-alt: #6d35cc;
-  --ar-accent-cool: #0d7078;
+  --ar-accent: #0d7a73;
+  --ar-accent-strong: #0a615b;
+  --ar-accent-warm: #a85c00;
+  --ar-accent-warm-fill: #ffc21a;
+  --ar-accent-hot: #c03a12;
+  --ar-accent-go: #10763a;
+  --ar-accent-stop: #bb1b28;
+  --ar-accent-link: #2740c7;
   --ar-on-accent: #ffffff;
+  --ar-on-warm: #2a1c00;
 
-  --ar-star: rgba(90, 70, 160, 0.5);
-  --ar-star-dim: rgba(120, 100, 180, 0.3);
-  --ar-orbit: rgba(120, 104, 190, 0.45);
-  --ar-shadow: #b3a9dd;
-  --ar-glow: rgba(176, 42, 102, 0.14);
-  --ar-scrim: rgba(236, 234, 255, 0.95);
+  --ar-grid: rgba(70, 90, 140, 0.11);
+  --ar-star: rgba(60, 80, 130, 0.42);
+  --ar-star-dim: rgba(80, 100, 150, 0.24);
+  --ar-orbit: rgba(70, 90, 140, 0.42);
+  --ar-orbit-lit: rgba(13, 122, 115, 0.55);
+  --ar-void: #e4e9f4;
+  --ar-shadow: #c3ccdf;
+  --ar-glow: rgba(13, 122, 115, 0.14);
+  --ar-scrim: rgba(245, 247, 251, 0.95);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -138,8 +183,8 @@ body.ar::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, rgba(130, 118, 210, 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(130, 118, 210, 0.07) 1px, transparent 1px),
+    linear-gradient(to right, var(--ar-grid) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--ar-grid) 1px, transparent 1px),
     radial-gradient(1.5px 1.5px at 14% 18%, var(--ar-star) 100%, transparent 0),
     radial-gradient(1.5px 1.5px at 72% 34%, var(--ar-star-dim) 100%, transparent 0),
     radial-gradient(1.5px 1.5px at 38% 76%, var(--ar-star) 100%, transparent 0),
@@ -228,7 +273,7 @@ body.ar::before {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.16em;
-  color: var(--ar-accent-cool);
+  color: var(--ar-accent);
 }
 .ar-kicker-accent { color: var(--ar-accent); }
 
@@ -301,7 +346,7 @@ body.ar::before {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--ar-accent-cool);
+  color: var(--ar-accent);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -319,7 +364,7 @@ body.ar::before {
   white-space: nowrap;
 }
 .ar-tag-accent { color: var(--ar-accent); border-color: currentColor; }
-.ar-tag-draft { color: var(--ar-accent-alt); border-color: currentColor; }
+.ar-tag-draft { color: var(--ar-accent-hot); border-color: currentColor; }
 
 /* Buttons press in: the shadow collapses and the face moves into it. */
 .ar-btn {
@@ -348,7 +393,7 @@ body.ar::before {
   border-color: var(--ar-accent);
   color: var(--ar-on-accent);
 }
-.ar-btn-accent:hover { background: var(--ar-accent-alt); border-color: var(--ar-accent-alt); color: var(--ar-on-accent); }
+.ar-btn-accent:hover { background: var(--ar-accent-strong); border-color: var(--ar-accent-strong); color: var(--ar-on-accent); }
 .ar-btn-quiet { background: transparent; color: var(--ar-muted); }
 .ar-btn-lg { padding: 0.7rem 1.1rem; font-size: 0.875rem; }
 .ar-btn-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.25rem; }
@@ -388,7 +433,7 @@ body.ar::before {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-.ar-linkrow a { position: relative; color: var(--ar-accent-cool); text-decoration: none; }
+.ar-linkrow a { position: relative; color: var(--ar-accent); text-decoration: none; }
 .ar-linkrow a:hover { color: var(--ar-accent); }
 .ar-linkrow a::after { content: ""; position: absolute; inset: -0.45rem 0; }
 
@@ -572,8 +617,8 @@ body.ar::before {
   justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  background: var(--ar-accent-alt);
-  color: var(--ar-on-accent);
+  background: var(--ar-accent-hot);
+  color: var(--ar-on-warm);
   padding: 0.5rem var(--ar-gutter);
   font-family: var(--ar-pixel);
   font-size: 0.75rem;
@@ -685,9 +730,9 @@ body.ar::before {
 .ar-dock-text { display: grid; min-width: 0; }
 .ar-dock-code {
   font-family: var(--ar-pixel);
-  font-size: 0.625rem;
+  font-size: 0.6875rem;
   letter-spacing: 0.14em;
-  color: var(--ar-faint);
+  color: var(--ar-muted);
 }
 .ar-dock-name {
   font-family: var(--ar-pixel);
@@ -700,43 +745,122 @@ body.ar::before {
 .ar-dock-blurb { font-size: 0.8125rem; color: var(--ar-muted); }
 .ar-dock-go { color: var(--ar-accent); font-size: 0.75rem; text-align: right; }
 
-/* --- the orrery: purely visual, and it never stops turning --------------- */
+/* --- the orrery: the landing attraction -----------------------------------
+   The frame is the interaction area and the clipping viewport: a window cut
+   into space, bordered like every other panel. Everything inside it is
+   positioned against the camera's three custom properties, so orienting the
+   system is three number writes and never a DOM change.
+
+   The transform chain is documented in views/partials/galaxy.ejs. The one
+   rule that matters here: the script writes only --ar-zoom, --ar-spin,
+   --ar-unspin and --ar-flat/--ar-unflat, and never touches .ar-arm or
+   .ar-world, which carry the animations. That is what makes it impossible
+   for a drag or a zoom to stutter the orbits.
+   -------------------------------------------------------------------------- */
 
 .ar-orrery { display: flex; justify-content: center; align-items: center; min-width: 0; }
 
 .ar-orrery-frame {
   position: relative;
   width: 100%;
-  max-width: min(30rem, 72vh);
+  max-width: min(34rem, 78vh);
   aspect-ratio: 1;
+  /* The window into space is darker than the page and framed like a panel. */
+  background:
+    radial-gradient(circle at 50% 50%, rgba(46, 230, 214, 0.05) 0%, transparent 58%),
+    var(--ar-void);
+  border: var(--ar-unit) solid var(--ar-line-strong);
+  box-shadow:
+    inset 0 0 0 var(--ar-unit) #04050f,
+    var(--ar-unit) var(--ar-unit) 0 0 var(--ar-shadow);
+  /* Zoomed in, the outer worlds pass behind the frame edge rather than over
+     the page. Clip, not hidden: nothing here ever needs to scroll. */
+  overflow: clip;
+  /* The wheel is only taken over the frame, and only when it would change
+     something — see theme.js. Declaring the intent here as well means a
+     browser that starts the gesture before script runs still scrolls. */
+  touch-action: pan-y;
 }
+
+/* Space is dark in both palettes. A pale "space" washes the planet art out,
+   and the alternative — redrawing seven sprites for day — would be two sets
+   of art to keep in step. So the frame declares its own interior palette and
+   everything inside it, the hint text included, is coloured against that
+   rather than against the page. On a light page it reads as a lit screen,
+   which is the point. */
+.ar-orrery-frame {
+  --ar-void: #080a1c;
+  --ar-scrim: rgba(8, 10, 28, 0.92);
+  --ar-line: #2b3468;
+  --ar-line-strong: #46539e;
+  --ar-accent: #2ee6d6;
+  --ar-accent-warm: #ffd029;
+  --ar-muted: #a9b3e4;
+  --ar-faint: #7d88c0;
+  --ar-orbit: rgba(80, 100, 180, 0.55);
+  --ar-orbit-lit: rgba(46, 230, 214, 0.65);
+}
+
+/* Corner ticks, so the window reads as instrumentation. */
+.ar-orrery-frame::before,
+.ar-orrery-frame::after {
+  content: "";
+  position: absolute;
+  width: 0.9rem;
+  height: 0.9rem;
+  border: var(--ar-unit) solid var(--ar-accent);
+  opacity: 0.55;
+  pointer-events: none;
+  z-index: 3;
+}
+.ar-orrery-frame::before { left: 6px; top: 6px; border-right: 0; border-bottom: 0; }
+.ar-orrery-frame::after { right: 6px; bottom: 6px; border-left: 0; border-top: 0; }
+
+/* The camera. Uniform zoom, then the spin, then the squash that turns a
+   face-on system into a plane seen at an angle. */
+.ar-camera {
+  position: absolute;
+  inset: 0;
+  transform: scale(var(--ar-zoom)) rotate(var(--ar-spin)) scaleY(var(--ar-flat));
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* Grabbing is a pointer affordance on the frame, not a state of the system. */
+.ar-orrery-frame.is-grabbing { cursor: grabbing; }
+.ar-orrery-frame.is-draggable { cursor: grab; }
+
+/* --- the star ------------------------------------------------------------ */
 
 .ar-star {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 28%;
-  height: 28%;
-  /* Centred with margins, not a translate, so nothing can shift it. */
-  margin: -14% 0 0 -14%;
+  width: var(--ar-sun-size);
+  height: var(--ar-sun-size);
+  /* Centred with margins, which the camera's transforms cannot disturb. */
+  margin-left: calc(var(--ar-sun-size) / -2);
+  margin-top: calc(var(--ar-sun-size) / -2);
+  /* Held upright and round against whatever the camera is doing. */
+  transform: scaleY(var(--ar-unflat)) rotate(var(--ar-unspin));
   display: block;
-}
-.ar-sprite-sun { width: 100%; height: 100%; display: block; filter: drop-shadow(0 0 10px var(--ar-glow)); }
-
-/* Flares pulse on steps() — a retro four-frame blink, not a smooth fade. */
-.ar-flare { animation: ar-flare 1.6s var(--ar-step) infinite; }
-.ar-flare--2 { animation-delay: 0.4s; }
-.ar-flare--3 { animation-delay: 0.8s; }
-.ar-flare--4 { animation-delay: 1.2s; }
-@keyframes ar-flare {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
+  z-index: 2;
 }
 
-.ar-beacon { animation: ar-blink 1s var(--ar-step) infinite; }
+.ar-sprite-sun { width: 100%; height: 100%; display: block; }
 
-/* Each ring is the visible orbit path. Centred with margins for the same
-   reason as the star. */
+/* The corona flickers by switching one inherited colour in hard steps. CSS
+   selectors cannot reach inside a <use>, but custom properties inherit
+   straight through it, and an unregistered property switches rather than
+   interpolates — which is the 8-bit flicker we want anyway. */
+.ar-star { animation: ar-corona 1.6s var(--ar-step) infinite; }
+@keyframes ar-corona {
+  0%, 100% { --ar-spark-corona: #ffb224; }
+  50% { --ar-spark-corona: #ffe066; }
+}
+
+/* --- orbits -------------------------------------------------------------- */
+
 .ar-ring {
   position: absolute;
   left: 50%;
@@ -749,38 +873,50 @@ body.ar::before {
   pointer-events: none;
 }
 
-/* The arm turns; the world turns back by exactly as much, so it stays
-   upright. Both animations are plain CSS on the same clock — no script
-   touches them, and nothing pauses them, whatever the pointer is doing. */
-/* The arm fills its ring and turns about the star at its centre. */
+/* The arm turns; the fix turns back by exactly as much. Both are plain CSS
+   animations on one duration, and nothing in the script reads or writes
+   them. */
 .ar-arm {
   position: absolute;
-  /* Out by the ring border, so the world centres on the line and not just
-     inside it. */
+  /* Out by the ring border, so a world centres on the line and not inside it. */
   inset: -2px;
   animation: ar-arm var(--ar-dur) linear infinite;
 }
 @keyframes ar-arm { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-/* Placed on the ring's edge with percentages, which resolve against the arm,
-   and centred on that point with margins, which are layout and so are not
-   disturbed by the rotation. The transform then does one job only: undo the
-   arm's turn, so the world never tips. */
-.ar-world {
+.ar-arm-fix {
   position: absolute;
   left: 100%;
   top: 50%;
-  width: var(--ar-world-size);
-  height: var(--ar-world-size);
-  margin-left: calc(var(--ar-world-size) / -2);
-  margin-top: calc(var(--ar-world-size) / -2);
-  display: block;
-  pointer-events: auto;
-  cursor: pointer;
+  width: 0;
+  height: 0;
   animation: ar-world var(--ar-dur) linear infinite;
 }
 @keyframes ar-world { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
 
+/* The world itself. By this point the two animations have cancelled, so the
+   only thing left to undo is the camera — and undoing it here, on the anchor,
+   means the hit area is round and upright too, not a squashed sliver. */
+.ar-world {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--ar-world-size);
+  height: var(--ar-world-size);
+  margin-left: calc(var(--ar-world-size) / -2);
+  margin-top: calc(var(--ar-world-size) / -2);
+  transform: scaleY(var(--ar-unflat)) rotate(var(--ar-unspin));
+  display: block;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+/* On a touch screen the finger needs more than the art does. */
+.ar-world::before {
+  content: "";
+  position: absolute;
+  inset: -0.45rem;
+}
 .ar-world-sprite { display: block; width: 100%; height: 100%; }
 .ar-sprite-world {
   width: 100%;
@@ -789,74 +925,107 @@ body.ar::before {
   transition: transform 0.1s var(--ar-step);
 }
 .ar-world:hover .ar-sprite-world,
-.ar-world.is-lit .ar-sprite-world { transform: scale(1.18); }
+.ar-world.is-lit .ar-sprite-world { transform: scale(1.2); }
 
-/* A game cursor's selection bracket, drawn around the world on hover. */
-.ar-world::before,
+/* A selection bracket, drawn around the world on hover. */
 .ar-world::after {
   content: "";
   position: absolute;
-  width: 34%;
-  height: 34%;
-  border: 3px solid var(--ar-accent);
+  inset: -22%;
+  border: var(--ar-unit) solid var(--ar-accent);
   opacity: 0;
   transition: opacity 0.1s var(--ar-step);
 }
-.ar-world::before { left: -12%; top: -12%; border-right: 0; border-bottom: 0; }
-.ar-world::after { right: -12%; bottom: -12%; border-left: 0; border-top: 0; }
-.ar-world:hover::before, .ar-world:hover::after,
-.ar-world.is-lit::before, .ar-world.is-lit::after { opacity: 1; }
+.ar-world:hover::after,
+.ar-world.is-lit::after { opacity: 1; }
 
-/* Ring geometry. Diameters are a share of the frame, stepping outward evenly;
-   radii are half of that. Periods are minutes long, so the system drifts
-   rather than spins, and each is different so the worlds never lock up. */
-.ar-orrery-frame { --ar-world-base: clamp(1.75rem, 7vmin, 2.3rem); }
+/* A lit world brightens its orbit too, so the pairing reads at a glance. */
+.ar-ring:has(.ar-world.is-lit) { border-color: var(--ar-orbit-lit); border-style: solid; }
+
+/* Ring geometry. Diameters are a share of the frame, stepping outward evenly.
+   Periods are minutes long, so the system drifts rather than spins, and each
+   is different so the worlds never lock into formation. */
+.ar-orrery-frame { --ar-world-base: clamp(1.9rem, 7.6vmin, 2.6rem); --ar-sun-size: clamp(2.6rem, 11vmin, 3.9rem); }
 .ar-ring { --ar-world-size: calc(var(--ar-world-base) * var(--ar-world-scale, 1)); }
-/* Diameter as a share of the frame, and a size of its own, so no two worlds
-   look alike and the outermost still clears the edge. */
-.ar-ring--1 { --ar-d: 24;   --ar-world-scale: 0.85; }
-.ar-ring--2 { --ar-d: 35.6; --ar-world-scale: 1; }
-.ar-ring--3 { --ar-d: 47.2; --ar-world-scale: 0.9; }
-.ar-ring--4 { --ar-d: 58.8; --ar-world-scale: 1.1; }
-.ar-ring--5 { --ar-d: 70.4; --ar-world-scale: 1.25; }
-.ar-ring--6 { --ar-d: 82;   --ar-world-scale: 1.05; }
+
+.ar-ring--1 { --ar-d: 22;   --ar-world-scale: 0.82; }
+.ar-ring--2 { --ar-d: 33.4; --ar-world-scale: 1; }
+.ar-ring--3 { --ar-d: 44.8; --ar-world-scale: 0.9; }
+.ar-ring--4 { --ar-d: 56.2; --ar-world-scale: 1.08; }
+.ar-ring--5 { --ar-d: 67.6; --ar-world-scale: 1.3; }
+.ar-ring--6 { --ar-d: 79;   --ar-world-scale: 1.02; }
+
 .ar-ring--1 { --ar-dur: 54s; }
 .ar-ring--2 { --ar-dur: 72s; }
 .ar-ring--3 { --ar-dur: 92s; }
 .ar-ring--4 { --ar-dur: 114s; }
 .ar-ring--5 { --ar-dur: 138s; }
 .ar-ring--6 { --ar-dur: 164s; }
-/* Spread the starting angles so they do not all begin in a line. */
-/* Arm and world must share a clock exactly, or the world would wobble. */
-.ar-ring--1 .ar-arm, .ar-ring--1 .ar-world { animation-delay: -6s; }
-.ar-ring--2 .ar-arm, .ar-ring--2 .ar-world { animation-delay: -30s; }
-.ar-ring--3 .ar-arm, .ar-ring--3 .ar-world { animation-delay: -54s; }
-.ar-ring--4 .ar-arm, .ar-ring--4 .ar-world { animation-delay: -18s; }
-.ar-ring--5 .ar-arm, .ar-ring--5 .ar-world { animation-delay: -96s; }
-.ar-ring--6 .ar-arm, .ar-ring--6 .ar-world { animation-delay: -66s; }
 
-.ar-scroll {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-self: start;
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ar-muted);
-  text-decoration: none;
-  padding: 0.5rem 0;
+/* Each pair starts somewhere different around its orbit. An arm and its fix
+   must always share a delay, or the world tips. */
+.ar-ring--1 .ar-arm, .ar-ring--1 .ar-arm-fix { animation-delay: -6s; }
+.ar-ring--2 .ar-arm, .ar-ring--2 .ar-arm-fix { animation-delay: -30s; }
+.ar-ring--3 .ar-arm, .ar-ring--3 .ar-arm-fix { animation-delay: -54s; }
+.ar-ring--4 .ar-arm, .ar-ring--4 .ar-arm-fix { animation-delay: -18s; }
+.ar-ring--5 .ar-arm, .ar-ring--5 .ar-arm-fix { animation-delay: -96s; }
+.ar-ring--6 .ar-arm, .ar-ring--6 .ar-arm-fix { animation-delay: -66s; }
+
+/* Surface details that blink, driven the same way as the corona. */
+.ar-sprite-world { animation: ar-surface 2.4s var(--ar-step) infinite; }
+@keyframes ar-surface {
+  0%, 100% { --ar-spark-hot: #ffab1f; --ar-spark-cool: #2bb8ac; --ar-spark-beacon: #8a5f06; }
+  50% { --ar-spark-hot: #fffbe0; --ar-spark-cool: #c4fff8; --ar-spark-beacon: #ffe89c; }
 }
-.ar-scroll:hover { color: var(--ar-accent); }
-.ar-scroll-arrow { animation: ar-bob 1.6s var(--ar-step) infinite; }
-@keyframes ar-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(4px); } }
+
+/* --- the heads-up display ------------------------------------------------ */
+
+.ar-hud {
+  position: absolute;
+  left: 50%;
+  bottom: 0.65rem;
+  transform: translateX(-50%);
+  margin: 0;
+  z-index: 4;
+  font-family: var(--ar-pixel);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ar-muted);
+  background: var(--ar-scrim);
+  border: var(--ar-unit) solid var(--ar-line);
+  padding: 0.25rem 0.55rem;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s var(--ar-step);
+}
+.ar-hud-key { color: var(--ar-accent); }
+.ar-hud-sep { color: var(--ar-faint); }
+
+.ar-hud-zoom {
+  left: auto;
+  right: 0.65rem;
+  bottom: auto;
+  top: 0.65rem;
+  transform: none;
+  color: var(--ar-accent-warm);
+}
+
+/* Only shown once the controls actually exist, and only where they work. */
+.ar-orrery-frame.is-live .ar-hud { opacity: 1; }
+/* The readout is feedback, not furniture: it appears while the camera is
+   being worked and gets out of the way the rest of the time. */
+.ar-orrery-frame.is-live .ar-hud-zoom { opacity: 0; }
+.ar-orrery-frame.is-live:hover .ar-hud-zoom,
+.ar-orrery-frame.is-live.is-grabbing .ar-hud-zoom { opacity: 1; }
+
+/* --- layout -------------------------------------------------------------- */
 
 /* Two columns once there is room; the brief leads, the orrery sits beside it. */
 @media (min-width: 64rem) {
   .ar-map-inner {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
     grid-template-areas: "brief orrery" "cue orrery";
     align-content: center;
   }
@@ -865,14 +1034,39 @@ body.ar::before {
   .ar-scroll { grid-area: cue; }
 }
 
-/* Below that the orrery would be too small to read as art and the dock is
-   the better interface, so the map stands down and the list takes over. It is
-   the same six links either way — nothing becomes unreachable. */
+/* Below that the map leads and the dock follows it, which keeps the solar
+   system the first thing on the page at every width. The frame shrinks but
+   nothing is taken away: the same six worlds, the same controls. */
 @media (max-width: 63.99rem) {
-  .ar-orrery { display: none; }
-  .ar-dock-link { padding: 0.65rem 0.7rem; }
+  .ar-map-inner {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "orrery" "brief" "cue";
+  }
+  .ar-map-brief { grid-area: brief; }
+  .ar-orrery { grid-area: orrery; }
+  .ar-scroll { grid-area: cue; justify-self: start; }
+
+  .ar-orrery-frame { max-width: min(26rem, 62vh); }
+  .ar-dock-link { padding: 0.65rem 0.7rem; grid-template-columns: 2.5rem minmax(0, 1fr) 1rem; }
   .ar-dock-sprite { width: 2.5rem; height: 2.5rem; }
-  .ar-dock-link { grid-template-columns: 2.5rem minmax(0, 1fr) 1rem; }
+}
+
+/* Phones. The map stays, sized so it never crowds the text beneath it, and
+   the worlds keep a finger-sized hit area whatever the art measures. */
+@media (max-width: 34rem) {
+  .ar-orrery-frame {
+    max-width: min(20rem, 54vh);
+    --ar-world-base: clamp(1.75rem, 9.4vmin, 2.2rem);
+    --ar-sun-size: clamp(2.2rem, 12vmin, 3rem);
+  }
+  /* Never below this: the hint is real text, not decoration. */
+  .ar-hud { font-size: 0.7rem; letter-spacing: 0.06em; padding: 0.2rem 0.4rem; }
+}
+
+/* A finger needs more room than the art does, and on the smallest screens the
+   art is at its smallest. The target grows to meet it. */
+@media (pointer: coarse) {
+  .ar-world::before { inset: -0.9rem; }
 }
 
 /* --------------------------------------------------------------------------
@@ -892,7 +1086,7 @@ body.ar::before {
   font-size: clamp(1.75rem, 7vw, 3.5rem);
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: var(--ar-accent-alt);
+  color: var(--ar-accent-warm);
   text-shadow: 4px 4px 0 var(--ar-shadow);
   margin: 0 0 1.25rem;
   animation: ar-blink 1.2s var(--ar-step) infinite;
@@ -966,7 +1160,7 @@ body.ar::before {
   text-transform: uppercase;
   letter-spacing: 0.08em;
 }
-.ar-card-links a { color: var(--ar-accent-cool); text-decoration: none; }
+.ar-card-links a { color: var(--ar-accent); text-decoration: none; }
 .ar-card-links a:hover { color: var(--ar-accent); }
 
 .ar-hero-card { display: grid; gap: 0; padding: 0; margin-bottom: 1.5rem; }
@@ -1032,7 +1226,7 @@ body.ar::before {
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
-  color: var(--ar-accent-cool);
+  color: var(--ar-accent);
 }
 .ar-timeline-body { min-width: 0; }
 .ar-timeline-degree {
@@ -1283,7 +1477,7 @@ body.ar::before {
 .ar .button:hover { color: var(--ar-accent); border-color: var(--ar-accent); }
 .ar .button:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--ar-shadow); }
 .ar .button-primary { background: var(--ar-accent); border-color: var(--ar-accent); color: var(--ar-on-accent); }
-.ar .button-primary:hover { background: var(--ar-accent-alt); border-color: var(--ar-accent-alt); color: var(--ar-on-accent); }
+.ar .button-primary:hover { background: var(--ar-accent-strong); border-color: var(--ar-accent-strong); color: var(--ar-on-accent); }
 
 .ar .project-ref-card {
   display: flex;
@@ -1321,7 +1515,7 @@ body.ar::before {
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--ar-accent-cool);
+  color: var(--ar-accent);
   margin-bottom: 0.75rem;
 }
 .ar .skill-list { display: flex; flex-wrap: wrap; gap: 0.4rem; min-width: 0; }
@@ -1360,7 +1554,7 @@ body.ar::before {
   margin: 0 0 0.3rem;
 }
 .ar-footer-meta { font-family: var(--ar-pixel); font-size: 0.75rem; color: var(--ar-muted); margin: 0; }
-.ar-footer-meta a { color: var(--ar-accent-cool); }
+.ar-footer-meta a { color: var(--ar-accent); }
 .ar-footer-links { display: grid; gap: 0.35rem; font-family: var(--ar-pixel); font-size: 0.8125rem; }
 .ar-footer-links a { position: relative; color: var(--ar-muted); text-decoration: none; }
 .ar-footer-links a:hover { color: var(--ar-accent); }
@@ -1398,20 +1592,32 @@ body.ar::before {
   .ar-js [data-reveal].is-in { opacity: 1; transform: none; transition: none; }
 
   /* The system becomes a still diagram: the worlds hold their places and
-     nothing blinks. Angles are set per ring so they do not stack up. */
-  .ar-arm, .ar-world { animation: none !important; }
+     nothing blinks. Angles are set per ring so they do not stack up, and an
+     arm and its fix always get the same angle with opposite signs, or the
+     world would sit tipped over. .ar-world is left alone — its transform is
+     the camera correction, not an animation. */
+  .ar-arm, .ar-arm-fix, .ar-star, .ar-sprite-world { animation: none !important; }
   .ar-ring--1 .ar-arm { transform: rotate(40deg); }
   .ar-ring--2 .ar-arm { transform: rotate(150deg); }
   .ar-ring--3 .ar-arm { transform: rotate(265deg); }
   .ar-ring--4 .ar-arm { transform: rotate(85deg); }
   .ar-ring--5 .ar-arm { transform: rotate(200deg); }
   .ar-ring--6 .ar-arm { transform: rotate(320deg); }
-  .ar-ring--1 .ar-world { transform: rotate(-40deg); }
-  .ar-ring--2 .ar-world { transform: rotate(-150deg); }
-  .ar-ring--3 .ar-world { transform: rotate(-265deg); }
-  .ar-ring--4 .ar-world { transform: rotate(-85deg); }
-  .ar-ring--5 .ar-world { transform: rotate(-200deg); }
-  .ar-ring--6 .ar-world { transform: rotate(-320deg); }
+  .ar-ring--1 .ar-arm-fix { transform: rotate(-40deg); }
+  .ar-ring--2 .ar-arm-fix { transform: rotate(-150deg); }
+  .ar-ring--3 .ar-arm-fix { transform: rotate(-265deg); }
+  .ar-ring--4 .ar-arm-fix { transform: rotate(-85deg); }
+  .ar-ring--5 .ar-arm-fix { transform: rotate(-200deg); }
+  .ar-ring--6 .ar-arm-fix { transform: rotate(-320deg); }
+
+  /* The blinking pixels settle on their lit colour rather than their dim one,
+     so a still planet still reads as alive. */
+  .ar-orrery, .ar-dock {
+    --ar-spark-corona: #ffc83c;
+    --ar-spark-hot: #ffd27a;
+    --ar-spark-cool: #8ff6ec;
+    --ar-spark-beacon: #ffc53d;
+  }
 
   .ar-blink, .ar-flare, .ar-beacon, .ar-hint-key, .ar-scroll-arrow, .ar-gameover {
     animation: none !important;

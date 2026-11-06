@@ -1,11 +1,15 @@
 /* Arcade theme — mobile nav, the light/dark switch, scroll reveals, section
    tracking, and the two-way link between the dock and the orrery.
 
-   Deliberately small, and deliberately not in charge of the star chart. The
-   revolutions are CSS animations on their own clock: nothing here starts,
-   stops, pauses or re-times them, so they cannot be made to stutter by
-   anything a visitor does. There is no wheel handler and no drag handler
-   anywhere in this file — the page always scrolls normally.
+   The star chart has a camera — wheel to zoom, drag to orient — but the
+   camera and the orbits are kept strictly apart. Orientation lives in custom
+   properties on the frame; the revolutions are CSS animations on their own
+   clock. Nothing here starts, stops, pauses or re-times them, so no amount of
+   zooming or dragging can make the planets stutter.
+
+   The wheel is only ever taken when the pointer is inside the frame AND the
+   zoom would actually change. Outside it, or at either limit, the event is
+   handed straight back and the page scrolls normally.
 
    Progressive enhancement throughout: with JavaScript off the header is
    solid, every reveal target is visible, the palette is whatever the system
@@ -15,6 +19,7 @@
 
   var root = document.documentElement;
   var reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var finePointer = window.matchMedia('(hover: hover) and (pointer: fine)');
 
   function slice(list) {
     return Array.prototype.slice.call(list);
@@ -240,5 +245,220 @@
     }
   } catch (error) {
     /* navigation highlighting is optional */
+  }
+
+  // --- camera controls: wheel to zoom, drag to orient ----------------------
+  // Adapted from the orbit theme, whose behaviour this is meant to restore.
+  //
+  // The camera lives entirely in custom properties on the frame. Nothing here
+  // reads, writes, starts, stops or re-times .ar-arm or .ar-arm-fix, which
+  // are the elements carrying the orbital animations — so however much a
+  // visitor zooms, drags or flings the system, the planets keep revolving on
+  // exactly the same clock they started on.
+  try {
+    var scene = document.querySelector('[data-scene]');
+
+    if (scene && finePointer.matches) {
+      // Must match the rest values in the stylesheet.
+      var REST_ZOOM = 1;
+      var MIN_ZOOM = 0.55;
+      var MAX_ZOOM = 2.6;
+
+      var REST_FLAT = 0.62;   // how open the orbital plane sits at rest
+      var MIN_FLAT = 0.20;    // nearly edge-on
+      var MAX_FLAT = 1;       // face-on; past this it would turn inside out
+
+      var MAX_FLING = 4.5;
+      // Past this much travel the gesture is a drag, and the click that would
+      // otherwise follow it is swallowed rather than navigating.
+      var DRAG_SLOP = 6;
+
+      var zoom = REST_ZOOM;
+      var spin = 0;
+      var flat = REST_FLAT;
+      var spinVelocity = 0;
+
+      var readout = scene.querySelector('[data-zoom-readout]');
+
+      var clampTo = function (value, low, high) {
+        return value < low ? low : value > high ? high : value;
+      };
+
+      var write = function () {
+        scene.style.setProperty('--ar-zoom', zoom.toFixed(3));
+        scene.style.setProperty('--ar-spin', spin.toFixed(2) + 'deg');
+        scene.style.setProperty('--ar-unspin', (-spin).toFixed(2) + 'deg');
+        scene.style.setProperty('--ar-flat', flat.toFixed(3));
+        // Undoing a squash means dividing by it, so the floor keeps this
+        // finite however far the plane is tipped.
+        scene.style.setProperty('--ar-unflat', (1 / Math.max(flat, 0.01)).toFixed(3));
+        if (readout) readout.textContent = Math.round(zoom * 100) + '%';
+      };
+
+      var reset = function () {
+        zoom = REST_ZOOM;
+        spin = 0;
+        flat = REST_FLAT;
+        spinVelocity = 0;
+        write();
+      };
+
+      // --- inertia: the system coasts to a stop after a fling --------------
+      var dragging = false;
+      var coasting = false;
+
+      var coast = function () {
+        if (coasting || dragging || reduced.matches) return;
+        if (Math.abs(spinVelocity) < 0.05) {
+          spinVelocity = 0;
+          return;
+        }
+        coasting = true;
+
+        var stepCoast = function () {
+          if (dragging) {
+            coasting = false;
+            spinVelocity = 0;
+            return;
+          }
+          spin += spinVelocity;
+          spinVelocity *= 0.955;
+          write();
+          if (Math.abs(spinVelocity) < 0.02) {
+            coasting = false;
+            spinVelocity = 0;
+            return;
+          }
+          window.requestAnimationFrame(stepCoast);
+        };
+
+        window.requestAnimationFrame(stepCoast);
+      };
+
+      // --- press and drag to orient ----------------------------------------
+      var dragPointer = null;
+      var travelled = 0;
+      var suppressClick = false;
+      var lastX = 0;
+      var lastY = 0;
+      var lastTime = 0;
+
+      var onMove = function (event) {
+        if (!dragging || event.pointerId !== dragPointer) return;
+
+        var dx = event.clientX - lastX;
+        var dy = event.clientY - lastY;
+        var dt = Math.max(8, event.timeStamp - lastTime);
+        lastX = event.clientX;
+        lastY = event.clientY;
+        lastTime = event.timeStamp;
+
+        travelled += Math.abs(dx) + Math.abs(dy);
+        // Only past the slop does this stop being a click on a planet.
+        if (travelled > DRAG_SLOP) suppressClick = true;
+
+        // Sideways swings the system around; dragging down opens the plane
+        // toward face-on and dragging up tips it toward edge-on.
+        var swing = dx * 0.32;
+        spin += swing;
+        flat = clampTo(flat + dy * 0.0035, MIN_FLAT, MAX_FLAT);
+        // Smoothed, so one stray sample cannot throw the fling.
+        spinVelocity = clampTo(spinVelocity * 0.6 + swing * (16 / dt) * 0.4, -MAX_FLING, MAX_FLING);
+        write();
+      };
+
+      var endDrag = function () {
+        // Unconditional teardown: the listeners come off and the flags reset
+        // even if the state was already half-cleared, so a release that
+        // arrives twice, or outside the window, still leaves nothing latched.
+        dragging = false;
+        dragPointer = null;
+        scene.classList.remove('is-grabbing');
+        window.removeEventListener('pointermove', onMove);
+        window.removeEventListener('pointerup', endDrag);
+        window.removeEventListener('pointercancel', endDrag);
+        window.removeEventListener('mouseup', endDrag);
+        coast();
+      };
+
+      scene.addEventListener('pointerdown', function (event) {
+        // Primary button only, and never a finger or a pen: a touch here has
+        // to stay available for scrolling the page and tapping a planet.
+        if (event.button !== 0 || event.pointerType !== 'mouse') return;
+
+        dragging = true;
+        coasting = false;
+        spinVelocity = 0;
+        travelled = 0;
+        suppressClick = false;
+        dragPointer = event.pointerId;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        lastTime = event.timeStamp;
+        scene.classList.add('is-grabbing');
+
+        // Listening on the window rather than capturing the pointer keeps the
+        // click's own target intact, so a press without travel still follows
+        // whichever planet it landed on.
+        window.addEventListener('pointermove', onMove);
+        window.addEventListener('pointerup', endDrag);
+        window.addEventListener('pointercancel', endDrag);
+        // Belt and braces: if a pointerup is ever lost — dragging out of the
+        // window and releasing there is the usual way — the mouse event still
+        // gets us out of the drag.
+        window.addEventListener('mouseup', endDrag);
+        // No preventDefault here: a planet still needs its focus and its click.
+      });
+
+      // A link is natively draggable, which would hijack the gesture.
+      scene.addEventListener('dragstart', function (event) { event.preventDefault(); });
+
+      // Capture, so a swallowed click never reaches the anchor.
+      scene.addEventListener('click', function (event) {
+        if (!suppressClick) return;
+        suppressClick = false;
+        event.preventDefault();
+        event.stopPropagation();
+      }, true);
+
+      // Put the view back where it started.
+      scene.addEventListener('dblclick', function () { reset(); });
+
+      window.addEventListener('blur', endDrag);
+
+      // --- wheel zoom -------------------------------------------------------
+      // Bound to the window, but answered purely from where the pointer is at
+      // the moment of the event rather than from what it is over in the DOM.
+      // The frame is the interaction area: anywhere outside it the event is
+      // left completely alone, so the page scrolls exactly as it always does.
+      var overMap = function (event) {
+        var box = scene.getBoundingClientRect();
+        if (!box.width || !box.height) return false;
+        return event.clientX >= box.left && event.clientX <= box.right &&
+               event.clientY >= box.top && event.clientY <= box.bottom;
+      };
+
+      window.addEventListener('wheel', function (event) {
+        if (!overMap(event)) return;
+
+        var delta = event.deltaY * (event.deltaMode === 1 ? 16 : 1);
+        var next = clampTo(zoom * Math.exp(-delta * 0.0012), MIN_ZOOM, MAX_ZOOM);
+        // At either limit the wheel is handed straight back to the page, so a
+        // visitor can always keep scrolling down to the portfolio itself and
+        // never gets stuck over the map.
+        if (Math.abs(next - zoom) < 0.0005) return;
+
+        zoom = next;
+        event.preventDefault();
+        write();
+      }, { passive: false });
+
+      // Only now, with the controls actually attached, does the frame start
+      // advertising them.
+      scene.classList.add('is-live', 'is-draggable');
+      write();
+    }
+  } catch (error) {
+    /* the map keeps its resting view and every planet is still a link */
   }
 })();

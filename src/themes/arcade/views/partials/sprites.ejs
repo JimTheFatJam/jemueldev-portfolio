@@ -1,12 +1,504 @@
 <%
-  /* The one shape every world is cut from: a 16x16 pixel disc, centred in a
-   * 24x24 box so there are four cells of margin for rings and aerials.
-   * Row spans are [x, width], top to bottom. Included once per page; each
-   * world sprite then clips to it, which is what keeps every edge on a cell
-   * boundary and makes the art read as pixels rather than as a shrunk circle.
+  /* Pixel-art planet foundry.
+   *
+   * Every sprite is a 32x32 grid drawn into one shared viewBox, emitted once
+   * as an SVG <symbol> and referenced with <use> wherever it is needed. One
+   * copy of the art, however many planets are on the page.
+   *
+   * Each world is two things:
+   *
+   *   · a MATERIAL MAP — 32 rows of 32 characters naming what each pixel is
+   *     made of ('.' is the base material). Drawn freehand; whatever falls
+   *     outside the disc is simply masked away, so the maps can be sketched
+   *     without counting to the edge.
+   *
+   *   · a set of RAMPS — five shades per material, lightest to darkest.
+   *
+   * The shading is computed rather than drawn. Each pixel inside the disc is
+   * treated as a point on a sphere, lit from the upper left, and quantised to
+   * one of the five steps; a thin rim light picks out the dark limb the way
+   * hand-drawn pixel planets do. So a material map only says *what* is there
+   * and the lighting says how round it looks — which is what keeps craters,
+   * continents and cloud bands sitting on a sphere instead of on a disc.
+   *
+   * Runs of identical pixels merge into single rects, which takes a planet
+   * from ~900 rects to ~150.
    */
-  const AR_DISC = [
-    [5, 6], [3, 10], [2, 12], [1, 14], [1, 14], [0, 16], [0, 16], [0, 16],
-    [0, 16], [0, 16], [0, 16], [1, 14], [1, 14], [2, 12], [3, 10], [5, 6]
-  ];
-%><svg class="ar-defs" aria-hidden="true" focusable="false" width="0" height="0"><defs><clipPath id="ar-disc"><% AR_DISC.forEach(function (row, y) { %><rect x="<%= row[0] + 4 %>" y="<%= y + 4 %>" width="<%= row[1] %>" height="1"/><% }); %></clipPath></defs></svg>
+
+  const AR_SIZE = 32;          // grid, and the viewBox
+  const AR_CX = 15.5;          // disc centre
+  const AR_CY = 15.5;
+  const AR_R = 14;             // disc radius
+
+  // Light from the upper left and slightly toward the viewer.
+  const AR_LIGHT = (() => {
+    const v = [-0.52, -0.58, 0.63];
+    const len = Math.hypot(v[0], v[1], v[2]);
+    return [v[0] / len, v[1] / len, v[2] / len];
+  })();
+
+  // Lambert term -> one of five steps. The bands are deliberately uneven:
+  // more resolution near the terminator, where the eye reads the curve.
+  function arShade(lambert) {
+    if (lambert > 0.80) return 0;
+    if (lambert > 0.54) return 1;
+    if (lambert > 0.24) return 2;
+    if (lambert > -0.04) return 3;
+    return 4;
+  }
+
+  /* Build the lit grid for one world. Returns a 32x32 array of colours (or
+     null where nothing is drawn). */
+  function arSurface(world) {
+    const map = world.map || [];
+    const ramps = world.ramps;
+    const grid = [];
+
+    for (let y = 0; y < AR_SIZE; y += 1) {
+      grid[y] = [];
+      const row = map[y] || '';
+
+      for (let x = 0; x < AR_SIZE; x += 1) {
+        const nx = (x + 0.5 - AR_CX) / AR_R;
+        const ny = (y + 0.5 - AR_CY) / AR_R;
+        const d2 = nx * nx + ny * ny;
+
+        if (d2 > 1) { grid[y][x] = null; continue; }
+
+        const nz = Math.sqrt(1 - d2);
+        const lambert = nx * AR_LIGHT[0] + ny * AR_LIGHT[1] + nz * AR_LIGHT[2];
+
+        // The lit limb opposite the sun: a one-pixel atmosphere that stops a
+        // planet reading as a flat coin.
+        if (world.rim && d2 > 0.855 && lambert < 0.06) { grid[y][x] = world.rim; continue; }
+
+        const key = row.charAt(x) || '.';
+        const ramp = ramps[key] || ramps['.'];
+        grid[y][x] = ramp[arShade(lambert)];
+      }
+    }
+
+    return grid;
+  }
+
+  /* A ring system, as pixels. Sampled on the same grid so it matches the
+     planet's resolution exactly, and split into the half behind the planet
+     and the half in front of it so the planet sits *inside* the rings. */
+  function arRings(world) {
+    const spec = world.rings;
+    const back = [];
+    const front = [];
+    if (!spec) return { back: back, front: front };
+
+    const flatten = spec.flatten;   // vertical squash: how open the rings are
+    const tilt = spec.tilt || 0;    // pixels the ring plane sits below centre
+
+    for (let y = 0; y < AR_SIZE; y += 1) {
+      back[y] = [];
+      front[y] = [];
+
+      for (let x = 0; x < AR_SIZE; x += 1) {
+        const dx = x + 0.5 - AR_CX;
+        const dy = (y + 0.5 - AR_CY - tilt) / flatten;
+        const r = Math.hypot(dx, dy);
+
+        let band = null;
+        for (let i = 0; i < spec.bands.length; i += 1) {
+          const b = spec.bands[i];
+          if (r >= b.from && r < b.to) { band = b; break; }
+        }
+        if (!band) continue;
+
+        // Shade across the ring: the far side is dimmer, and the arc passing
+        // behind the planet is dimmer still.
+        const behind = dy < 0;
+        let step = band.shade + (behind ? 1 : 0);
+
+        // The planet throws a shadow across the near rings.
+        const inShadow = !behind && dx > -3 && dx < 11 && Math.abs(dy) < AR_R + 3;
+        if (inShadow) step += 2;
+
+        const colour = spec.ramp[Math.min(step, spec.ramp.length - 1)];
+
+        // Anything over the disc belongs to the planet, not the rings.
+        const onDisc = Math.hypot(x + 0.5 - AR_CX, y + 0.5 - AR_CY) <= AR_R;
+        if (onDisc) continue;
+
+        if (behind) back[y][x] = colour;
+        else front[y][x] = colour;
+      }
+    }
+
+    return { back: back, front: front };
+  }
+
+  /* Merge runs of equal colour along each row into single rects. */
+  function arRects(grid, extraClass) {
+    const out = [];
+    const cls = extraClass ? ' class="' + extraClass + '"' : '';
+
+    for (let y = 0; y < AR_SIZE; y += 1) {
+      const row = grid[y] || [];
+      let x = 0;
+      while (x < AR_SIZE) {
+        const colour = row[x];
+        if (!colour) { x += 1; continue; }
+        let run = 1;
+        while (x + run < AR_SIZE && row[x + run] === colour) run += 1;
+        out.push('<rect x="' + x + '" y="' + y + '" width="' + run + '" height="1" fill="' + colour + '"' + cls + '/>');
+        x += run;
+      }
+    }
+
+    return out.join('');
+  }
+
+  /* Pixels that blink. They take their colour from an inherited custom
+     property, because CSS selectors cannot reach inside a <use>, but custom
+     properties inherit straight through it. Animating an unregistered
+     property switches it in hard steps, which is the blink we want anyway. */
+  function arSparks(cells, variable, fallback) {
+    return cells.map(function (cell) {
+      return '<rect x="' + cell[0] + '" y="' + cell[1] + '" width="' + (cell[2] || 1) +
+             '" height="' + (cell[3] || 1) + '" fill="var(' + variable + ', ' + fallback + ')"/>';
+    }).join('');
+  }
+
+  /* ----------------------------------------------------------------------
+     The worlds
+     ---------------------------------------------------------------------- */
+
+  const AR_WORLDS = {
+    /* Ocean world. Continents, shelf shallows, two cloud banks, polar caps. */
+    terra: {
+      rim: '#7fe6ff',
+      ramps: {
+        '.': ['#6fdcff', '#2a9fe0', '#1a6fb8', '#114b84', '#0a2f57'],
+        's': ['#9df0ff', '#4fc0ee', '#2a8ccc', '#1a5f9c', '#0f3d68'],
+        'g': ['#bcf47a', '#7ccc4e', '#4e9c32', '#356e22', '#204516'],
+        'f': ['#7ccc4e', '#4e9c32', '#356e22', '#255018', '#15300f'],
+        'c': ['#ffffff', '#eaf4ff', '#c6daf0', '#9db8d6', '#7592b4'],
+        'i': ['#ffffff', '#f2faff', '#d6e8f8', '#b0cce4', '#8aa8c8']
+      },
+      map: [
+        '................................',
+        '..........iiiiiiiiii............',
+        '........iiiiiiiiiiiiii..........',
+        '.......iiiiiiiiiiiiiiii.........',
+        '......ii.iii...i.iii.ii.........',
+        '.....s.gg.......sgggs...........',
+        '....sggggs.....sgggggs..........',
+        '...sfgggggs...sggfffggs.........',
+        '...sffggggg...sgffffggg.........',
+        '..cc.fffgg.....ggffffgg.........',
+        '..ccc..ffg......ggfffg..........',
+        '.....s..gs.......gggs...........',
+        '.................gg.............',
+        '....sgs..........sggs...........',
+        '...sgggs........sffgggs.........',
+        '..sfggggs.......sffffggs........',
+        '..sffgggs........sfffgg.........',
+        '...sffgg....cc....sffg..........',
+        '....sfgs...ccc.....sfs..........',
+        '.....sgs.............s..........',
+        '.......s........................',
+        '...............sggs.............',
+        '.............sgggggs............',
+        '............sfggggggs...........',
+        '............sffgggggs...........',
+        '.....iiiiiiiiiiiiiiiiii.........',
+        '......iiiiiiiiiiiiiiii..........',
+        '........iiiiiiiiiiii............',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+      ]
+    },
+
+    /* Volcanic world. A branching fissure network with bright vents. */
+    forge: {
+      rim: '#ff8c3c',
+      ramps: {
+        '.': ['#7a675d', '#574740', '#3d322c', '#28201c', '#16110e'],
+        'a': ['#9c8a80', '#6f5d54', '#4e4039', '#372c27', '#241c19'],
+        'l': ['#ffd27a', '#ff9e2c', '#f06a10', '#b8400a', '#7a2206'],
+        'v': ['#fffbe0', '#ffe066', '#ffab1f', '#e0700c', '#9c3d06']
+      },
+      map: [
+        '................................',
+        '..........aaaa.aaaa.............',
+        '........aa...ll.l...aa..........',
+        '.......a....l....l....a.........',
+        '......a....l......ll...aa.......',
+        '.....aa...ll........l....a......',
+        '....a....l...aa.....ll...a......',
+        '....a...lv..a..a.....l....a.....',
+        '...a...ll..a....aa....ll..a.....',
+        '...a..l...a.......a.....l.a.....',
+        '..a..ll..a.........aa...ll.a....',
+        '..a.l...a............a...l.a....',
+        '..a.l..aa.....vv......a..ll.a...',
+        '..all..a.....vllv.....aa..l.a...',
+        '..al..aa....vl..lv.....a..la....',
+        '..al.aa....ll....ll....aa.la....',
+        '..all.a...ll......l.....a.la....',
+        '...al..a.ll........ll...a.la....',
+        '...all..all..........l..a.l.....',
+        '....al...l............l.a.l.....',
+        '....all.ll.....aaa.....lal......',
+        '.....al.l.....a...a....ll.......',
+        '.....all.....a.....a...l........',
+        '......al....a.......a.l.........',
+        '......all..a.........ll.........',
+        '.......al.a....vvv....l.........',
+        '........aa....lll....ll.........',
+        '.........aaa.......aaa..........',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+      ],
+      sparks: { variable: '--ar-spark-hot', fallback: '#ffe066', cells: [[9, 7], [14, 12], [15, 12], [13, 13], [16, 13], [15, 25], [16, 25]] }
+    },
+
+    /* Machine world. Etched traces with solder points that pulse. */
+    circuit: {
+      rim: '#4fe8da',
+      ramps: {
+        '.': ['#44568c', '#2f3f6e', '#212c4f', '#161e37', '#0d1322'],
+        't': ['#b4fff6', '#4fe8da', '#28bdb0', '#178a80', '#0d564f'],
+        'n': ['#ffffff', '#c4fff8', '#5ff0e4', '#2bb8ac', '#176f67']
+      },
+      map: [
+        '................................',
+        '..........tttttttt..............',
+        '........t.......t.t.............',
+        '.......t...nttttt..t............',
+        '......t....t.......t.tt.........',
+        '.....t.....t...nttttt..t........',
+        '....tttttttt...t.......t........',
+        '....t..........t...ntttt........',
+        '...t...nttttttttt..t....t.......',
+        '...t...t........t..t....t.......',
+        '..tttttt...nttttt..ttttttt......',
+        '..t........t.......t.....t......',
+        '..t...nttttt...nttttt....t......',
+        '..t...t........t.........t......',
+        '..ttttt...nttttt...ntttttt......',
+        '..t.......t........t............',
+        '..t...ntttt....ntttt....ttt.....',
+        '..t...t........t........t.......',
+        '..tttttt...nttttttt.....t.......',
+        '...t.......t.......t...tt.......',
+        '...t...ntttt...ntttt...t........',
+        '...t...t.......t.......t........',
+        '....ttttt...nttttt...ttt........',
+        '....t.......t........t..........',
+        '.....t...ntttt...nttttt.........',
+        '.....t...t.......t..............',
+        '......ttttt...ntttt.............',
+        '.........t.......t..............',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+      ],
+      sparks: { variable: '--ar-spark-cool', fallback: '#5ff0e4', cells: [[11, 3], [15, 5], [19, 7], [7, 8], [11, 10], [6, 12], [15, 12], [10, 14], [19, 14], [6, 16], [15, 16], [11, 18], [7, 20], [15, 20], [12, 22], [9, 24], [17, 24], [14, 26]] }
+    },
+
+    /* Ice world. Crevasse field, snow plateaus, broad caps. */
+    cryo: {
+      rim: '#bfe8ff',
+      ramps: {
+        '.': ['#ffffff', '#dcefff', '#b4d6f4', '#88b2db', '#5f88b4'],
+        'd': ['#9cc4e8', '#6e9ac8', '#4a73a4', '#325580', '#20395a'],
+        's': ['#ffffff', '#ffffff', '#eaf6ff', '#c8e0f4', '#a0bcd8']
+      },
+      map: [
+        '................................',
+        '..........ssssssssss............',
+        '........ssssssssssssss..........',
+        '.......sss.d.....d.ssss.........',
+        '......ss....d...d.....ss........',
+        '.....ss......d.d.......ss.......',
+        '....s.........d.........s.......',
+        '....s........d.d........s.......',
+        '...s........d...dd.......s......',
+        '...s.......d......d......s......',
+        '..ss......d........d.....ss.....',
+        '..s......d..ss......dd....s.....',
+        '..s.....d..ssss.......d...s.....',
+        '..s....d...ssss........d..s.....',
+        '..s...dd....ss..........d.s.....',
+        '..s..d.................dd.s.....',
+        '..s.d...............dd....s.....',
+        '..ss.............ddd......s.....',
+        '...s..........ddd........ss.....',
+        '...s.......ddd...ss......s......',
+        '....s...ddd.....ssss....s.......',
+        '....s.dd........ssss....s.......',
+        '.....ss..........ss....ss.......',
+        '......ss..............ss........',
+        '.......sss..........sss.........',
+        '........ssssssssssssss..........',
+        '.........ssssssssssss...........',
+        '...........ssssssss.............',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+      ]
+    },
+
+    /* Ringed gas giant. Banded atmosphere, a storm, and a real ring system
+       split around the planet. */
+    halo: {
+      rim: '#ffd890',
+      ramps: {
+        '.': ['#ffe8b0', '#f5c97a', '#d9a254', '#ad7a3a', '#7a5226'],
+        '1': ['#fff0c8', '#f0d089', '#cfa95f', '#a37e40', '#73562a'],
+        '2': ['#f0c488', '#d19a52', '#aa763a', '#80562a', '#59391a'],
+        '3': ['#fff8e0', '#f2dfb2', '#d4bd87', '#a89361', '#786640'],
+        's': ['#ffab7c', '#e8704a', '#c24a30', '#8f301d', '#5c1c0f']
+      },
+      rings: {
+        flatten: 0.30,
+        tilt: 1,
+        ramp: ['#ffeec4', '#e8cf96', '#c9a96c', '#9c8050', '#6e5836', '#4a3a24'],
+        bands: [
+          { from: 15.5, to: 18.5, shade: 1 },
+          { from: 19.0, to: 19.8, shade: 3 },
+          { from: 20.2, to: 23.0, shade: 2 }
+        ]
+      },
+      map: [
+        '................................',
+        '..........3333333333............',
+        '........333333333333333.........',
+        '.......11111111111111111........',
+        '......1111111111111111111.......',
+        '.....333333333333333333333......',
+        '....33333333333333333333333.....',
+        '....22222222222222222222222.....',
+        '...2222222222222222222222222....',
+        '...11111111111111111111111111...',
+        '..111111111111111111111111111...',
+        '..333333333333333333333333333...',
+        '..33333333333333333333333333....',
+        '..2222222sss22222222222222222...',
+        '..222222sssss2222222222222222...',
+        '..111111sssss1111111111111111...',
+        '..1111111sss11111111111111111...',
+        '..333333333333333333333333333...',
+        '..333333333333333333333333333...',
+        '...2222222222222222222222222....',
+        '...2222222222222222222222222....',
+        '....11111111111111111111111.....',
+        '....33333333333333333333333.....',
+        '.....333333333333333333333......',
+        '......2222222222222222222.......',
+        '.......11111111111111111........',
+        '........333333333333333.........',
+        '..........3333333333............',
+        '................................',
+        '................................',
+        '................................',
+        '................................'
+      ]
+    },
+
+    /* Cratered relay moon. Impact basins with lit rims, and a beacon that
+       blinks on the terminator. */
+    relay: {
+      rim: '#b8b4ff',
+      ramps: {
+        '.': ['#d2cfe8', '#a09cc4', '#726e9a', '#4e4a70', '#302d4a'],
+        'c': ['#f0eeff', '#c0bce0', '#8f8bb4', '#64608a', '#403d60'],
+        'k': ['#9a96bc', '#6f6b94', '#4e4a70', '#363352', '#222036'],
+        'L': ['#ffffff', '#ffe89c', '#ffc53d', '#d1920e', '#8a5f06']
+      },
+      map: [
+        '................................',
+        '................................',
+        '............cccc................',
+        '...........ckkkkc...............',
+        '..........ckkkkkkc.....cc.......',
+        '..........ckkkkkkc....ckkc......',
+        '...........cccccc.....ckkc......',
+        '.......................cc.......',
+        '....cccc........................',
+        '...ckkkkc............ccc........',
+        '...ckkkkkc..........ckkkc.......',
+        '...ckkkkc...........ckkkc.......',
+        '....cccc.............ccc........',
+        '..................cccccc........',
+        '.........cc......ckkkkkkc.......',
+        '........ckkc.....ckkkkkkc.......',
+        '........ckkc......cccccc........',
+        '.........cc.....................',
+        '................cccc............',
+        '...............ckkkkc...........',
+        '...............ckkkkc...........',
+        '................cccc............',
+        '......cccc......................',
+        '.....ckkkkc.............cc......',
+        '.....ckkkkc............ckkc.....',
+        '......cccc..............cc......',
+        '................................',
+        '..........cccc..................',
+        '.........ckkkkc.................',
+        '..........cccc..................',
+        '................................',
+        '................................'
+      ],
+      sparks: { variable: '--ar-spark-beacon', fallback: '#ffc53d', cells: [[23, 4, 2, 1], [23, 5, 2, 1]] }
+    }
+  };
+
+  /* The star. Its own thing: no terminator, a hot core falling off to a
+     cooler limb, granulation, spots, and a corona that flickers. */
+  const AR_SUN = {
+    ramp: ['#ffffff', '#fff6b4', '#ffdc5a', '#ffb224', '#f08610', '#d35f08'],
+    spots: [[11, 10], [12, 10], [11, 11], [19, 18], [20, 18], [20, 19], [14, 22]],
+    grains: [[13, 7], [18, 8], [9, 13], [22, 14], [10, 19], [17, 12], [21, 21], [13, 17], [16, 25], [24, 11]],
+    flares: [
+      [15, 0, 2, 2], [15, 30, 2, 2], [0, 15, 2, 2], [30, 15, 2, 2],
+      [5, 5, 2, 2], [25, 5, 2, 2], [5, 25, 2, 2], [25, 25, 2, 2]
+    ]
+  };
+
+  function arSunGrid() {
+    const grid = [];
+    const R = 13.2;
+
+    for (let y = 0; y < AR_SIZE; y += 1) {
+      grid[y] = [];
+      for (let x = 0; x < AR_SIZE; x += 1) {
+        const dx = x + 0.5 - AR_CX;
+        const dy = y + 0.5 - AR_CY;
+        const d = Math.hypot(dx, dy) / R;
+        if (d > 1) { grid[y][x] = null; continue; }
+        // Limb darkening: brightest at the centre, cooling toward the edge.
+        let step = d < 0.30 ? 0 : d < 0.52 ? 1 : d < 0.72 ? 2 : d < 0.88 ? 3 : 4;
+        grid[y][x] = AR_SUN.ramp[step];
+      }
+    }
+
+    AR_SUN.grains.forEach(function (cell) {
+      if (grid[cell[1]] && grid[cell[1]][cell[0]]) grid[cell[1]][cell[0]] = AR_SUN.ramp[1];
+    });
+    AR_SUN.spots.forEach(function (cell) {
+      if (grid[cell[1]] && grid[cell[1]][cell[0]]) grid[cell[1]][cell[0]] = AR_SUN.ramp[5];
+    });
+
+    return grid;
+  }
+%>
+<svg class="ar-defs" aria-hidden="true" focusable="false" width="0" height="0"><defs>
+<% Object.keys(AR_WORLDS).forEach(function (key) {
+     const world = AR_WORLDS[key];
+     const rings = arRings(world);
+%><symbol id="ar-p-<%= key %>" viewBox="0 0 <%= AR_SIZE %> <%= AR_SIZE %>"><%- world.rings ? arRects(rings.back) : '' %><%- arRects(arSurface(world)) %><%- world.rings ? arRects(rings.front) : '' %><%- world.sparks ? arSparks(world.sparks.cells, world.sparks.variable, world.sparks.fallback) : '' %></symbol><% }); %>
+<symbol id="ar-p-sun" viewBox="0 0 <%= AR_SIZE %> <%= AR_SIZE %>"><%- arRects(arSunGrid()) %><%- arSparks(AR_SUN.flares, '--ar-spark-corona', '#ffb224') %></symbol>
+</defs></svg>

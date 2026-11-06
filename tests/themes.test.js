@@ -1541,6 +1541,10 @@ describe('arcade theme', () => {
     assert.match(body, /class="ar-map"/);
     assert.match(body, /class="ar-orrery"/);
     assert.match(body, /class="ar-star"/);
+    // The frame is the interaction area and the camera is what the script
+    // writes to; both have to be there for the controls to attach.
+    assert.match(body, /class="ar-orrery-frame" data-scene/);
+    assert.match(body, /class="ar-camera"/);
 
     // Six worlds on six rings, each one a real anchor.
     assert.equal((body.match(/class="ar-world"/g) || []).length, 6, 'expected six worlds');
@@ -1550,7 +1554,7 @@ describe('arcade theme', () => {
 
     // The dock names the same six, in order, and is the accessible path.
     assert.match(body, /class="ar-dock"/);
-    const codes = [...body.matchAll(/class="ar-dock-code"[^>]*>(\d\d) · ([A-Z]{3})</g)]
+    const codes = [...body.matchAll(/class="ar-dock-code"[^>]*>(\d\d) &middot; ([A-Z]{3})</g)]
       .map((m) => m[1] + ':' + m[2]);
     assert.deepEqual(codes, ['01:ABT', '02:WRK', '03:SKL', '04:RSH', '05:EDU', '06:CTC']);
 
@@ -1562,6 +1566,11 @@ describe('arcade theme', () => {
     // The worlds point at the same places, so the map really is navigation.
     const worldHrefs = [...body.matchAll(/<a class="ar-world" href="([^"]+)"/g)].map((m) => m[1]);
     assert.deepEqual(worldHrefs, hrefs);
+
+    // Each world hangs off an arm and a counter-rotating fix. Both must be
+    // present for every one of them, or that planet will tip as it orbits.
+    assert.equal((body.match(/class="ar-arm"/g) || []).length, 6);
+    assert.equal((body.match(/class="ar-arm-fix"/g) || []).length, 6);
   });
 
   test('the map duplicates the dock visually, not for assistive technology', async () => {
@@ -1574,20 +1583,43 @@ describe('arcade theme', () => {
     assert.equal((body.match(/<a class="ar-world" href="[^"]+" tabindex="-1"/g) || []).length, 6);
 
     // The worlds carry no text of their own — that is what keeps a moving
-    // label from ever colliding with the artwork.
-    const orrery = body.slice(body.indexOf('class="ar-orrery"'), body.indexOf('class="ar-scroll"'));
-    assert.doesNotMatch(orrery.replace(/<svg[\s\S]*?<\/svg>/g, ''), />[^<>\s][^<>]*</);
+    // label from ever colliding with the artwork. The camera is the moving
+    // part, so that is the part that has to be empty of text; the hint sits
+    // outside it, pinned to the frame, and never moves.
+    const camera = body.slice(body.indexOf('class="ar-camera"'), body.indexOf('class="ar-hud"'));
+    assert.doesNotMatch(camera.replace(/<svg[\s\S]*?<\/svg>/g, ''), />[^<>\s][^<>]*</);
+    // And the hint really is outside the camera.
+    assert.ok(body.indexOf('class="ar-hud"') > body.indexOf('</div>'));
   });
 
   test('the planets are drawn here, not borrowed from orbit', async () => {
     const { body } = await new Client().html('/');
     // Pixel art: crisp-edged SVG rectangles, no photographic textures.
     assert.match(body, /shape-rendering="crispEdges"/);
-    assert.ok((body.match(/<rect/g) || []).length > 100, 'expected a lot of pixels');
     assert.doesNotMatch(body, /ob-planet|ob-body|ob-sun|ob-launch/);
-    // A single shared pixel disc clips every sprite.
-    assert.match(body, /<clipPath id="ar-disc">/);
-    assert.equal((body.match(/<clipPath id="ar-disc">/g) || []).length, 1, 'defs must be emitted once');
+
+    // Seven worlds, each drawn once into a symbol. Anything less means a
+    // planet lost its art; anything more means it is being duplicated.
+    const symbols = [...body.matchAll(/<symbol id="ar-p-([a-z]+)"/g)].map((m) => m[1]).sort();
+    assert.deepEqual(symbols, ['circuit', 'cryo', 'forge', 'halo', 'relay', 'sun', 'terra']);
+
+    // Every sprite on the page references that art rather than repeating it:
+    // six in the dock, six in the orrery, and the star.
+    assert.equal((body.match(/<use href="#ar-p-[a-z]+"\/>/g) || []).length, 13);
+
+    // Shaded, not flat. A lit sphere quantised into five steps gives each
+    // planet far more distinct colours than a solid disc ever would, so this
+    // trips the moment the shading is dropped for plain circles.
+    const defs = body.slice(body.indexOf('<svg class="ar-defs"'), body.indexOf('</defs>'));
+    const colours = new Set([...defs.matchAll(/fill="(#[0-9a-f]{6})"/g)].map((m) => m[1]));
+    assert.ok(colours.size > 60, 'expected a deep palette, got ' + colours.size);
+    assert.ok((defs.match(/<rect/g) || []).length > 600, 'expected real pixel detail');
+
+    // Saturn's rings are drawn around the planet, so its symbol is the widest
+    // thing on the sheet: pixels out at the very edge of the grid, which no
+    // other world has, since their art stops at the disc.
+    const halo = defs.slice(defs.indexOf('id="ar-p-halo"'), defs.indexOf('id="ar-p-relay"'));
+    assert.match(halo, /<rect x="0"/, 'the ring system should reach the edge of the grid');
   });
 
   test('the map is homepage-only and the ordinary nav is always there', async () => {
@@ -1718,6 +1750,69 @@ describe('arcade theme', () => {
     assert.match(boot, /setAttribute\('data-ar-theme'/);
   });
 
+  test('the night palette is navy and the day palette is neutral', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+
+    const night = css.slice(css.indexOf(':root {'), css.indexOf('@media (prefers-color-scheme: light)'));
+    const day = css.slice(css.indexOf(':root[data-ar-theme="light"] {'));
+
+    const token = (block, name) => {
+      const m = block.match(new RegExp('--ar-' + name + ': (#[0-9a-f]{6});'));
+      assert.ok(m, 'no --ar-' + name);
+      const c = [1, 3, 5].map((i) => parseInt(m[1].slice(i, i + 2), 16));
+      return { hex: m[1], r: c[0], g: c[1], b: c[2] };
+    };
+
+    // Night reads as navy, not as the purple it used to be: the blue channel
+    // leads the red one by a clear margin everywhere it matters.
+    ['bg', 'bg-alt', 'panel', 'panel-alt', 'line'].forEach(function (name) {
+      const c = token(night, name);
+      assert.ok(c.b > c.r + 14, 'night --ar-' + name + ' (' + c.hex + ') is not navy enough');
+      assert.ok(c.b >= c.g, 'night --ar-' + name + ' (' + c.hex + ') leans green');
+    });
+    // And it really is almost black.
+    const bg = token(night, 'bg');
+    assert.ok(bg.r + bg.g + bg.b < 110, 'the night background is not dark enough');
+
+    // Day is a neutral off-white, not a tinted one. A near-grey keeps every
+    // channel within a few points of the others.
+    ['bg', 'bg-alt', 'panel', 'panel-alt'].forEach(function (name) {
+      const c = token(day, name);
+      const spread = Math.max(c.r, c.g, c.b) - Math.min(c.r, c.g, c.b);
+      assert.ok(spread <= 16, 'day --ar-' + name + ' (' + c.hex + ') is tinted, spread ' + spread);
+      assert.ok(c.r + c.g + c.b > 660, 'day --ar-' + name + ' (' + c.hex + ') is not light enough');
+      // Specifically: not the lavender it used to be. A faintly cool grey is
+      // wanted and is fine — what is not is purple, which is blue running
+      // ahead while green falls behind both of its neighbours. On a cool grey
+      // green sits between red and blue; on a lavender it drops below them.
+      assert.ok(c.g >= (c.r + c.b) / 2 - 3,
+        'day --ar-' + name + ' (' + c.hex + ') is purple, not neutral');
+    });
+    // Ink on paper is a dark navy, not black and not violet.
+    const ink = token(day, 'ink');
+    assert.ok(ink.r + ink.g + ink.b < 180, 'day ink is too light');
+    assert.ok(ink.b > ink.r, 'day ink lost its navy cast');
+
+    // Cyan leads and yellow emphasises.
+    assert.match(night, /--ar-accent: #2ee6d6;/);
+    assert.match(night, /--ar-accent-warm: #ffd029;/);
+    assert.ok(/--ar-accent: #[0-9a-f]{6};/.test(day), 'day has no lead accent');
+  });
+
+  test('space stays dark on a light page, so the art is never washed out', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+    // The frame declares its own interior palette rather than inheriting the
+    // page's, which is what lets one set of sprites serve both themes.
+    const start = css.indexOf('.ar-orrery-frame {\n  --ar-void');
+    assert.ok(start > -1, 'the frame does not declare a space palette');
+    const frame = css.slice(start, start + 500);
+    assert.match(frame, /--ar-void: #080a1c;/);
+    assert.match(frame, /--ar-muted: #a9b3e4;/);
+    assert.match(frame, /--ar-accent: #2ee6d6;/);
+    // The hint inside the frame is coloured against that, not against paper.
+    assert.match(css, /\.ar-hud \{[\s\S]*?color: var\(--ar-muted\);/);
+  });
+
   test('layout containment and reduced motion are in place', async () => {
     const css = await (await new Client().get('/themes/arcade/theme.css')).text();
     assert.match(css, /overflow-wrap: anywhere/);
@@ -1727,38 +1822,66 @@ describe('arcade theme', () => {
     const reduced = (css.match(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}\n/) || [''])[0];
     assert.ok(reduced, 'no reduced-motion block');
     // The system becomes a still diagram rather than disappearing.
-    assert.match(reduced, /\.ar-arm, \.ar-world \{ animation: none !important; \}/);
+    assert.match(reduced, /\.ar-arm, \.ar-arm-fix, \.ar-star, \.ar-sprite-world \{ animation: none !important; \}/);
     for (let slot = 1; slot <= 6; slot += 1) {
       assert.match(reduced, new RegExp('\\.ar-ring--' + slot + ' \\.ar-arm \\{ transform: rotate\\(\\d+deg\\); \\}'), `arm ${slot}`);
-      assert.match(reduced, new RegExp('\\.ar-ring--' + slot + ' \\.ar-world \\{ transform: rotate\\(-\\d+deg\\); \\}'), `world ${slot}`);
+      assert.match(reduced, new RegExp('\\.ar-ring--' + slot + ' \\.ar-arm-fix \\{ transform: rotate\\(-\\d+deg\\); \\}'), `fix ${slot}`);
     }
+    // .ar-world carries the camera correction, not an animation. Freezing it
+    // here would overwrite that and leave every planet squashed and tipped.
+    assert.doesNotMatch(reduced, /\.ar-ring--\d \.ar-world \{ transform:/);
     // Reveals must never be able to strand content when motion is off.
     assert.match(reduced, /\[data-reveal\][\s\S]*?opacity: 1/);
   });
 
-  test('the orrery stands down on narrow viewports without losing a link', async () => {
+  test('the map leads at every width, and nothing is ever hidden', async () => {
     const css = await (await new Client().get('/themes/arcade/theme.css')).text();
-    const compact = (css.match(/@media \(max-width: 63\.99rem\) \{[\s\S]*?\n\}\n/) || [''])[0];
-    assert.ok(compact, 'no compact breakpoint');
-    assert.match(compact, /\.ar-orrery \{ display: none; \}/);
-    // The dock is never the thing that is hidden — it is the fallback.
+
+    // Neither half of the landing page is ever taken away: the orrery is the
+    // attraction and the dock is the accessible path, and a visitor on a
+    // phone is entitled to both.
+    assert.doesNotMatch(css, /\.ar-orrery[^-{][^{]*\{[^}]*display: none/);
     assert.doesNotMatch(css, /\.ar-dock[^{]*\{[^}]*display: none/);
-    // And it grows, because below that width it is the whole interface.
-    assert.match(compact, /\.ar-dock-sprite \{ width: 2\.5rem/);
+
+    // Side by side when there is room; stacked with the map on top when there
+    // is not, so the solar system is the first thing on the page either way.
+    const wide = (css.match(/@media \(min-width: 64rem\) \{[\s\S]*?\n\}\n/) || [''])[0];
+    assert.match(wide, /grid-template-areas: "brief orrery" "cue orrery";/);
+    const narrow = (css.match(/@media \(max-width: 63\.99rem\) \{[\s\S]*?\n\}\n/) || [''])[0];
+    assert.match(narrow, /grid-template-areas: "orrery" "brief" "cue";/);
+
+    // The frame shrinks rather than the contents overflowing it.
+    assert.match(narrow, /\.ar-orrery-frame \{ max-width: min\(/);
+    const phone = (css.match(/@media \(max-width: 34rem\) \{[\s\S]*?\n\}\n/) || [''])[0];
+    assert.match(phone, /--ar-world-base: clamp\(/);
+
+    // A finger gets a bigger target than the art, at any size.
+    assert.match(css, /@media \(pointer: coarse\) \{\s*\n\s*\.ar-world::before \{ inset: -0?\.\d+rem; \}/);
   });
 
   test('each world keeps its own size and stays upright by construction', async () => {
     const css = await (await new Client().get('/themes/arcade/theme.css')).text();
 
-    // The arm turns one way, the world exactly the other, on one duration.
+    // The arm turns one way, the fix exactly the other, on one duration.
     assert.match(css, /@keyframes ar-arm \{ from \{ transform: rotate\(0deg\); \} to \{ transform: rotate\(360deg\); \} \}/);
     assert.match(css, /@keyframes ar-world \{ from \{ transform: rotate\(0deg\); \} to \{ transform: rotate\(-360deg\); \} \}/);
     assert.match(css, /\.ar-arm \{[\s\S]*?animation: ar-arm var\(--ar-dur\) linear infinite;/);
-    assert.match(css, /\.ar-world \{[\s\S]*?animation: ar-world var\(--ar-dur\) linear infinite;/);
+    assert.match(css, /\.ar-arm-fix \{[\s\S]*?animation: ar-world var\(--ar-dur\) linear infinite;/);
 
-    // Centred with margins, which rotation cannot disturb. A percentage
-    // translate would resolve against the world's own box instead of the
-    // ring, which is exactly how this went wrong the first time.
+    // The camera squashes and spins the whole plane; the world undoes exactly
+    // that and nothing else, so a planet stays round and upright whatever the
+    // orientation — and so does its hit area, because the correction is on
+    // the anchor rather than on a span inside it.
+    assert.match(css, /\.ar-camera \{[\s\S]*?transform: scale\(var\(--ar-zoom\)\) rotate\(var\(--ar-spin\)\) scaleY\(var\(--ar-flat\)\);/);
+    assert.match(css, /\.ar-world \{[\s\S]*?transform: scaleY\(var\(--ar-unflat\)\) rotate\(var\(--ar-unspin\)\);/);
+    assert.match(css, /\.ar-star \{[\s\S]*?transform: scaleY\(var\(--ar-unflat\)\) rotate\(var\(--ar-unspin\)\);/);
+    // Inverting a squash means dividing by it, so the two must be a pair.
+    assert.match(css, /--ar-flat: 0\.62;/);
+    assert.match(css, /--ar-unflat: 1\.6129;/);
+
+    // Centred with margins, which the camera's transforms cannot disturb. A
+    // percentage translate would resolve against the world's own box instead
+    // of the ring, which is exactly how this went wrong the first time.
     assert.match(css, /\.ar-world \{[\s\S]*?margin-left: calc\(var\(--ar-world-size\) \/ -2\);/);
     assert.doesNotMatch(css, /\.ar-world \{[^}]*transform: translate/);
 
@@ -1780,32 +1903,86 @@ describe('arcade theme', () => {
     assert.equal(new Set(durations).size, 6, 'every ring needs its own period');
     assert.ok(Math.min(...durations) >= 30, 'a drift, not a spin');
 
-    // An arm and its world must share a delay, or the world tips.
+    // An arm and its fix must share a delay, or the world tips.
     for (let slot = 1; slot <= 6; slot += 1) {
       assert.match(
         css,
-        new RegExp('\\.ar-ring--' + slot + ' \\.ar-arm, \\.ar-ring--' + slot + ' \\.ar-world \\{ animation-delay: -\\d+s; \\}'),
-        `ring ${slot} must offset its arm and its world together`
+        new RegExp('\\.ar-ring--' + slot + ' \\.ar-arm, \\.ar-ring--' + slot + ' \\.ar-arm-fix \\{ animation-delay: -\\d+s; \\}'),
+        `ring ${slot} must offset its arm and its fix together`
       );
     }
   });
 
-  test('nothing can interrupt the revolutions or the page scroll', async () => {
+  test('the wheel is only ever taken over the map, and only when it does something', async () => {
+    const js = await (await new Client().get('/themes/arcade/theme.js')).text();
+
+    // Whether the wheel belongs to the map is decided by where the pointer
+    // actually is, not by what it happens to be over in the DOM. Going by
+    // ancestry is what used to leave the page refusing to scroll, because a
+    // label that had orbited outside the frame still counted as being inside.
+    assert.match(js, /var overMap = function \(event\) \{[\s\S]*?getBoundingClientRect\(\)/);
+    assert.match(js, /event\.clientX >= box\.left && event\.clientX <= box\.right/);
+    assert.match(js, /event\.clientY >= box\.top && event\.clientY <= box\.bottom/);
+
+    // The handler has to be able to call preventDefault, so it cannot be
+    // passive — and it must bail out before doing so in two cases.
+    const handler = js.slice(js.indexOf("window.addEventListener('wheel'"));
+    assert.match(handler, /\{ passive: false \}/);
+    const body = handler.slice(0, handler.indexOf('{ passive: false }'));
+    // 1. outside the frame, before anything else happens
+    assert.match(body, /if \(!overMap\(event\)\) return;/);
+    // 2. at either zoom limit, so a visitor can always scroll on down to the
+    //    portfolio instead of getting stuck over the map
+    assert.match(body, /if \(Math\.abs\(next - zoom\) < [\d.]+\) return;/);
+    // and only then is the event taken
+    assert.ok(body.indexOf('if (!overMap(event)) return;') < body.indexOf('event.preventDefault()'));
+    assert.ok(body.indexOf('return;', body.indexOf('Math.abs(next - zoom)')) < body.indexOf('event.preventDefault()'));
+    // preventDefault appears once in the whole handler, and nowhere near the
+    // page's own scrolling.
+    assert.equal((body.match(/preventDefault\(\)/g) || []).length, 1);
+  });
+
+  test('orienting the map can never stutter the orbits', async () => {
     const js = await (await new Client().get('/themes/arcade/theme.js')).text();
     const css = await (await new Client().get('/themes/arcade/theme.css')).text();
 
-    // No wheel or drag handling at all, so the wheel always scrolls the page
-    // and a pointer press never captures it.
-    assert.doesNotMatch(js, /addEventListener\((['"])(wheel|touchstart|touchmove|pointerdown|pointermove|mousedown|mousemove)\1/);
-    assert.doesNotMatch(js, /preventDefault\s*\(/);
-    assert.doesNotMatch(js, /setPointerCapture|touchAction/);
+    // The camera and the orbits are kept strictly apart. The script writes
+    // five custom properties on the frame and nothing else; it never reads,
+    // writes, pauses or re-times the animations, and it never touches the
+    // elements carrying them.
+    const camera = js.slice(js.indexOf('camera controls'));
+    assert.doesNotMatch(camera, /animationPlayState|getAnimations|animationDuration|--ar-dur/);
+    assert.doesNotMatch(camera, /querySelector\(['"]\.ar-arm/);
+    const written = [...camera.matchAll(/setProperty\('(--[a-z-]+)'/g)].map((m) => m[1]).sort();
+    assert.deepEqual(written, ['--ar-flat', '--ar-spin', '--ar-unflat', '--ar-unspin', '--ar-zoom']);
 
-    // The script never reaches for the animation at all: no pausing, no
-    // re-timing, no writing to the custom properties that drive it.
-    assert.doesNotMatch(js, /animationPlayState|getAnimations|animationDuration|--ar-dur/);
-    // Nor does the stylesheet pause on hover, which would stutter the system
-    // every time the pointer crossed it.
+    // Nor does the stylesheet pause on hover or focus, which would stutter
+    // the system every time the pointer crossed it.
     assert.doesNotMatch(css, /animation-play-state/);
+
+    // A press that travels is a drag and must not navigate; a press that does
+    // not is a click on a planet and must.
+    assert.match(camera, /if \(travelled > DRAG_SLOP\) suppressClick = true;/);
+    assert.match(camera, /if \(!suppressClick\) return;/);
+
+    // Listening on the window rather than capturing the pointer is what keeps
+    // the click's own target intact.
+    assert.match(camera, /window\.addEventListener\('pointermove', onMove\)/);
+    assert.doesNotMatch(camera, /setPointerCapture/);
+    // Every one of those comes off again, however the gesture ends.
+    ['pointermove', 'pointerup', 'pointercancel', 'mouseup'].forEach(function (name) {
+      assert.match(camera, new RegExp("window\\.removeEventListener\\('" + name + "'"), name);
+    });
+    assert.match(camera, /window\.addEventListener\('blur', endDrag\)/);
+
+    // Touch keeps the page: a finger never starts a drag, so scrolling past
+    // the map on a phone works exactly as it does anywhere else.
+    assert.match(camera, /event\.pointerType !== 'mouse'\) return;/);
+    assert.match(camera, /event\.button !== 0/);
+  });
+
+  test('the dock and the orrery light each other, and reveals cannot strand content', async () => {
+    const js = await (await new Client().get('/themes/arcade/theme.js')).text();
 
     // The highlight between the dock and a world is class toggling only.
     assert.match(js, /classList\.toggle\('is-lit'/);
