@@ -1,0 +1,16 @@
+<%- include('./partials/head') %>
+
+<article class="ar-detail">
+  <div class="ar-shell">
+    <header class="ar-page-head">
+      <p class="ar-kicker">Page</p>
+      <h1 class="ar-page-title"><%= page.title %></h1>
+    </header>
+
+    <div class="ar-detail-wide">
+      <%- include('shared/blocks', { blocks: blocks }) %>
+    </div>
+  </div>
+</article>
+
+<%- include('./partials/foot') %>

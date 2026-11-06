@@ -1,0 +1,42 @@
+<%
+  // Locals: item, recordIndex.
+  const _href = item.hasDetailPage ? item.href : (safeUrl(item.paper_url) || safeUrl(item.github_url) || '');
+%>
+<li class="ar-record">
+  <article class="ar-panel ar-record-body">
+    <p class="ar-record-meta">
+      <span class="ar-card-num"><%= String(recordIndex + 1).padStart(2, '0') %></span>
+      <% if (item.date) { %><span><%= item.date %></span><% } %>
+      <% if (item.work_status) { %><span class="ar-tag"><%= item.work_status %></span><% } %>
+      <% if (!item.isPublished) { %><span class="ar-tag ar-tag-draft">Draft</span><% } %>
+    </p>
+
+    <h3 class="ar-record-title">
+      <% if (_href) { %><a href="<%= _href %>"><%= item.title %></a><% } else { %><%= item.title %><% } %>
+    </h3>
+
+    <% if (item.authors) { %><p class="ar-record-by"><%= item.authors %></p><% } %>
+    <% if (item.abstract) { %><div class="ar-prose ar-prose-tight"><%- md(item.abstract) %></div><% } %>
+
+    <% if (item.keywords.length) { %>
+      <ul class="ar-chips">
+        <% item.keywords.forEach(function (keyword) { %><li class="ar-chip"><span><%= keyword %></span></li><% }); %>
+      </ul>
+    <% } %>
+
+    <ul class="ar-card-links">
+      <% if (item.hasDetailPage) { %>
+        <li><a href="<%= item.href %>">Open <span aria-hidden="true">▶</span></a></li>
+      <% } %>
+      <% if (safeUrl(item.paper_url)) { %>
+        <li><a href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Paper</a></li>
+      <% } %>
+      <% if (safeUrl(item.github_url)) { %>
+        <li><a href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">Code</a></li>
+      <% } %>
+      <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+        <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+      <% } }); %>
+    </ul>
+  </article>
+</li>

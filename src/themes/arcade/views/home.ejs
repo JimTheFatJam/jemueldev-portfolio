@@ -1,0 +1,245 @@
+<%- include('./partials/head') %>
+<%
+  const site = settings.site;
+  const titles = settings.sectionTitles;
+  const resume = safeUrl(site.resumeUrl);
+  const visibleSkills = (skillCategories || []).filter((category) => category.skills.length);
+  const featured = projects.length ? projects[0] : null;
+  const otherProjects = projects.slice(1);
+%>
+
+<%- include('./partials/galaxy') %>
+
+<div id="ar-content"></div>
+
+<% if (sections.about && (about.body || aboutImage || aboutBlocks.length)) { %>
+<section class="ar-section" id="about">
+  <div class="ar-shell">
+    <h2 class="ar-heading" data-reveal><span class="ar-heading-num">01</span><%= about.heading || 'About' %></h2>
+
+    <div class="ar-about" data-reveal>
+      <% if (aboutImage) { %>
+        <figure class="ar-frame ar-portrait">
+          <%- include('shared/image', {
+                media: aboutImage,
+                imgSizes: '(max-width: 48rem) 100vw, 18rem',
+                imgClass: 'ar-portrait-img',
+                imgLoading: 'eager'
+              }) %>
+        </figure>
+      <% } %>
+
+      <div class="ar-about-text">
+        <% if (about.body) { %><div class="ar-prose"><%- md(about.body) %></div><% } %>
+
+        <% if ((about.links || []).length) { %>
+          <ul class="ar-linkrow">
+            <% about.links.forEach(function (link) { if (safeUrl(link.url)) { %>
+              <li><a href="<%= safeUrl(link.url) %>"<%- /^https?:/.test(safeUrl(link.url)) ? ' target="_blank" rel="noopener noreferrer"' : '' %>><%= link.label %></a></li>
+            <% } }); %>
+          </ul>
+        <% } %>
+
+        <% if (aboutSecondaryImage) { %>
+          <figure class="ar-frame ar-about-extra">
+            <%- include('shared/image', {
+                  media: aboutSecondaryImage,
+                  imgSizes: '(max-width: 48rem) 100vw, 20rem',
+                  imgClass: 'ar-portrait-img'
+                }) %>
+          </figure>
+        <% } %>
+      </div>
+    </div>
+
+    <%- include('shared/blocks', { blocks: aboutBlocks }) %>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.projects) { %>
+<section class="ar-section" id="projects">
+  <div class="ar-shell">
+    <div class="ar-section-head" data-reveal>
+      <h2 class="ar-heading"><span class="ar-heading-num">02</span><%= titles.projects %></h2>
+      <a class="ar-more" href="/projects">All projects <span aria-hidden="true">▶</span></a>
+    </div>
+
+    <% if (featured) { %>
+      <%
+        const fHref = featured.hasDetailPage
+          ? featured.href
+          : (safeUrl(featured.demo_url) || safeUrl(featured.github_url) || '');
+      %>
+      <article class="ar-panel ar-hero-card" data-reveal>
+        <div class="ar-hero-card-media">
+          <% if (featured.thumbnail) { %>
+            <% if (fHref) { %><a href="<%= fHref %>" tabindex="-1" aria-hidden="true"><% } %>
+              <%- include('shared/image', {
+                    media: featured.thumbnail,
+                    imgSizes: '(max-width: 60rem) 100vw, 36rem',
+                    imgClass: 'ar-hero-card-img',
+                    imgLoading: 'eager'
+                  }) %>
+            <% if (fHref) { %></a><% } %>
+          <% } else { %>
+            <div class="ar-card-blank" aria-hidden="true"><span>NO IMAGE</span></div>
+          <% } %>
+        </div>
+
+        <div class="ar-hero-card-body">
+          <p class="ar-kicker ar-kicker-accent">★ Featured</p>
+          <h3 class="ar-hero-card-title">
+            <% if (fHref) { %><a href="<%= fHref %>"><%= featured.title %></a><% } else { %><%= featured.title %><% } %>
+          </h3>
+
+          <p class="ar-card-meta">
+            <% if (featured.year) { %><span><%= featured.year %></span><% } %>
+            <% if (!featured.isPublished) { %><span class="ar-tag ar-tag-draft">Draft</span><% } %>
+          </p>
+
+          <% if (featured.summary) { %><p class="ar-card-text"><%= featured.summary %></p><% } %>
+
+          <% if (featured.tech.length) { %>
+            <ul class="ar-chips">
+              <% featured.tech.slice(0, 8).forEach(function (tech) { %>
+                <li class="ar-chip<%= tech.icon ? ' has-icon' : '' %>"><% if (tech.icon) { %><span class="ar-chip-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li>
+              <% }); %>
+            </ul>
+          <% } %>
+
+          <div class="ar-btn-row">
+            <% if (featured.hasDetailPage) { %>
+              <a class="ar-btn ar-btn-accent" href="<%= featured.href %>">Open <span aria-hidden="true">▶</span></a>
+            <% } %>
+            <% if (safeUrl(featured.github_url)) { %>
+              <a class="ar-btn" href="<%= safeUrl(featured.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a>
+            <% } %>
+            <% if (safeUrl(featured.demo_url)) { %>
+              <a class="ar-btn" href="<%= safeUrl(featured.demo_url) %>" target="_blank" rel="noopener noreferrer">Demo</a>
+            <% } %>
+          </div>
+        </div>
+      </article>
+    <% } %>
+
+    <% if (otherProjects.length) { %>
+      <ul class="ar-grid" data-reveal>
+        <% otherProjects.forEach(function (project, index) { %>
+          <%- include('./partials/project-card', { project: project, cardIndex: index + 1 }) %>
+        <% }); %>
+      </ul>
+    <% } %>
+
+    <% if (!featured && !otherProjects.length) { %>
+      <p class="ar-empty">No featured projects yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %></p>
+    <% } %>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.skills && visibleSkills.length) { %>
+<section class="ar-section" id="skills">
+  <div class="ar-shell">
+    <h2 class="ar-heading" data-reveal><span class="ar-heading-num">03</span><%= titles.skills %></h2>
+
+    <ul class="ar-skills" data-reveal>
+      <% visibleSkills.forEach(function (category, index) { %>
+        <li class="ar-panel ar-skill-row">
+          <p class="ar-skill-head">
+            <span class="ar-card-num"><%= String(index + 1).padStart(2, '0') %></span>
+            <span class="ar-skill-name"><%= category.name %></span>
+          </p>
+          <ul class="ar-chips">
+            <% category.skills.forEach(function (skill) { %>
+              <li class="ar-chip<%= skill.icon ? ' has-icon' : '' %>"><% if (skill.icon) { %><span class="ar-chip-logo" aria-hidden="true"><%- renderIcon(skill.icon, { style: skillIconStyle }) %></span><% } %><span><%= skill.name %></span></li>
+            <% }); %>
+          </ul>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.research && research.length) { %>
+<section class="ar-section" id="research">
+  <div class="ar-shell">
+    <div class="ar-section-head" data-reveal>
+      <h2 class="ar-heading"><span class="ar-heading-num">04</span><%= titles.research %></h2>
+      <a class="ar-more" href="/research">All research <span aria-hidden="true">▶</span></a>
+    </div>
+
+    <ul class="ar-records" data-reveal>
+      <% research.forEach(function (item, index) { %>
+        <%- include('./partials/research-record', { item: item, recordIndex: index }) %>
+      <% }); %>
+    </ul>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.education && education.length) { %>
+<section class="ar-section" id="education">
+  <div class="ar-shell">
+    <h2 class="ar-heading" data-reveal><span class="ar-heading-num">05</span><%= titles.education %></h2>
+
+    <ul class="ar-timeline" data-reveal>
+      <% education.forEach(function (item) { %>
+        <li class="ar-panel ar-timeline-row">
+          <p class="ar-timeline-when"><%= item.date_range %></p>
+          <div class="ar-timeline-body">
+            <h3 class="ar-timeline-degree">
+              <% if (item.logo) { %>
+                <span class="ar-timeline-logo"><%- include('shared/image', { media: item.logo, imgSizes: '2rem', imgAlt: '' }) %></span>
+              <% } %>
+              <%= item.degree %>
+            </h3>
+            <% if (item.institution) { %><p class="ar-timeline-where"><%= item.institution %></p><% } %>
+            <% if (item.description) { %><div class="ar-prose ar-prose-tight"><%- md(item.description) %></div><% } %>
+          </div>
+        </li>
+      <% }); %>
+    </ul>
+  </div>
+</section>
+<% } %>
+
+<% if (sections.contact) { %>
+<section class="ar-section ar-section-last" id="contact">
+  <div class="ar-shell">
+    <h2 class="ar-heading" data-reveal><span class="ar-heading-num">06</span><%= titles.contact || 'Contact' %></h2>
+
+    <div class="ar-panel ar-contact" data-reveal>
+      <p class="ar-contact-head"><%= settings.contact.heading %></p>
+
+      <% if (settings.contact.body) { %>
+        <div class="ar-prose ar-contact-body"><%- md(settings.contact.body) %></div>
+      <% } %>
+
+      <div class="ar-btn-row">
+        <% if (settings.contact.showEmail) { site.emails.forEach(function (address, index) { %>
+          <a class="ar-btn ar-btn-lg<%= index === 0 ? ' ar-btn-accent' : '' %>" href="mailto:<%= address %>"><%= address %></a>
+        <% }); } %>
+        <% if (resume) { %>
+          <a class="ar-btn ar-btn-lg" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
+        <% } %>
+      </div>
+
+      <ul class="ar-linkrow">
+        <% if (safeUrl(site.github)) { %>
+          <li><a href="<%= safeUrl(site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <% } %>
+        <% if (safeUrl(site.linkedin)) { %>
+          <li><a href="<%= safeUrl(site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+        <% } %>
+        <% (site.extraLinks || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+          <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+        <% } }); %>
+      </ul>
+    </div>
+  </div>
+</section>
+<% } %>
+
+<%- include('./partials/foot') %>

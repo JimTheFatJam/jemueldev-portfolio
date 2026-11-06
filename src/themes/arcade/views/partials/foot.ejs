@@ -1,0 +1,38 @@
+</main>
+
+<footer class="ar-footer">
+  <div class="ar-shell ar-footer-inner">
+    <div class="ar-panel">
+      <p class="ar-kicker">Player</p>
+      <p class="ar-footer-name"><%= settings.site.name %></p>
+      <p class="ar-footer-meta">&copy; <%= new Date().getFullYear() %><% if (user) { %> · <a href="/admin">Admin</a><% } %></p>
+    </div>
+
+    <div class="ar-panel">
+      <p class="ar-kicker">Links</p>
+      <ul class="ar-footer-links">
+        <% settings.site.emails.forEach(function (address) { %>
+          <li><a href="mailto:<%= address %>"><%= address %></a></li>
+        <% }); %>
+        <% if (safeUrl(settings.site.github)) { %>
+          <li><a href="<%= safeUrl(settings.site.github) %>" target="_blank" rel="noopener noreferrer">GitHub</a></li>
+        <% } %>
+        <% if (safeUrl(settings.site.linkedin)) { %>
+          <li><a href="<%= safeUrl(settings.site.linkedin) %>" target="_blank" rel="noopener noreferrer">LinkedIn</a></li>
+        <% } %>
+        <% if (safeUrl(settings.site.resumeUrl)) { %>
+          <li><a href="<%= safeUrl(settings.site.resumeUrl) %>" target="_blank" rel="noopener noreferrer">Resume</a></li>
+        <% } %>
+        <% (settings.site.extraLinks || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+          <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
+        <% } }); %>
+      </ul>
+    </div>
+  </div>
+
+  <p class="ar-footer-sign" aria-hidden="true">● ● ●  THANKS FOR PLAYING  ● ● ●</p>
+</footer>
+
+<script src="<%= themeAssets %>/theme.js" defer></script>
+</body>
+</html>

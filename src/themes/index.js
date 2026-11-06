@@ -57,6 +57,16 @@ export const THEMES = [
       'a hand-steerable 3D orbital map where the sun is home and each planet is a ' +
       'destination, over a star chart that follows you through the whole site.',
     hasScript: true
+  },
+  {
+    id: 'arcade',
+    label: 'Design 5 — Arcade',
+    name: 'Arcade',
+    description:
+      'A retro pixel-art universe: hand-drawn planets orbiting a pixel sun as the ' +
+      'landing navigation, hard-edged panels and chunky type over a star field, ' +
+      'with a night palette by default and a designed day mode.',
+    hasScript: true
   }
 ];
 

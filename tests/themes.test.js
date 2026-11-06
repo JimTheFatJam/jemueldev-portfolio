@@ -1490,3 +1490,358 @@ describe('orbit theme', () => {
     await setTheme(client, 'orbit');
   });
 });
+
+/* --------------------------------------------------------------------------
+   Arcade (design 5)
+   --------------------------------------------------------------------------
+   The star chart is the landing navigation, so most of these tests are about
+   it staying navigable: six real destinations, two ways in, and animation
+   that nothing can interrupt. The last group is deliberately adversarial —
+   it asserts the absence of the mechanisms behind the usability problems the
+   orbit theme went through, so reintroducing one of them fails here.
+   -------------------------------------------------------------------------- */
+describe('arcade theme', () => {
+  before(async () => {
+    const client = await authed();
+    await setTheme(client, 'arcade');
+  });
+
+  after(async () => {
+    const client = await authed();
+    await setTheme(client, 'classic');
+  });
+
+  test('it is offered in the admin alongside the others', async () => {
+    const client = await authed();
+    const { body } = await client.html('/admin/settings/sections');
+    for (const theme of ['classic', 'editorial', 'grid', 'orbit', 'arcade']) {
+      assert.match(body, new RegExp('name="publicTheme" value="' + theme + '"'), theme);
+    }
+    // Selected through the real form, so the picker must show it as current.
+    assert.match(body, /value="arcade"[^>]*\schecked/);
+  });
+
+  test('every public route renders', async () => {
+    const client = new Client();
+    for (const path of [
+      '/',
+      '/projects',
+      '/research',
+      '/projects/example-pm25-prediction',
+      '/research/example-thesis'
+    ]) {
+      const response = await client.get(path);
+      assert.equal(response.status, 200, `${path} returned ${response.status}`);
+    }
+    assert.equal((await client.get('/definitely-not-a-page')).status, 404);
+  });
+
+  test('the star chart offers every section twice over', async () => {
+    const { body } = await new Client().html('/');
+    assert.match(body, /class="ar-map"/);
+    assert.match(body, /class="ar-orrery"/);
+    assert.match(body, /class="ar-star"/);
+
+    // Six worlds on six rings, each one a real anchor.
+    assert.equal((body.match(/class="ar-world"/g) || []).length, 6, 'expected six worlds');
+    for (let slot = 1; slot <= 6; slot += 1) {
+      assert.match(body, new RegExp('class="ar-ring ar-ring--' + slot + '"'), `ring ${slot}`);
+    }
+
+    // The dock names the same six, in order, and is the accessible path.
+    assert.match(body, /class="ar-dock"/);
+    const codes = [...body.matchAll(/class="ar-dock-code"[^>]*>(\d\d) · ([A-Z]{3})</g)]
+      .map((m) => m[1] + ':' + m[2]);
+    assert.deepEqual(codes, ['01:ABT', '02:WRK', '03:SKL', '04:RSH', '05:EDU', '06:CTC']);
+
+    // Every destination exists and none of them is script.
+    const hrefs = [...body.matchAll(/<a class="ar-dock-link" href="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(hrefs, ['#about', '/projects', '#skills', '/research', '#education', '#contact']);
+    for (const href of hrefs) assert.doesNotMatch(href, /^javascript:/i);
+
+    // The worlds point at the same places, so the map really is navigation.
+    const worldHrefs = [...body.matchAll(/<a class="ar-world" href="([^"]+)"/g)].map((m) => m[1]);
+    assert.deepEqual(worldHrefs, hrefs);
+  });
+
+  test('the map duplicates the dock visually, not for assistive technology', async () => {
+    const { body } = await new Client().html('/');
+
+    // One announced copy of the six links. The orrery is the decorative twin:
+    // hidden from screen readers and out of the tab order, so nobody is made
+    // to walk through six unlabelled links to reach the page.
+    assert.match(body, /<div class="ar-orrery" aria-hidden="true">/);
+    assert.equal((body.match(/<a class="ar-world" href="[^"]+" tabindex="-1"/g) || []).length, 6);
+
+    // The worlds carry no text of their own — that is what keeps a moving
+    // label from ever colliding with the artwork.
+    const orrery = body.slice(body.indexOf('class="ar-orrery"'), body.indexOf('class="ar-scroll"'));
+    assert.doesNotMatch(orrery.replace(/<svg[\s\S]*?<\/svg>/g, ''), />[^<>\s][^<>]*</);
+  });
+
+  test('the planets are drawn here, not borrowed from orbit', async () => {
+    const { body } = await new Client().html('/');
+    // Pixel art: crisp-edged SVG rectangles, no photographic textures.
+    assert.match(body, /shape-rendering="crispEdges"/);
+    assert.ok((body.match(/<rect/g) || []).length > 100, 'expected a lot of pixels');
+    assert.doesNotMatch(body, /ob-planet|ob-body|ob-sun|ob-launch/);
+    // A single shared pixel disc clips every sprite.
+    assert.match(body, /<clipPath id="ar-disc">/);
+    assert.equal((body.match(/<clipPath id="ar-disc">/g) || []).length, 1, 'defs must be emitted once');
+  });
+
+  test('the map is homepage-only and the ordinary nav is always there', async () => {
+    const client = new Client();
+    assert.match((await client.html('/')).body, /class="ar-nav"/);
+
+    for (const path of ['/projects', '/research', '/projects/example-pm25-prediction']) {
+      const { body } = await client.html(path);
+      assert.doesNotMatch(body, /class="ar-map"/, `${path} should not carry the map`);
+      assert.match(body, /class="ar-nav"/, `${path} lost its navigation`);
+    }
+  });
+
+  test('the portfolio content follows the chart on the homepage', async () => {
+    const { body } = await new Client().html('/');
+    assert.match(body, /id="ar-content"/);
+    for (const id of ['about', 'projects', 'skills', 'education', 'contact']) {
+      assert.match(body, new RegExp('id="' + id + '"'), id);
+    }
+    // Research is featured-only on the homepage, exactly as the other themes
+    // have it, and nothing is seeded as featured — so the section stays away
+    // while its world still leads to the full listing.
+    assert.doesNotMatch(body, /id="research"/);
+    assert.match(body, /<a class="ar-dock-link" href="\/research"/);
+
+    // The cue comes after the chart, so it reads as "there is more below".
+    assert.ok(body.indexOf('class="ar-scroll"') > body.indexOf('class="ar-dock"'));
+  });
+
+  test('it reads the database rather than carrying its own copy', async () => {
+    const { body } = await new Client().html('/');
+    // Seeded content, section titles and counts all come through.
+    assert.match(body, /Example: PM2\.5 prediction pipeline/);
+    assert.match(body, /Selected work/);
+    assert.match(body, /class="ar-stats"/);
+    // Two published projects in the seed, zero-padded by the template.
+    assert.match(body, /<dt>Projects<\/dt><dd>02<\/dd>/);
+    assert.match(body, /<dt>Worlds<\/dt><dd>06<\/dd>/);
+  });
+
+  test('CMS blocks, media and Devicon logos render', async () => {
+    const { body } = await new Client().html('/projects/example-pm25-prediction');
+    assert.match(body, /class="blocks"/);
+    assert.match(body, /class="block-heading"/);
+    assert.match(body, /class="block-code"/);
+    assert.match(body, /class="block-image/);
+    assert.match(body, /<svg[^>]*class="icon-svg"/);
+    assert.match(body, /class="gallery-grid"/);
+    // Responsive variants, served from the shared image partial.
+    assert.match(body, /srcset="[^"]*-480\.webp 480w[^"]*-960\.webp 960w/);
+    assert.match(body, /sizes="\(max-width: 72rem\) 100vw, 60rem"/);
+    assert.doesNotMatch(body, /<script>alert/);
+  });
+
+  test('SEO, sitemap and robots are unaffected by the theme', async () => {
+    const client = new Client();
+    const { body } = await client.html('/projects/example-pm25-prediction');
+    assert.match(body, /<title>Example: PM2\.5 prediction pipeline —/);
+    assert.match(body, /<meta property="og:title"/);
+    assert.match(body, /<meta name="twitter:card"/);
+
+    assert.match(await (await client.get('/sitemap.xml')).text(), /<urlset/);
+    assert.match(await (await client.get('/robots.txt')).text(), /Disallow: \/admin/);
+  });
+
+  test('drafts stay private and are flagged for the admin', async () => {
+    const visitor = new Client();
+    assert.equal((await visitor.get('/projects/example-draft-project')).status, 404);
+    // Nor may the title leak into any listing a visitor can read.
+    for (const path of ['/', '/projects']) {
+      assert.doesNotMatch((await visitor.html(path)).body, /draft project/i, path);
+    }
+
+    const client = await authed();
+    const { response, body } = await client.html('/projects/example-draft-project');
+    assert.equal(response.status, 200);
+    assert.match(body, /class="ar-draft"/);
+    assert.match((await client.html('/projects')).body, /draft project/i);
+  });
+
+  test('custom pages render through the theme', async () => {
+    const client = await authed();
+    let _csrf = await client.token('/admin/pages/new');
+    const created = await client.post('/admin/pages', {
+      _csrf,
+      title: 'Arcade Colophon',
+      status: 'published',
+      show_in_nav: '1'
+    });
+    const id = created.headers.get('location').split('/').pop();
+
+    _csrf = await client.token(`/admin/pages/${id}`);
+    const added = await client.post(`/admin/blocks/page/${id}/add`, { _csrf, type: 'richtext' });
+    const blockId = Number(added.headers.get('location').split('#block-').pop());
+    await client.post(`/admin/blocks/${blockId}`, { _csrf, body: 'Typeset in **pixels**.' });
+
+    const { response, body } = await new Client().html('/arcade-colophon');
+    assert.equal(response.status, 200);
+    assert.match(body, /class="ar-page-title">Arcade Colophon</);
+    assert.match(body, /<strong>pixels<\/strong>/);
+    assert.match(body, /themes\/arcade\/theme\.css/);
+
+    await client.post(`/admin/pages/${id}/delete`, { _csrf: await client.token('/admin/pages') });
+  });
+
+  test('no inline styles or scripts, so the strict CSP still holds', async () => {
+    const client = new Client();
+    for (const path of ['/', '/projects', '/projects/example-pm25-prediction', '/research/example-thesis', '/nope']) {
+      const { body } = await client.html(path);
+      const markup = body.replace(/<svg[\s\S]*?<\/svg>/g, '');
+      assert.doesNotMatch(markup, /\sstyle="/, `${path} contains an inline style`);
+      assert.doesNotMatch(markup, /<style/, `${path} contains a style element`);
+      assert.doesNotMatch(markup, /<script(?![^>]*\ssrc=)/, `${path} contains an inline script`);
+    }
+  });
+
+  test('both palettes are defined, and the night one is the default', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+    assert.match(css, /:root \{[\s\S]*?color-scheme: dark;/);
+    // A visitor who asks for light gets it; an explicit choice wins either way.
+    assert.match(css, /@media \(prefers-color-scheme: light\) \{\s*\n\s*:root:not\(\[data-ar-theme="dark"\]\) \{/);
+    assert.match(css, /:root\[data-ar-theme="light"\] \{/);
+
+    // The palette is resolved before the first paint, so there is no flash.
+    const { body } = await new Client().html('/');
+    assert.match(body, /<script src="\/themes\/arcade\/theme-boot\.js"><\/script>/);
+    const boot = await (await new Client().get('/themes/arcade/theme-boot.js')).text();
+    assert.match(boot, /setAttribute\('data-ar-theme'/);
+  });
+
+  test('layout containment and reduced motion are in place', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+    assert.match(css, /overflow-wrap: anywhere/);
+    assert.match(css, /min-width: 0/);
+    assert.match(css, /overflow-x: auto/);
+
+    const reduced = (css.match(/@media \(prefers-reduced-motion: reduce\) \{[\s\S]*?\n\}\n/) || [''])[0];
+    assert.ok(reduced, 'no reduced-motion block');
+    // The system becomes a still diagram rather than disappearing.
+    assert.match(reduced, /\.ar-arm, \.ar-world \{ animation: none !important; \}/);
+    for (let slot = 1; slot <= 6; slot += 1) {
+      assert.match(reduced, new RegExp('\\.ar-ring--' + slot + ' \\.ar-arm \\{ transform: rotate\\(\\d+deg\\); \\}'), `arm ${slot}`);
+      assert.match(reduced, new RegExp('\\.ar-ring--' + slot + ' \\.ar-world \\{ transform: rotate\\(-\\d+deg\\); \\}'), `world ${slot}`);
+    }
+    // Reveals must never be able to strand content when motion is off.
+    assert.match(reduced, /\[data-reveal\][\s\S]*?opacity: 1/);
+  });
+
+  test('the orrery stands down on narrow viewports without losing a link', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+    const compact = (css.match(/@media \(max-width: 63\.99rem\) \{[\s\S]*?\n\}\n/) || [''])[0];
+    assert.ok(compact, 'no compact breakpoint');
+    assert.match(compact, /\.ar-orrery \{ display: none; \}/);
+    // The dock is never the thing that is hidden — it is the fallback.
+    assert.doesNotMatch(css, /\.ar-dock[^{]*\{[^}]*display: none/);
+    // And it grows, because below that width it is the whole interface.
+    assert.match(compact, /\.ar-dock-sprite \{ width: 2\.5rem/);
+  });
+
+  test('each world keeps its own size and stays upright by construction', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+
+    // The arm turns one way, the world exactly the other, on one duration.
+    assert.match(css, /@keyframes ar-arm \{ from \{ transform: rotate\(0deg\); \} to \{ transform: rotate\(360deg\); \} \}/);
+    assert.match(css, /@keyframes ar-world \{ from \{ transform: rotate\(0deg\); \} to \{ transform: rotate\(-360deg\); \} \}/);
+    assert.match(css, /\.ar-arm \{[\s\S]*?animation: ar-arm var\(--ar-dur\) linear infinite;/);
+    assert.match(css, /\.ar-world \{[\s\S]*?animation: ar-world var\(--ar-dur\) linear infinite;/);
+
+    // Centred with margins, which rotation cannot disturb. A percentage
+    // translate would resolve against the world's own box instead of the
+    // ring, which is exactly how this went wrong the first time.
+    assert.match(css, /\.ar-world \{[\s\S]*?margin-left: calc\(var\(--ar-world-size\) \/ -2\);/);
+    assert.doesNotMatch(css, /\.ar-world \{[^}]*transform: translate/);
+
+    // Sizes come from the viewport and a per-ring scale, never a percentage
+    // of the differently sized arm each world happens to hang from.
+    assert.match(css, /--ar-world-base: clamp\([^)]*vmin[^)]*\);/);
+    assert.match(css, /--ar-world-size: calc\(var\(--ar-world-base\) \* var\(--ar-world-scale, 1\)\);/);
+    assert.doesNotMatch(css, /--ar-world-size: clamp\([^)]*%/);
+
+    // Six rings, each stepping outward and staying inside the frame.
+    const diameters = [...css.matchAll(/\.ar-ring--\d \{ --ar-d: ([\d.]+);/g)].map((m) => Number(m[1]));
+    assert.equal(diameters.length, 6);
+    assert.deepEqual(diameters, [...diameters].sort((a, b) => a - b), 'rings must step outward');
+    assert.ok(diameters[5] <= 90, 'the outermost ring must stay inside the frame');
+
+    // Each on its own clock, so the worlds never lock into formation.
+    const durations = [...css.matchAll(/\.ar-ring--\d \{ --ar-dur: (\d+)s; \}/g)].map((m) => Number(m[1]));
+    assert.equal(durations.length, 6);
+    assert.equal(new Set(durations).size, 6, 'every ring needs its own period');
+    assert.ok(Math.min(...durations) >= 30, 'a drift, not a spin');
+
+    // An arm and its world must share a delay, or the world tips.
+    for (let slot = 1; slot <= 6; slot += 1) {
+      assert.match(
+        css,
+        new RegExp('\\.ar-ring--' + slot + ' \\.ar-arm, \\.ar-ring--' + slot + ' \\.ar-world \\{ animation-delay: -\\d+s; \\}'),
+        `ring ${slot} must offset its arm and its world together`
+      );
+    }
+  });
+
+  test('nothing can interrupt the revolutions or the page scroll', async () => {
+    const js = await (await new Client().get('/themes/arcade/theme.js')).text();
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+
+    // No wheel or drag handling at all, so the wheel always scrolls the page
+    // and a pointer press never captures it.
+    assert.doesNotMatch(js, /addEventListener\((['"])(wheel|touchstart|touchmove|pointerdown|pointermove|mousedown|mousemove)\1/);
+    assert.doesNotMatch(js, /preventDefault\s*\(/);
+    assert.doesNotMatch(js, /setPointerCapture|touchAction/);
+
+    // The script never reaches for the animation at all: no pausing, no
+    // re-timing, no writing to the custom properties that drive it.
+    assert.doesNotMatch(js, /animationPlayState|getAnimations|animationDuration|--ar-dur/);
+    // Nor does the stylesheet pause on hover, which would stutter the system
+    // every time the pointer crossed it.
+    assert.doesNotMatch(css, /animation-play-state/);
+
+    // The highlight between the dock and a world is class toggling only.
+    assert.match(js, /classList\.toggle\('is-lit'/);
+    assert.match(js, /\[data-world\]/);
+    assert.match(js, /addEventListener\('focus'/);
+
+    // And reveals can never leave content invisible if frames stop arriving.
+    assert.match(js, /setTimeout\(revealAll, 10000\)/);
+    assert.match(js, /removeEventListener\('scroll', scheduleReveal\)/);
+  });
+
+  test('theme templates are never served as static files', async () => {
+    const client = new Client();
+    for (const path of [
+      '/themes/arcade/views/home.ejs',
+      '/themes/arcade/home.ejs',
+      '/themes/arcade/views/partials/galaxy.ejs'
+    ]) {
+      const response = await client.get(path);
+      assert.notEqual(response.status, 200, `${path} was served`);
+    }
+    // The assets that are meant to be public still are.
+    for (const path of ['/themes/arcade/theme.css', '/themes/arcade/theme.js', '/themes/arcade/theme-boot.js']) {
+      assert.equal((await client.get(path)).status, 200, path);
+    }
+  });
+
+  test('the other four themes are untouched by this one', async () => {
+    const client = await authed();
+    for (const theme of ['classic', 'editorial', 'grid', 'orbit']) {
+      await setTheme(client, theme);
+      const { response, body } = await new Client().html('/');
+      assert.equal(response.status, 200, theme);
+      assert.doesNotMatch(body, /ar-map|ar-world|ar-dock|ar-orrery/, `${theme} picked up arcade markup`);
+      assert.match(body, new RegExp('/themes/' + theme + '/theme\\.css'), theme);
+    }
+    await setTheme(client, 'arcade');
+  });
+});

@@ -1,0 +1,101 @@
+<%- include('./partials/head') %>
+
+<article class="ar-detail">
+  <div class="ar-shell">
+    <nav class="ar-crumb" aria-label="Breadcrumb">
+      <a href="/research"><span aria-hidden="true">◀</span> Research</a>
+    </nav>
+
+    <header class="ar-page-head">
+      <p class="ar-kicker">
+        Research
+        <% if (item.date) { %><span class="ar-tag"><%= item.date %></span><% } %>
+        <% if (item.work_status) { %><span class="ar-tag ar-tag-accent"><%= item.work_status %></span><% } %>
+      </p>
+
+      <h1 class="ar-page-title"><%= item.title %></h1>
+      <% if (item.authors) { %><p class="ar-record-by"><%= item.authors %></p><% } %>
+      <% if (item.institution) { %><p class="ar-page-lede"><%= item.institution %></p><% } %>
+
+      <div class="ar-btn-row">
+        <% if (safeUrl(item.paper_url)) { %>
+          <a class="ar-btn ar-btn-accent" href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Read the paper</a>
+        <% } %>
+        <% if (safeUrl(item.github_url)) { %>
+          <a class="ar-btn" href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">View code</a>
+        <% } %>
+        <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
+          <a class="ar-btn" href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+        <% } }); %>
+      </div>
+    </header>
+
+    <% if (item.thumbnail) { %>
+      <figure class="ar-frame ar-detail-figure" data-reveal>
+        <%- include('shared/image', {
+              media: item.thumbnail,
+              imgSizes: '(max-width: 72rem) 100vw, 60rem',
+              imgLoading: 'eager',
+              imgClass: 'ar-detail-img'
+            }) %>
+      </figure>
+    <% } %>
+
+    <div class="ar-detail-layout">
+      <aside class="ar-detail-side">
+        <div class="ar-panel ar-side-block">
+          <p class="ar-kicker">Status</p>
+          <p class="ar-side-value"><%= item.work_status || (item.isPublished ? 'Published' : 'Draft') %></p>
+        </div>
+
+        <% if (item.keywords.length) { %>
+          <div class="ar-panel ar-side-block">
+            <p class="ar-kicker">Keywords</p>
+            <ul class="ar-chips ar-chips-stacked">
+              <% item.keywords.forEach(function (keyword) { %><li class="ar-chip"><span><%= keyword %></span></li><% }); %>
+            </ul>
+          </div>
+        <% } %>
+
+        <% if (item.institution) { %>
+          <div class="ar-panel ar-side-block">
+            <p class="ar-kicker">Institution</p>
+            <p class="ar-side-value"><%= item.institution %></p>
+          </div>
+        <% } %>
+      </aside>
+
+      <div class="ar-detail-main">
+        <% if (item.abstract) { %>
+          <section class="ar-detail-block" data-reveal>
+            <h2 class="ar-kicker">Abstract</h2>
+            <div class="ar-prose"><%- md(item.abstract) %></div>
+          </section>
+        <% } %>
+
+        <%- include('shared/blocks', { blocks: blocks }) %>
+
+        <% if (item.gallery.length) { %>
+          <section class="ar-detail-block" data-reveal>
+            <h2 class="ar-kicker">Figures</h2>
+            <ul class="gallery-grid" data-columns="2">
+              <% item.gallery.forEach(function (image) { %>
+                <li>
+                  <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
+                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 22rem', imgClass: 'gallery-img' }) %>
+                  </a>
+                </li>
+              <% }); %>
+            </ul>
+          </section>
+        <% } %>
+      </div>
+    </div>
+
+    <footer class="ar-detail-foot">
+      <a href="/research"><span aria-hidden="true">◀</span> All research</a>
+    </footer>
+  </div>
+</article>
+
+<%- include('./partials/foot') %>

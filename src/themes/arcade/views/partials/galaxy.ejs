@@ -1,0 +1,118 @@
+<%
+  /* The star chart: the landing attraction and the primary navigation.
+   *
+   * Deliberately flat rather than tilted. A face-on system needs only a
+   * rotation on the arm and the inverse on the world to keep it upright — no
+   * perspective, no depth sorting, no camera — which removes a whole class of
+   * problems and reads better as pixel art besides.
+   *
+   * Two ways into the same six destinations, and that is on purpose:
+   *   · the orrery, where each world is clickable for anyone using a pointer.
+   *     It carries no text at all — hovering a world lights up its row in the
+   *     dock instead — so a moving label can never collide with the art, which
+   *     is the one thing that kept going wrong before. Hidden from assistive
+   *     technology and out of the tab order, so it is a visual affordance
+   *     rather than a duplicate control.
+   *   · the dock, a labelled list that never moves. This is the accessible
+   *     path, and on a narrow screen it becomes the whole interface.
+   *
+   * There are no scroll or drag controls: the wheel always scrolls the page,
+   * and the revolutions are CSS animations that nothing ever pauses.
+   */
+  const isHome = currentPath === '/';
+  const anchor = (id) => (isHome ? '#' + id : '/#' + id);
+  const titles = settings.sectionTitles;
+
+  const worlds = [];
+  if (settings.sections.about) {
+    worlds.push({ world: 'terra', name: 'About', code: 'ABT', href: anchor('about'), blurb: 'Who I am' });
+  }
+  if (settings.sections.projects) {
+    worlds.push({ world: 'forge', name: titles.projects || 'Projects', code: 'WRK', href: '/projects', blurb: 'Things I have built' });
+  }
+  if (settings.sections.skills) {
+    worlds.push({ world: 'circuit', name: titles.skills || 'Skills', code: 'SKL', href: anchor('skills'), blurb: 'What I build with' });
+  }
+  if (settings.sections.research) {
+    worlds.push({ world: 'cryo', name: titles.research || 'Research', code: 'RSH', href: '/research', blurb: 'Studies and papers' });
+  }
+  if (settings.sections.education && (education || []).length) {
+    worlds.push({ world: 'halo', name: titles.education || 'Education', code: 'EDU', href: anchor('education'), blurb: 'Where I studied' });
+  }
+  if (settings.sections.contact) {
+    worlds.push({ world: 'relay', name: titles.contact || 'Contact', code: 'CTC', href: anchor('contact'), blurb: 'Get in touch' });
+  }
+
+  // Six rings are styled; anything beyond would stack, so it is capped.
+  const orbits = worlds.slice(0, 6);
+  const siteName = settings.site.name || 'Portfolio';
+  const techCount = new Set((projects || []).flatMap((p) => p.tech.map((t) => t.name))).size;
+%>
+
+<%- include('./sprites') %>
+
+<section class="ar-map" aria-labelledby="ar-map-title">
+  <div class="ar-shell ar-map-inner">
+    <div class="ar-map-brief">
+      <p class="ar-eyebrow"><span class="ar-blink" aria-hidden="true">●</span><%= hero.identity || settings.site.tagline || 'Portfolio' %></p>
+      <h1 class="ar-title" id="ar-map-title"><%= hero.headline || siteName %></h1>
+
+      <% if (hero.intro) { %>
+        <div class="ar-lede"><p><%- mdInline(hero.intro) %></p></div>
+      <% } %>
+
+      <dl class="ar-stats">
+        <% if (settings.sections.projects) { %>
+          <div><dt>Projects</dt><dd><%= String((projects || []).length).padStart(2, '0') %></dd></div>
+        <% } %>
+        <% if (techCount) { %>
+          <div><dt>Tools</dt><dd><%= String(techCount).padStart(2, '0') %></dd></div>
+        <% } %>
+        <div><dt>Worlds</dt><dd><%= String(orbits.length).padStart(2, '0') %></dd></div>
+      </dl>
+
+      <nav class="ar-dock" aria-label="Explore">
+        <p class="ar-dock-head" id="ar-dock-head">
+          <span class="ar-hint-key" aria-hidden="true">▶</span>Select a world
+        </p>
+        <ul>
+          <% orbits.forEach(function (item, index) { %>
+            <li>
+              <a class="ar-dock-link" href="<%= item.href %>" data-world="<%= index + 1 %>">
+                <span class="ar-dock-sprite" aria-hidden="true"><%- include('./planet-sprite', { world: item.world, spriteClass: 'ar-sprite ar-sprite-chip' }) %></span>
+                <span class="ar-dock-text">
+                  <span class="ar-dock-code" aria-hidden="true"><%= String(index + 1).padStart(2, '0') %> · <%= item.code %></span>
+                  <span class="ar-dock-name"><%= item.name %></span>
+                  <span class="ar-dock-blurb" aria-hidden="true"><%= item.blurb %></span>
+                </span>
+                <span class="ar-dock-go" aria-hidden="true">▶</span>
+              </a>
+            </li>
+          <% }); %>
+        </ul>
+      </nav>
+    </div>
+
+    <%# The visual map. Hidden from assistive technology and out of the tab
+        order, because the dock above already names every destination. %>
+    <div class="ar-orrery" aria-hidden="true">
+      <div class="ar-orrery-frame">
+        <span class="ar-star"><%- include('./planet-sprite', { world: 'sun', spriteClass: 'ar-sprite ar-sprite-sun' }) %></span>
+
+        <% orbits.forEach(function (item, index) { %>
+          <span class="ar-ring ar-ring--<%= index + 1 %>">
+            <span class="ar-arm">
+              <a class="ar-world" href="<%= item.href %>" tabindex="-1" data-world="<%= index + 1 %>">
+                <span class="ar-world-sprite"><%- include('./planet-sprite', { world: item.world, spriteClass: 'ar-sprite ar-sprite-world' }) %></span>
+              </a>
+            </span>
+          </span>
+        <% }); %>
+      </div>
+    </div>
+
+    <a class="ar-scroll" href="#ar-content">
+      <span>Continue</span><span class="ar-scroll-arrow" aria-hidden="true">▼</span>
+    </a>
+  </div>
+</section>

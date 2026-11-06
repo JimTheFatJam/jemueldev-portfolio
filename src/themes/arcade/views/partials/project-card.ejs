@@ -1,0 +1,57 @@
+<%
+  // Locals: project, cardIndex. A project with no detail page still links out
+  // to its demo or source if it has one, and is plain text if it has neither.
+  const _href = project.hasDetailPage
+    ? project.href
+    : (safeUrl(project.demo_url) || safeUrl(project.github_url) || '');
+%>
+<li class="ar-card">
+  <article class="ar-panel ar-card-body">
+    <div class="ar-card-media">
+      <% if (project.thumbnail) { %>
+        <% if (_href) { %><a href="<%= _href %>" tabindex="-1" aria-hidden="true"><% } %>
+          <%- include('shared/image', {
+                media: project.thumbnail,
+                imgSizes: '(max-width: 48rem) 100vw, 22rem',
+                imgClass: 'ar-card-img'
+              }) %>
+        <% if (_href) { %></a><% } %>
+      <% } else { %>
+        <div class="ar-card-blank" aria-hidden="true"><span>NO IMAGE</span></div>
+      <% } %>
+    </div>
+
+    <p class="ar-card-meta">
+      <span class="ar-card-num"><%= String(cardIndex + 1).padStart(2, '0') %></span>
+      <% if (project.year) { %><span><%= project.year %></span><% } %>
+      <% if (!project.isPublished) { %><span class="ar-tag ar-tag-draft">Draft</span><% } %>
+      <% if (project.featured) { %><span class="ar-tag">★</span><% } %>
+    </p>
+
+    <h3 class="ar-card-title">
+      <% if (_href) { %><a href="<%= _href %>"><%= project.title %></a><% } else { %><%= project.title %><% } %>
+    </h3>
+
+    <% if (project.summary) { %><p class="ar-card-text"><%= project.summary %></p><% } %>
+
+    <% if (project.tech.length) { %>
+      <ul class="ar-chips">
+        <% project.tech.slice(0, 6).forEach(function (tech) { %>
+          <li class="ar-chip<%= tech.icon ? ' has-icon' : '' %>"><% if (tech.icon) { %><span class="ar-chip-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li>
+        <% }); %>
+      </ul>
+    <% } %>
+
+    <ul class="ar-card-links">
+      <% if (project.hasDetailPage) { %>
+        <li><a href="<%= project.href %>">Open <span aria-hidden="true">▶</span></a></li>
+      <% } %>
+      <% if (safeUrl(project.github_url)) { %>
+        <li><a href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a></li>
+      <% } %>
+      <% if (safeUrl(project.demo_url)) { %>
+        <li><a href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Demo</a></li>
+      <% } %>
+    </ul>
+  </article>
+</li>

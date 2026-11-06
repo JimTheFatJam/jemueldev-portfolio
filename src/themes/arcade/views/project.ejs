@@ -1,0 +1,89 @@
+<%- include('./partials/head') %>
+
+<article class="ar-detail">
+  <div class="ar-shell">
+    <nav class="ar-crumb" aria-label="Breadcrumb">
+      <a href="/projects"><span aria-hidden="true">◀</span> Projects</a>
+    </nav>
+
+    <header class="ar-page-head">
+      <p class="ar-kicker">
+        Project
+        <% if (project.year) { %><span class="ar-tag"><%= project.year %></span><% } %>
+        <% if (project.featured) { %><span class="ar-tag ar-tag-accent">★ Featured</span><% } %>
+      </p>
+
+      <h1 class="ar-page-title"><%= project.title %></h1>
+      <% if (project.summary) { %><p class="ar-page-lede"><%= project.summary %></p><% } %>
+
+      <div class="ar-btn-row">
+        <% if (safeUrl(project.github_url)) { %>
+          <a class="ar-btn ar-btn-accent" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">View source</a>
+        <% } %>
+        <% if (safeUrl(project.demo_url)) { %>
+          <a class="ar-btn" href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
+        <% } %>
+      </div>
+    </header>
+
+    <% if (project.thumbnail) { %>
+      <figure class="ar-frame ar-detail-figure" data-reveal>
+        <%- include('shared/image', {
+              media: project.thumbnail,
+              imgSizes: '(max-width: 72rem) 100vw, 60rem',
+              imgLoading: 'eager',
+              imgClass: 'ar-detail-img'
+            }) %>
+      </figure>
+    <% } %>
+
+    <div class="ar-detail-layout">
+      <aside class="ar-detail-side">
+        <% if (project.tech.length) { %>
+          <div class="ar-panel ar-side-block">
+            <p class="ar-kicker">Stack</p>
+            <ul class="ar-chips ar-chips-stacked">
+              <% project.tech.forEach(function (tech) { %>
+                <li class="ar-chip<%= tech.icon ? ' has-icon' : '' %>"><% if (tech.icon) { %><span class="ar-chip-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li>
+              <% }); %>
+            </ul>
+          </div>
+        <% } %>
+
+        <div class="ar-panel ar-side-block">
+          <p class="ar-kicker">Status</p>
+          <p class="ar-side-value"><%= project.isPublished ? 'Published' : 'Draft' %></p>
+        </div>
+      </aside>
+
+      <div class="ar-detail-main">
+        <% if (project.description) { %>
+          <div class="ar-prose" data-reveal><%- md(project.description) %></div>
+        <% } %>
+
+        <%- include('shared/blocks', { blocks: blocks }) %>
+
+        <% if (project.gallery.length) { %>
+          <section class="ar-detail-block" data-reveal>
+            <h2 class="ar-kicker">Gallery</h2>
+            <ul class="gallery-grid" data-columns="2">
+              <% project.gallery.forEach(function (image) { %>
+                <li>
+                  <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
+                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 22rem', imgClass: 'gallery-img' }) %>
+                  </a>
+                </li>
+              <% }); %>
+            </ul>
+          </section>
+        <% } %>
+      </div>
+    </div>
+
+    <footer class="ar-detail-foot">
+      <a href="/projects"><span aria-hidden="true">◀</span> All projects</a>
+    </footer>
+  </div>
+</article>
+
+<%- include('./partials/foot') %>

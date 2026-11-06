@@ -1,0 +1,128 @@
+<%
+  /* One pixel-art world, drawn as inline SVG.
+   *
+   * Locals: world (key below), spriteClass (optional).
+   *
+   * The art is authored as data — a palette plus a list of cells — rather than
+   * as hand-written SVG, so every rectangle lands exactly on the 16x16 grid and
+   * a world can be retouched by editing numbers. Cells are [x, y, w, h, key] in
+   * disc-local coordinates; the renderer offsets them by the four cells of
+   * margin that the clip path in sprites.ejs leaves for rings and aerials.
+   *
+   * Drawn rather than photographed on purpose: a few hundred bytes each, sharp
+   * at any size, and nothing to download.
+   */
+  const _world = typeof world !== 'undefined' ? world : '';
+  const _cls = typeof spriteClass !== 'undefined' ? spriteClass : 'ar-sprite';
+
+  const AR_WORLDS = {
+    // ABOUT — an ocean world with continents and a little weather.
+    terra: {
+      pal: { sea: '#2b6ca8', deep: '#1c4a7a', land: '#3f9d5d', hi: '#6fd089', cloud: '#eaf6ff' },
+      px: [
+        [0, 0, 16, 16, 'sea'], [0, 11, 16, 5, 'deep'],
+        [3, 2, 5, 2, 'land'], [2, 4, 4, 2, 'land'], [6, 4, 2, 1, 'land'],
+        [9, 6, 5, 3, 'land'], [8, 9, 4, 2, 'land'], [4, 10, 3, 3, 'land'],
+        [3, 2, 3, 1, 'hi'], [9, 6, 3, 1, 'hi'], [4, 10, 2, 1, 'hi'],
+        [1, 7, 3, 1, 'cloud'], [11, 3, 3, 1, 'cloud'], [6, 13, 4, 1, 'cloud'],
+        [10, 12, 2, 1, 'cloud']
+      ]
+    },
+    // PROJECTS — a forge world, cracked open and glowing.
+    forge: {
+      pal: { rock: '#5a4066', dark: '#2e1f36', lava: '#f07a2a', hot: '#ffd166', ash: '#7a5e86' },
+      px: [
+        [0, 0, 16, 16, 'rock'], [0, 10, 16, 6, 'dark'],
+        [2, 3, 3, 1, 'ash'], [10, 2, 4, 1, 'ash'], [6, 6, 5, 1, 'ash'],
+        [3, 5, 1, 4, 'lava'], [4, 8, 4, 1, 'lava'], [8, 9, 1, 3, 'lava'],
+        [9, 11, 4, 1, 'lava'], [11, 5, 1, 3, 'lava'], [12, 7, 2, 1, 'lava'],
+        [3, 7, 1, 1, 'hot'], [8, 10, 1, 1, 'hot'], [11, 6, 1, 1, 'hot'],
+        [5, 8, 1, 1, 'hot']
+      ]
+    },
+    // SKILLS — a built world: traces and nodes across the surface.
+    circuit: {
+      pal: { board: '#46307f', dark: '#261a4a', trace: '#3fd0c9', node: '#b8ffef', plate: '#5c46a0' },
+      px: [
+        [0, 0, 16, 16, 'board'], [0, 11, 16, 5, 'dark'],
+        [2, 2, 4, 3, 'plate'], [10, 12, 4, 2, 'plate'],
+        [1, 6, 7, 1, 'trace'], [8, 4, 1, 3, 'trace'], [9, 4, 5, 1, 'trace'],
+        [4, 7, 1, 4, 'trace'], [5, 11, 6, 1, 'trace'], [12, 7, 1, 5, 'trace'],
+        [1, 6, 1, 1, 'node'], [8, 4, 1, 1, 'node'], [4, 10, 1, 1, 'node'],
+        [12, 11, 1, 1, 'node'], [13, 4, 1, 1, 'node']
+      ]
+    },
+    // RESEARCH — an ice world with caps and a deep crevasse.
+    cryo: {
+      pal: { ice: '#cfeefa', deep: '#6fadcc', crack: '#2f6f98', cap: '#ffffff', shade: '#9ccfe4' },
+      px: [
+        [0, 0, 16, 16, 'ice'], [0, 10, 16, 6, 'shade'],
+        [4, 0, 8, 2, 'cap'], [3, 2, 10, 1, 'cap'], [5, 14, 6, 2, 'cap'],
+        [7, 3, 1, 5, 'crack'], [8, 8, 1, 3, 'crack'], [6, 6, 1, 2, 'crack'],
+        [9, 5, 1, 2, 'crack'],
+        [2, 5, 3, 1, 'deep'], [11, 8, 3, 1, 'deep'], [4, 12, 4, 1, 'deep']
+      ]
+    },
+    // EDUCATION — a ringed world. The ring is drawn outside the disc, in two
+    // halves, so it passes behind the world and then across its face.
+    halo: {
+      pal: { body: '#e0a040', dark: '#a9701f', band: '#f6cf7a', ring: '#ffe6ad', ringDark: '#c69a4c' },
+      px: [
+        [0, 0, 16, 16, 'body'], [0, 11, 16, 5, 'dark'],
+        [0, 3, 16, 2, 'band'], [0, 7, 16, 1, 'band'], [0, 13, 16, 1, 'band'],
+        [2, 1, 5, 1, 'band'], [4, 9, 6, 1, 'dark']
+      ],
+      outer: [
+        [0, 12, 6, 1, 'ringDark'], [1, 13, 4, 1, 'ringDark'],
+        [18, 11, 6, 1, 'ringDark'], [19, 12, 4, 1, 'ringDark']
+      ],
+      front: [
+        [2, 15, 20, 1, 'ring'], [5, 16, 14, 1, 'ringDark']
+      ]
+    },
+    // CONTACT — a relay world with an aerial and a beacon.
+    relay: {
+      pal: { sea: '#1f8a7a', deep: '#11574c', land: '#49c0a4', mast: '#dce8ee', beacon: '#ff5d5d' },
+      px: [
+        [0, 0, 16, 16, 'sea'], [0, 10, 16, 6, 'deep'],
+        [2, 4, 5, 2, 'land'], [9, 7, 5, 2, 'land'], [5, 12, 5, 1, 'land'],
+        [2, 4, 3, 1, 'mast'], [9, 7, 2, 1, 'mast']
+      ],
+      outer: [
+        [11, 2, 1, 3, 'mast'], [9, 1, 5, 1, 'mast'],
+        [9, 2, 1, 1, 'mast'], [13, 2, 1, 1, 'mast']
+      ],
+      beacon: [11, 0, 1, 1, 'beacon']
+    },
+    // The star at the centre: concentric pixel shells plus four flares that
+    // pulse. Bigger than a world, so it fills more of the 24x24 box.
+    sun: {
+      pal: { core: '#fff6d8', inner: '#ffd84d', mid: '#ff9f2e', outer: '#f2651f', flare: '#ffc24d' },
+      px: [
+        [0, 0, 16, 16, 'outer'],
+        [1, 2, 14, 12, 'mid'], [2, 1, 12, 14, 'mid'],
+        [3, 4, 10, 8, 'inner'], [4, 3, 8, 10, 'inner'],
+        [5, 6, 6, 4, 'core'], [6, 5, 4, 6, 'core'],
+        [4, 5, 2, 1, 'core'], [3, 8, 1, 2, 'inner']
+      ],
+      flares: [
+        [11, 0, 2, 2], [11, 22, 2, 2], [0, 11, 2, 2], [22, 11, 2, 2]
+      ]
+    }
+  };
+
+  const _art = AR_WORLDS[_world] || null;
+  const _fill = (key) => (_art && _art.pal[key]) || key;
+  const _rect = (r, inDisc) => {
+    const o = inDisc ? 4 : 0;
+    return '<rect x="' + (r[0] + o) + '" y="' + (r[1] + o) + '" width="' + r[2] +
+      '" height="' + r[3] + '" fill="' + _fill(r[4]) + '"/>';
+  };
+%><% if (_art) { %><svg class="<%= _cls %>" viewBox="0 0 24 24" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><%
+  // Behind the world: the far half of a ring, an aerial mast.
+  (_art.outer || []).forEach(function (r) { %><%- _rect(r, false) %><% });
+%><g clip-path="url(#ar-disc)"><% (_art.px || []).forEach(function (r) { %><%- _rect(r, true) %><% }); %></g><%
+  // In front of the world: the near half of a ring.
+  (_art.front || []).forEach(function (r) { %><%- _rect(r, false) %><% });
+%><% (_art.flares || []).forEach(function (f, i) { %><rect class="ar-flare ar-flare--<%= i + 1 %>" x="<%= f[0] %>" y="<%= f[1] %>" width="<%= f[2] %>" height="<%= f[3] %>" fill="<%= _fill('flare') %>"/><% });
+%><% if (_art.beacon) { %><rect class="ar-beacon" x="<%= _art.beacon[0] %>" y="<%= _art.beacon[1] %>" width="<%= _art.beacon[2] %>" height="<%= _art.beacon[3] %>" fill="<%= _fill(_art.beacon[4]) %>"/><% } %></svg><% } %>
