@@ -97,11 +97,35 @@
 
   /* Controls. A button is a sprite: flat fill, black outline, light bevel
      top-left, dark bevel bottom-right, hard drop shadow. */
+  /* Controls, straight from the reference. Four sprites, each with a light
+  bevel at the top left and a dark one at the bottom right. Identical in
+  both palettes: a button carries its own colour, like a key on a console.
+  blue   default      green  go / primary
+  yellow secondary    red    stop / destructive                        */
   --ar-btn: #3c3cbc;
   --ar-btn-hi: #6888fc;
   --ar-btn-lo: #1c1c78;
-  --ar-btn-ink: #ffffff;
+  --ar-btn-ink: #f8f8f8;
+
+  --ar-go: #00a800;
+  --ar-go-hi: #b8f818;
+  --ar-go-lo: #006800;
+  --ar-go-ink: #000000;
+
+  --ar-warn: #e89800;
+  --ar-warn-hi: #fce0a8;
+  --ar-warn-lo: #885000;
+  --ar-warn-ink: #000000;
+
+  --ar-stop: #a81000;
+  --ar-stop-hi: #f87858;
+  --ar-stop-lo: #581000;
+  --ar-stop-ink: #f8f8f8;
   --ar-input: #0b0b1e;
+
+  /* Light text over a dark page: the hard black offset is what makes a
+     heading read as 8-bit rather than merely bold. */
+  --ar-text-shadow: #000000;
 
   --ar-star: rgba(248, 248, 255, 0.85);
   --ar-star-soft: rgba(168, 168, 216, 0.55);
@@ -228,7 +252,7 @@ body.ar::before {
   font-weight: 400;
   line-height: 1.45;
   letter-spacing: 0;
-  text-shadow: 2px 2px 0 var(--ar-line);
+  text-shadow: 2px 2px 0 var(--ar-text-shadow);
 }
 /* Press Start 2P is a 5x7 face: it needs far more room per line than a
    proportional one, and it must never be asked to carry a long paragraph. */
@@ -305,14 +329,38 @@ body.ar::before {
     --ar-good: #0f7a35;
     --ar-bad: #c01f08;
 
-    --ar-btn: #2b2bae;
-    --ar-btn-hi: #7f8ff5;
-    --ar-btn-lo: #16165e;
-    --ar-btn-ink: #ffffff;
+    /* Controls, straight from the reference. Four sprites, each with a light
+    bevel at the top left and a dark one at the bottom right. Identical in
+    both palettes: a button carries its own colour, like a key on a console.
+    blue   default      green  go / primary
+    yellow secondary    red    stop / destructive                        */
+    --ar-btn: #3c3cbc;
+    --ar-btn-hi: #6888fc;
+    --ar-btn-lo: #1c1c78;
+    --ar-btn-ink: #f8f8f8;
+
+    --ar-go: #00a800;
+    --ar-go-hi: #b8f818;
+    --ar-go-lo: #006800;
+    --ar-go-ink: #000000;
+
+    --ar-warn: #e89800;
+    --ar-warn-hi: #fce0a8;
+    --ar-warn-lo: #885000;
+    --ar-warn-ink: #000000;
+
+    --ar-stop: #a81000;
+    --ar-stop-hi: #f87858;
+    --ar-stop-lo: #581000;
+    --ar-stop-ink: #f8f8f8;
     --ar-input: #ffffff;
 
-    --ar-star: rgba(20, 20, 43, 0.5);
-    --ar-star-soft: rgba(20, 20, 43, 0.28);
+    /* Not black: the ink is already near-black, so a black shadow
+       under it would only thicken the letters into a smudge. */
+    --ar-text-shadow: #9293b3;
+
+    --ar-star: rgba(8, 8, 24, 0.85);
+    --ar-star-soft: rgba(8, 8, 24, 0.55);
     --ar-orbit-line: rgba(20, 20, 43, 0.2);
     --ar-orbit-line-faint: rgba(20, 20, 43, 0.1);
 
@@ -365,14 +413,38 @@ body.ar::before {
   --ar-good: #0f7a35;
   --ar-bad: #c01f08;
 
-  --ar-btn: #2b2bae;
-  --ar-btn-hi: #7f8ff5;
-  --ar-btn-lo: #16165e;
-  --ar-btn-ink: #ffffff;
+  /* Controls, straight from the reference. Four sprites, each with a light
+  bevel at the top left and a dark one at the bottom right. Identical in
+  both palettes: a button carries its own colour, like a key on a console.
+  blue   default      green  go / primary
+  yellow secondary    red    stop / destructive                        */
+  --ar-btn: #3c3cbc;
+  --ar-btn-hi: #6888fc;
+  --ar-btn-lo: #1c1c78;
+  --ar-btn-ink: #f8f8f8;
+
+  --ar-go: #00a800;
+  --ar-go-hi: #b8f818;
+  --ar-go-lo: #006800;
+  --ar-go-ink: #000000;
+
+  --ar-warn: #e89800;
+  --ar-warn-hi: #fce0a8;
+  --ar-warn-lo: #885000;
+  --ar-warn-ink: #000000;
+
+  --ar-stop: #a81000;
+  --ar-stop-hi: #f87858;
+  --ar-stop-lo: #581000;
+  --ar-stop-ink: #f8f8f8;
   --ar-input: #ffffff;
 
-  --ar-star: rgba(20, 20, 43, 0.5);
-  --ar-star-soft: rgba(20, 20, 43, 0.28);
+  /* Not black: the ink is already near-black, so a black shadow
+     under it would only thicken the letters into a smudge. */
+  --ar-text-shadow: #9293b3;
+
+  --ar-star: rgba(8, 8, 24, 0.85);
+  --ar-star-soft: rgba(8, 8, 24, 0.55);
   --ar-orbit-line: rgba(20, 20, 43, 0.2);
   --ar-orbit-line-faint: rgba(20, 20, 43, 0.1);
 
@@ -531,22 +603,17 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 2rem;
+  height: 2rem;
   flex: none;
-  border-radius: 50%;
-  background: var(--ar-ink);
-  color: var(--ar-panel);
-  font-family: var(--ar-mono);
-  font-size: 0.75rem;
+  background: var(--ar-warn);
+  color: var(--ar-warn-ink);
 }
 .ar-mark-name {
   font-family: var(--ar-pixel);
   font-size: 0.6875rem;
+  font-weight: 400;
   letter-spacing: 0.02em;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -561,13 +628,16 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   border: var(--ar-px) solid var(--ar-line);
   box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel), var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ar-ink);
-  background: none;
-  border: 1px solid var(--ar-line-strong);
-  border-radius: var(--ar-radius);
-  padding: 0.4rem 0.65rem;
+  letter-spacing: 0.06em;
+  color: var(--ar-btn-ink);
+  background: var(--ar-btn);
+  padding: 0.6rem 0.7rem;
   cursor: pointer;
+}
+.ar-nav-toggle:hover { filter: brightness(1.18); }
+.ar-nav-toggle:active {
+  transform: translate(var(--ar-px), var(--ar-px));
+  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
 }
 .ar-nav-toggle-bars {
   width: 0.85rem;
@@ -586,20 +656,28 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
 }
 .ar-nav ul a {
   position: relative;
+  display: inline-block;
   font-family: var(--ar-pixel);
   font-size: 0.5625rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--ar-muted);
+  /* A key, like every other control. Blue at rest; the page you are on
+     lights up yellow, so the bar reads as a selector, not a list. */
+  padding: 0.6rem 0.7rem;
+  background: var(--ar-btn);
+  color: var(--ar-btn-ink);
+  border: 2px solid var(--ar-line);
+  box-shadow:
+    inset 2px 2px 0 0 var(--ar-btn-hi),
+    inset -2px -2px 0 0 var(--ar-btn-lo),
+    2px 2px 0 0 var(--ar-line);
   text-decoration: none;
-  padding-block: 0.4rem;
   white-space: nowrap;
-  transition: color 0.18s var(--ar-ease);
+  /* A key does not fade between states. */
+  transition: none;
 }
 .ar-nav ul a::before {
-  height: var(--ar-px);
-  background: var(--ar-accent);
-  transition: none;
+  display: none;
   content: "";
   position: absolute;
   left: 0;
@@ -611,9 +689,22 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   transform-origin: left;
   transition: transform 0.25s var(--ar-ease);
 }
-.ar-nav ul a:hover,
+.ar-nav ul a:hover { filter: brightness(1.18); color: var(--ar-btn-ink); }
+.ar-nav ul a:active {
+  transform: translate(2px, 2px);
+  box-shadow: inset 2px 2px 0 0 var(--ar-btn-lo);
+}
+
+/* Where you are now. */
 .ar-nav ul a[aria-current="page"],
-.ar-nav ul a.is-active { color: var(--ar-ink); }
+.ar-nav ul a.is-active {
+  background: var(--ar-warn);
+  color: var(--ar-warn-ink);
+  box-shadow:
+    inset 2px 2px 0 0 var(--ar-warn-hi),
+    inset -2px -2px 0 0 var(--ar-warn-lo),
+    2px 2px 0 0 var(--ar-line);
+}
 .ar-nav ul a:hover::before,
 .ar-nav ul a[aria-current="page"]::before,
 .ar-nav ul a.is-active::before { transform: scaleX(1); }
@@ -695,54 +786,50 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   text-transform: uppercase;
   letter-spacing: 0.04em;
   text-decoration: none;
-  color: var(--ar-btn-ink);
-  background: var(--ar-btn);
   border: var(--ar-px) solid var(--ar-line);
   padding: 0.85rem 1rem;
   white-space: nowrap;
-  /* Two inset bevels and one hard drop: the whole of the 8-bit button. */
+  /* Two inset bevels and one hard drop: the whole of the 8-bit button.
+     Re-pointed by the variants below; blue is the default key. */
+  --ar-key: var(--ar-btn);
+  --ar-key-hi: var(--ar-btn-hi);
+  --ar-key-lo: var(--ar-btn-lo);
+  --ar-key-ink: var(--ar-btn-ink);
+  background: var(--ar-key);
+  color: var(--ar-key-ink);
   box-shadow:
-    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-btn-hi),
-    inset calc(-1 * var(--ar-px)) calc(-1 * var(--ar-px)) 0 0 var(--ar-btn-lo),
+    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-key-hi),
+    inset calc(-1 * var(--ar-px)) calc(-1 * var(--ar-px)) 0 0 var(--ar-key-lo),
     var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
   /* Nothing eases: a sprite changes frame. */
   transition: none;
 }
-.ar-btn:hover { filter: brightness(1.18); color: var(--ar-btn-ink); }
+.ar-btn:hover { filter: brightness(1.18); color: var(--ar-key-ink); }
 /* Pressed: the button moves into its own shadow, which disappears. */
 .ar-btn:active {
   transform: translate(var(--ar-px), var(--ar-px));
-  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-btn-lo);
+  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-key-lo);
 }
 
+/* A variant only re-points the four colours. The construction above is
+   shared, so every control is unmistakably the same kind of object. */
 .ar-btn-accent {
-  background: var(--ar-accent);
-  color: var(--ar-on-accent);
-  box-shadow:
-    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-accent-bright),
-    inset calc(-1 * var(--ar-px)) calc(-1 * var(--ar-px)) 0 0 #8a6200,
-    var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
+  --ar-key: var(--ar-go);
+  --ar-key-hi: var(--ar-go-hi);
+  --ar-key-lo: var(--ar-go-lo);
+  --ar-key-ink: var(--ar-go-ink);
 }
-.ar-btn-accent:hover { color: var(--ar-on-accent); }
-.ar-btn-accent:active {
-  transform: translate(var(--ar-px), var(--ar-px));
-  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 #8a6200;
-}
-
-/* The quiet variant is the unpressed console key: panel-coloured, same
-   construction, so it still reads as a control rather than as text. */
 .ar-btn-quiet {
-  background: var(--ar-panel);
-  color: var(--ar-ink);
-  box-shadow:
-    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel),
-    inset calc(-1 * var(--ar-px)) calc(-1 * var(--ar-px)) 0 0 var(--ar-bevel-dark),
-    var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
+  --ar-key: var(--ar-warn);
+  --ar-key-hi: var(--ar-warn-hi);
+  --ar-key-lo: var(--ar-warn-lo);
+  --ar-key-ink: var(--ar-warn-ink);
 }
-.ar-btn-quiet:hover { color: var(--ar-ink); }
-.ar-btn-quiet:active {
-  transform: translate(var(--ar-px), var(--ar-px));
-  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+.ar-btn-stop {
+  --ar-key: var(--ar-stop);
+  --ar-key-hi: var(--ar-stop-hi);
+  --ar-key-lo: var(--ar-stop-lo);
+  --ar-key-ink: var(--ar-stop-ink);
 }
 
 .ar-btn-lg { padding: 1.05rem 1.35rem; font-size: 0.75rem; }
@@ -873,7 +960,7 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   font-weight: 400;
   letter-spacing: 0;
   line-height: 1.35;
-  text-shadow: var(--ar-px) var(--ar-px) 0 var(--ar-line);
+  text-shadow: var(--ar-px) var(--ar-px) 0 var(--ar-text-shadow);
   text-transform: uppercase;
   margin-bottom: clamp(0.9rem, 3vh, 2rem);
 }
@@ -2139,7 +2226,7 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
 }
 .ar .button:hover { border-color: var(--ar-ink); }
 .ar .button-primary { background: var(--ar-accent); border-color: var(--ar-accent); color: var(--ar-on-accent); }
-.ar .button-primary:hover { background: var(--ar-accent-bright); border-color: var(--ar-accent-bright); color: var(--ar-on-accent); }
+.ar .button-primary:hover { filter: brightness(1.18); }
 
 .ar .project-ref-card {
   display: flex;

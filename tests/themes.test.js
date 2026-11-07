@@ -1732,27 +1732,145 @@ describe('arcade theme', () => {
     assert.match(css, /--ar-sans: "VT323"/);
   });
 
-  test('controls are sprites: hard outline, two bevels, and a pressed state', async () => {
+  test('controls are sprites, and every one is the same kind of object', async () => {
     const css = await (await new Client().get('/themes/arcade/theme.css')).text();
     const btn = (css.match(/\n\.ar-btn \{[\s\S]*?\n\}/) || [''])[0];
     assert.ok(btn, 'no .ar-btn rule');
 
+    // One construction, shared: black outline, a light bevel at the top left,
+    // a dark one at the bottom right, and a hard drop shadow.
     assert.match(btn, /border: var\(--ar-px\) solid var\(--ar-line\);/);
-    // A light bevel top-left, a dark one bottom-right, and a hard drop.
-    assert.match(btn, /inset var\(--ar-px\) var\(--ar-px\) 0 0 var\(--ar-btn-hi\)/);
-    assert.match(btn, /inset calc\(-1 \* var\(--ar-px\)\) calc\(-1 \* var\(--ar-px\)\) 0 0 var\(--ar-btn-lo\)/);
+    assert.match(btn, /inset var\(--ar-px\) var\(--ar-px\) 0 0 var\(--ar-key-hi\)/);
+    assert.match(btn, /inset calc\(-1 \* var\(--ar-px\)\) calc\(-1 \* var\(--ar-px\)\) 0 0 var\(--ar-key-lo\)/);
     assert.match(btn, /var\(--ar-px\) var\(--ar-px\) 0 0 var\(--ar-line\)/);
-    // Nothing eases: a sprite changes frame.
     assert.match(btn, /transition: none;/);
 
     // Pressing moves the button into its own shadow.
     assert.match(css, /\.ar-btn:active \{[\s\S]*?transform: translate\(var\(--ar-px\), var\(--ar-px\)\);/);
-    // Each variant carries the same construction rather than going flat.
-    for (const variant of ['accent', 'quiet']) {
-      assert.match(css, new RegExp('\\.ar-btn-' + variant + ' \\{[\\s\\S]*?inset var\\(--ar-px\\)'), variant);
+
+    // A variant only re-points the four colours, so a new one can never
+    // accidentally become a flat rectangle.
+    for (const [variant, role] of [['accent', 'go'], ['quiet', 'warn'], ['stop', 'stop']]) {
+      const rule = (css.match(new RegExp('\\.ar-btn-' + variant + ' \\{[\\s\\S]*?\n\\}')) || [''])[0];
+      assert.ok(rule, 'no .ar-btn-' + variant + ' rule');
+      for (const slot of ['', '-hi', '-lo', '-ink']) {
+        assert.match(rule, new RegExp('--ar-key' + slot + ': var\\(--ar-' + role + slot + '\\)'), variant + slot);
+      }
+      // A variant must not redeclare the construction; that is the bug the
+      // shared --ar-key indirection exists to prevent.
+      assert.doesNotMatch(rule, /box-shadow|border:/);
     }
+
     // Nothing anywhere is rounded.
     assert.match(css, /--ar-radius: 0px;/);
+  });
+
+  test('the button palette is the reference\'s four keys, in both themes', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+
+    // Taken from the reference file, and deliberately identical in both
+    // palettes: a button is a sprite that carries its own colour rather than
+    // following the page. This is also what stops everything being one blue.
+    const KEYS = {
+      btn: ['#3c3cbc', '#6888fc', '#1c1c78', '#f8f8f8'],
+      go: ['#00a800', '#b8f818', '#006800', '#000000'],
+      warn: ['#e89800', '#fce0a8', '#885000', '#000000'],
+      stop: ['#a81000', '#f87858', '#581000', '#f8f8f8']
+    };
+    for (const [role, [fill, hi, lo, ink]] of Object.entries(KEYS)) {
+      for (const [suffix, value] of [['', fill], ['-hi', hi], ['-lo', lo], ['-ink', ink]]) {
+        const declarations = [...css.matchAll(new RegExp('--ar-' + role + suffix + ': (#[0-9a-f]{6});', 'g'))]
+          .map((m) => m[1]);
+        assert.equal(declarations.length, 3,
+          '--ar-' + role + suffix + ' should be declared once per palette block');
+        assert.deepEqual([...new Set(declarations)], [value],
+          '--ar-' + role + suffix + ' differs between palettes or from the reference');
+      }
+    }
+
+    // The navigation is a row of those keys, not a row of text links, and the
+    // page you are on lights up in the secondary colour.
+    const nav = (css.match(/\n\.ar-nav ul a \{[\s\S]*?\n\}/) || [''])[0];
+    assert.match(nav, /background: var\(--ar-btn\);/);
+    assert.match(nav, /color: var\(--ar-btn-ink\);/);
+    assert.match(nav, /inset 2px 2px 0 0 var\(--ar-btn-hi\)/);
+    // The original muted link colour must not survive below it, or it wins on
+    // source order and the key renders with no readable label.
+    assert.doesNotMatch(nav, /color: var\(--ar-muted\)/);
+    assert.match(css, /\.ar-nav ul a\[aria-current="page"\],[\s\S]*?background: var\(--ar-warn\);/);
+  });
+
+  test('no rule declares the same property twice over itself', async () => {
+    // Restyling a forked theme means editing rules that already had opinions.
+    // A declaration added above an existing one simply loses, silently — that
+    // is how the nav keys ended up with invisible labels — so no rule may
+    // carry the same property twice.
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+    const offenders = [];
+    for (const m of css.matchAll(/(?:^|\n)(\.[a-z0-9 .:>\[\]="()-]+)\s*\{([^}]*)\}/g)) {
+      const props = [...m[2].matchAll(/(?:^|\n)\s*([a-z-]+)\s*:/g)].map((x) => x[1]);
+      const dupes = [...new Set(props.filter((x) => props.filter((y) => y === x).length > 1))]
+        .filter((x) => !x.startsWith('--'));
+      // .ar-lightbox-img carries a deliberate max-height fallback pair that
+      // Design 4 already had, so it is allowed.
+      if (dupes.length && !m[1].includes('ar-lightbox-img')) {
+        offenders.push(m[1].trim() + ' -> ' + dupes.join(', '));
+      }
+    }
+    assert.deepEqual(offenders, []);
+  });
+
+  test('the star chart and the heading shadow read in both palettes', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+
+    const srgb = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const lum = (c) => 0.2126 * srgb(c[0]) + 0.7152 * srgb(c[1]) + 0.0722 * srgb(c[2]);
+    const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+    const rgba = (s) => { const n = s.match(/[\d.]+/g).map(Number); return n.length > 3 ? n : n.concat(1); };
+    const over = (fg, bg) => [0, 1, 2].map((i) => fg[i] * fg[3] + bg[i] * (1 - fg[3]));
+    const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+
+    const blocks = {
+      night: css.slice(css.indexOf(':root {'), css.indexOf('@media (prefers-color-scheme: light)')),
+      day: (() => { const at = css.indexOf(':root[data-ar-theme="light"] {');
+                    return css.slice(at, css.indexOf('}', css.indexOf('--ar-planet-halo', at))); })()
+    };
+    const token = (block, name) => {
+      const m = block.match(new RegExp('--ar-' + name + ':\\s*([^;]+);'));
+      assert.ok(m, 'no --ar-' + name);
+      return m[1].trim();
+    };
+
+    for (const [name, block] of Object.entries(blocks)) {
+      const canvas = hex(token(block, 'canvas'));
+
+      // The stars are the same chart in both palettes, so on paper they have
+      // to be drawn in ink. A pale wash on white is simply not visible.
+      const star = over(rgba(token(block, 'star')), canvas);
+      assert.ok(ratio(star, canvas) > 7,
+        name + ' stars are too faint against the canvas (' + ratio(star, canvas).toFixed(2) + ')');
+      const soft = over(rgba(token(block, 'star-soft')), canvas);
+      assert.ok(ratio(soft, canvas) > 2.5, name + ' faint stars are invisible');
+
+      // The heading shadow must be distinguishable from the heading itself.
+      // Black under near-black ink turns the letters to mud, which is exactly
+      // what a single shared --ar-line gave on paper.
+      const shadow = hex(token(block, 'text-shadow'));
+      const ink = hex(token(block, 'ink'));
+      assert.ok(ratio(shadow, ink) > 3,
+        name + ' heading shadow is too close to the ink (' + ratio(shadow, ink).toFixed(2) + ')');
+      // Against the canvas there is no requirement either way: on a dark
+      // page a black offset is meant to be subtle and read against the
+      // light letters. Only paper needs the shadow to be visible.
+      if (lum(canvas) > 0.5) {
+        assert.ok(ratio(shadow, canvas) > 1.4,
+          name + ' heading shadow disappears into the paper');
+      }
+    }
+
+    // Both headings point at the token rather than at the outline colour.
+    assert.doesNotMatch(css, /text-shadow: [^;]*var\(--ar-line\)/);
+    assert.equal((css.match(/text-shadow: [^;]*var\(--ar-text-shadow\)/g) || []).length, 2);
   });
 
   test('the night palette is the reference\'s, and the day palette is neutral', async () => {
