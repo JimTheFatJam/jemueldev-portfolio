@@ -3,20 +3,24 @@
 <section class="ar-section ar-section-first" id="research">
   <div class="ar-shell">
     <div class="ar-page-head">
-      <p class="ar-kicker">World 04</p>
+      <p class="ar-label"><span class="ar-label-num">04</span>Research</p>
       <h1 class="ar-page-title">Research</h1>
-      <p class="ar-page-lede">Academic work, studies and ongoing investigations.</p>
+      <p class="ar-page-lead">Academic work, studies and ongoing investigations.</p>
     </div>
 
-    <% if (items.length) { %>
-      <ul class="ar-records">
-        <% items.forEach(function (item, index) { %>
-          <%- include('./partials/research-record', { item: item, recordIndex: index }) %>
-        <% }); %>
-      </ul>
-    <% } else { %>
-      <p class="ar-empty">Nothing published here yet.<% if (user) { %> <a href="/admin/research">Add research in the admin</a>.<% } %></p>
-    <% } %>
+    <div class="ar-section-body">
+      <% if (items.length) { %>
+        <div class="ar-records">
+          <% items.forEach(function (item, index) { %>
+            <%- include('./partials/research-record', { item: item, recordIndex: index }) %>
+          <% }); %>
+        </div>
+      <% } else { %>
+        <p class="ar-empty">
+          Nothing published here yet.<% if (user) { %> <a href="/admin/research">Add research in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
   </div>
 </section>
 

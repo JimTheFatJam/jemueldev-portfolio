@@ -1,6 +1,0 @@
-<%
-  /* One planet, referencing the art emitted once by ./sprites.
-     Locals: world (key), spriteClass. */
-  const arWorld = typeof world !== 'undefined' ? world : 'terra';
-  const arClass = typeof spriteClass !== 'undefined' ? spriteClass : 'ar-sprite';
-%><svg class="<%= arClass %>" viewBox="0 0 32 32" shape-rendering="crispEdges" aria-hidden="true" focusable="false"><use href="#ar-p-<%= arWorld %>"/></svg>

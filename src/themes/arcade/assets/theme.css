@@ -1,158 +1,164 @@
 /* ==========================================================================
    Arcade — Design 5
-   A retro pixel-art universe. Night is the native mode; day is a designed
-   alternate, not an inversion.
+   Design 4's orbital map, wearing an 8-bit coat.
 
-   Three rules hold the whole thing together:
-     · nothing is rounded, and nothing fades — shadows are hard offsets and
-       animations run on steps(), which is what reads as 8-bit;
-     · the art is drawn, not photographed, so it stays sharp at any size;
-     · uploaded images are never pixelated or filtered. The frame around a
-       photo is retro; the photo itself is left exactly as it was.
+   This theme is a fork of Orbit, not a reimplementation of it. The solar
+   system — its composition, planet artwork, orbital radii, revolution rates,
+   camera tilt, zoom limits, drag behaviour and label placement — is Design
+   4's, unchanged, because that part already worked. What changes is
+   everything around it: the palette, the typography, the borders, the
+   buttons and the surfaces.
 
+   Three rules carry the 8-bit identity:
+     · nothing is rounded and nothing is blurred. Borders are hard black
+       outlines, shadows are hard offsets, and bevels are inset box-shadows
+       on two sides — the way a sprite is shaded;
+     · the grid lives on the page background, not in a box around the map;
+     · type is a real pixel face, served from this origin because the
+       application's CSP sets font-src 'self'.
    Resets use :where() so component rules always win.
    ========================================================================== */
 
+/* The pixel faces. Press Start 2P for anything that should read as a title,
+   a label or a control; VT323 for running text, where a 5x7 face would be
+   unreadable at paragraph length. Both are SIL OFL — see fonts/OFL.txt. */
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("fonts/press-start-2p-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "Press Start 2P";
+  src: url("fonts/press-start-2p-latin-ext.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+@font-face {
+  font-family: "VT323";
+  src: url("fonts/vt323-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA,
+    U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191,
+    U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: "VT323";
+  src: url("fonts/vt323-latin-ext.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
 :root {
+  /* Tells the browser which form-control and scrollbar palette to use. */
   color-scheme: dark;
 
-  /* Night, and the native mode. Deep navy rather than purple: the background
-     is almost black with a blue cast, panels are indigo, and all the colour
-     comes from cyan for structure and yellow for emphasis. */
-  --ar-bg: #080a1c;
-  --ar-bg-alt: #0e1230;
-  --ar-panel: #141937;
-  --ar-panel-alt: #1b2146;
-  --ar-line: #2b3468;
-  --ar-line-strong: #46539e;
-  --ar-ink: #eef1ff;
-  --ar-muted: #a9b3e4;
-  --ar-faint: #7d88c0;
+  /* Night, and the native mode: the reference's own values. Almost-black
+     navy, indigo surfaces, cyan for structure and yellow for emphasis. */
+  --ar-canvas: #0f0f23;
+  --ar-panel: #1d1d45;
+  --ar-panel-alt: #14143a;
+  --ar-ink: #f8f8f8;
+  --ar-muted: #a8a8d8;
+  --ar-faint: #8e8ec6;
+  /* 8-bit outlines are black, whatever is behind them. --ar-bevel is the
+     top-left highlight that makes a surface read as raised. */
+  --ar-line: #000000;
+  --ar-line-strong: #000000;
+  --ar-bevel: #4a4aa8;
+  --ar-bevel-dark: #0b0b22;
+  --ar-grid: #16163a;
 
-  /* Cyan leads; yellow and orange mark what matters; green and red are kept
-     for states that mean go and stop. */
-  --ar-accent: #2ee6d6;
-  --ar-accent-strong: #5ff2e6;
-  --ar-accent-warm: #ffd029;
-  --ar-accent-warm-fill: #ffd029;
-  --ar-accent-hot: #ff8c21;
-  --ar-accent-go: #27d07a;
-  --ar-accent-stop: #ff4d5e;
-  --ar-accent-link: #6f86ff;
-  --ar-on-accent: #04121a;
-  --ar-on-warm: #2a2000;
+  /* Yellow leads as the emphasis colour; cyan marks structure. */
+  --ar-accent: #f8b800;
+  --ar-accent-bright: #ffd34d;
+  --ar-accent-soft: #2a2208;
+  --ar-on-accent: #000000;
+  --ar-cyan: #00e8d8;
+  --ar-cyan-deep: #00a89c;
+  --ar-good: #58d854;
+  --ar-bad: #f83800;
 
-  --ar-grid: rgba(90, 112, 200, 0.10);
-  --ar-star: rgba(226, 236, 255, 0.90);
-  --ar-star-dim: rgba(140, 170, 235, 0.55);
-  --ar-orbit: rgba(80, 100, 180, 0.55);
-  --ar-orbit-lit: rgba(46, 230, 214, 0.65);
-  --ar-void: #050714;
-  --ar-shadow: #03040e;
-  --ar-glow: rgba(46, 230, 214, 0.20);
-  --ar-scrim: rgba(8, 10, 28, 0.95);
+  /* Controls. A button is a sprite: flat fill, black outline, light bevel
+     top-left, dark bevel bottom-right, hard drop shadow. */
+  --ar-btn: #3c3cbc;
+  --ar-btn-hi: #6888fc;
+  --ar-btn-lo: #1c1c78;
+  --ar-btn-ink: #ffffff;
+  --ar-input: #0b0b1e;
 
-  --ar-pixel: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SF Mono", Menlo,
-    Consolas, "Liberation Mono", monospace;
-  --ar-body: ui-monospace, "Cascadia Mono", "Segoe UI Mono", "SF Mono", Menlo,
-    Consolas, "Liberation Mono", monospace;
+  --ar-star: rgba(248, 248, 255, 0.85);
+  --ar-star-soft: rgba(168, 168, 216, 0.55);
+  --ar-orbit-line: rgba(136, 136, 230, 0.34);
+  --ar-orbit-line-faint: rgba(136, 136, 230, 0.17);
 
-  --ar-shell: 80rem;
+  --ar-header-bg: rgba(15, 15, 35, 0.92);
+  --ar-header-bg-focus: rgba(15, 15, 35, 0.98);
+  --ar-panel-glass: rgba(29, 29, 69, 0.86);
+  --ar-plate: rgba(11, 11, 30, 0.88);
+  --ar-scrim: rgba(15, 15, 35, 0.95);
+  --ar-halo: rgba(0, 232, 216, 0.1);
+  --ar-contact-glow: rgba(0, 232, 216, 0.08);
+
+  /* The sun and the planets keep Design 4's lighting. Only the colour of the
+     light changes with the sky. */
+  --ar-sun-fill:
+    radial-gradient(circle at 36% 32%, rgba(255, 244, 224, 0.5), rgba(255, 186, 116, 0.1) 52%, rgba(110, 36, 4, 0.26)),
+    url("sun.webp");
+  --ar-sun-ring: rgba(248, 184, 0, 0.38);
+  --ar-sun-ring-lit: rgba(248, 184, 0, 0.68);
+  --ar-sun-glow: rgba(248, 184, 0, 0.26);
+  --ar-sun-glow-lit: rgba(248, 184, 0, 0.44);
+  --ar-planet-shade: rgba(0, 0, 0, 0.5);
+  --ar-planet-sheen: rgba(255, 255, 255, 0.42);
+  --ar-planet-drop: rgba(0, 0, 0, 0.6);
+  --ar-planet-halo: rgba(0, 232, 216, 0.55);
+
+  /* Type. The pixel face is for titles, labels and controls; the terminal
+     face carries running text, where a 5x7 face at paragraph length would be
+     punishing to read. Both fall back to a monospace stack. */
+  --ar-pixel: "Press Start 2P", "Courier New", ui-monospace, monospace;
+  --ar-sans: "VT323", "Courier New", ui-monospace, monospace;
+  --ar-display: "Press Start 2P", "Courier New", ui-monospace, monospace;
+  --ar-mono: "VT323", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  --ar-shell: 88rem;
   --ar-measure: 44rem;
-  --ar-gutter: clamp(1rem, 3vw, 2.25rem);
-  --ar-pad: clamp(1rem, 2.2vw, 1.5rem);
-  /* The grid every border and shadow snaps to. */
-  --ar-unit: 2px;
-  --ar-step: steps(8, end);
+  --ar-gutter: clamp(1rem, 3vw, 2.5rem);
+  --ar-pad: clamp(1.25rem, 2.4vw, 2rem);
+  --ar-label-gap: 3rem;
+  /* Steps, not curves: an 8-bit interface moves in frames. */
+  --ar-ease: steps(6, end);
+  --ar-radius: 0px;
+  /* One "pixel". Every border, bevel and shadow is a multiple of it. */
+  --ar-px: 4px;
 
-  /* Camera rest state. The script overwrites these; without it they are the
-     view everyone gets, which is a deliberately good one. */
-  --ar-zoom: 1;
-  --ar-spin: 0deg;
-  --ar-unspin: 0deg;
-  --ar-flat: 0.62;
-  --ar-unflat: 1.6129;
-}
-
-/* Day is applied when asked for, and by default when the system asks and
-   the visitor has not. An explicit "dark" always wins. The two lists are
-   identical by construction. */
-@media (prefers-color-scheme: light) {
-  :root:not([data-ar-theme="dark"]) {
-    color-scheme: light;
-
-    /* Day. A clean, neutral counterpart: off-white paper, white panels,
-       charcoal-navy ink. The accents carry over but are darkened to the point
-       where they pass AA on paper — the palette changes value, not identity. */
-    --ar-bg: #f5f7fb;
-    --ar-bg-alt: #e9edf6;
-    --ar-panel: #ffffff;
-    --ar-panel-alt: #f1f4fa;
-    --ar-line: #ccd4e6;
-    --ar-line-strong: #5d6a93;
-    --ar-ink: #111730;
-    --ar-muted: #3f4a6e;
-    --ar-faint: #5e6a8f;
-
-    --ar-accent: #0d7a73;
-    --ar-accent-strong: #0a615b;
-    --ar-accent-warm: #a85c00;
-    --ar-accent-warm-fill: #ffc21a;
-    --ar-accent-hot: #c03a12;
-    --ar-accent-go: #10763a;
-    --ar-accent-stop: #bb1b28;
-    --ar-accent-link: #2740c7;
-    --ar-on-accent: #ffffff;
-    --ar-on-warm: #2a1c00;
-
-    --ar-grid: rgba(70, 90, 140, 0.11);
-    --ar-star: rgba(60, 80, 130, 0.42);
-    --ar-star-dim: rgba(80, 100, 150, 0.24);
-    --ar-orbit: rgba(70, 90, 140, 0.42);
-    --ar-orbit-lit: rgba(13, 122, 115, 0.55);
-    --ar-void: #e4e9f4;
-    --ar-shadow: #c3ccdf;
-    --ar-glow: rgba(13, 122, 115, 0.14);
-    --ar-scrim: rgba(245, 247, 251, 0.95);
-  }
-}
-
-:root[data-ar-theme="light"] {
-  color-scheme: light;
-
-  /* Day. A clean, neutral counterpart: off-white paper, white panels,
-     charcoal-navy ink. The accents carry over but are darkened to the point
-     where they pass AA on paper — the palette changes value, not identity. */
-  --ar-bg: #f5f7fb;
-  --ar-bg-alt: #e9edf6;
-  --ar-panel: #ffffff;
-  --ar-panel-alt: #f1f4fa;
-  --ar-line: #ccd4e6;
-  --ar-line-strong: #5d6a93;
-  --ar-ink: #111730;
-  --ar-muted: #3f4a6e;
-  --ar-faint: #5e6a8f;
-
-  --ar-accent: #0d7a73;
-  --ar-accent-strong: #0a615b;
-  --ar-accent-warm: #a85c00;
-  --ar-accent-warm-fill: #ffc21a;
-  --ar-accent-hot: #c03a12;
-  --ar-accent-go: #10763a;
-  --ar-accent-stop: #bb1b28;
-  --ar-accent-link: #2740c7;
-  --ar-on-accent: #ffffff;
-  --ar-on-warm: #2a1c00;
-
-  --ar-grid: rgba(70, 90, 140, 0.11);
-  --ar-star: rgba(60, 80, 130, 0.42);
-  --ar-star-dim: rgba(80, 100, 150, 0.24);
-  --ar-orbit: rgba(70, 90, 140, 0.42);
-  --ar-orbit-lit: rgba(13, 122, 115, 0.55);
-  --ar-void: #e4e9f4;
-  --ar-shadow: #c3ccdf;
-  --ar-glow: rgba(13, 122, 115, 0.14);
-  --ar-scrim: rgba(245, 247, 251, 0.95);
+  /* ----------------------------------------------------------------------
+     Camera and orbital geometry — Design 4's values, untouched. Changing
+     anything below changes the solar system, which is the one thing this
+     theme is not allowed to change.
+     ---------------------------------------------------------------------- */
+  --ar-tilt: 62deg;
+  --ar-tilt-back: -62deg;
+  --ar-r: clamp(7rem, 17.5vw, 13.5rem);
+  --ar-sun-size: 4.5rem;
+  --ar-orb: 2.5rem;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -160,22 +166,28 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
-  scroll-padding-top: 5rem;
+  scroll-padding-top: 5.5rem;
 }
 
 body.ar {
   margin: 0;
-  background-color: var(--ar-bg);
   color: var(--ar-ink);
-  font-family: var(--ar-body);
-  font-size: 1rem;
-  line-height: 1.65;
-  -webkit-font-smoothing: antialiased;
+  background-color: var(--ar-canvas);
+  font-family: var(--ar-sans);
+  /* VT323 has a small x-height, so it is set well above a normal body size
+     to stay comfortable over a paragraph. */
+  font-size: 1.375rem;
+  line-height: 1.45;
+  /* Hinting and subpixel smoothing fight a pixel face. */
+  -webkit-font-smoothing: none;
+  font-smooth: never;
 }
 
-/* The sky. Fixed, behind everything, on every page: a scatter of hard-edged
-   star pixels over a faint grid. No gradients soften — each stop is abrupt,
-   which is what keeps the stars square. */
+/* Uploaded photographs are never pixelated; only the drawn interface is. */
+.ar :where(img) { image-rendering: auto; }
+
+/* The star chart. Fixed, behind everything, present on every page and every
+   scroll position — it never stops partway down the document. */
 body.ar::before {
   content: "";
   position: fixed;
@@ -183,23 +195,47 @@ body.ar::before {
   z-index: -1;
   pointer-events: none;
   background-image:
-    linear-gradient(to right, var(--ar-grid) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--ar-grid) 1px, transparent 1px),
-    radial-gradient(1.5px 1.5px at 14% 18%, var(--ar-star) 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 72% 34%, var(--ar-star-dim) 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 38% 76%, var(--ar-star) 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 88% 62%, var(--ar-star-dim) 100%, transparent 0),
-    radial-gradient(2px 2px at 56% 12%, var(--ar-star) 100%, transparent 0),
-    radial-gradient(2px 2px at 23% 48%, var(--ar-star-dim) 100%, transparent 0),
-    radial-gradient(2px 2px at 81% 88%, var(--ar-star) 100%, transparent 0),
-    radial-gradient(1.5px 1.5px at 6% 62%, var(--ar-star-dim) 100%, transparent 0);
+    /* A hard-edged pixel grid on the page itself — never a box drawn around
+       the map, which has no frame at all. */
+    linear-gradient(to right, var(--ar-grid) 2px, transparent 2px),
+    linear-gradient(to bottom, var(--ar-grid) 2px, transparent 2px),
+    /* Three star planes at different scales. */
+    radial-gradient(1px 1px at 18% 24%, var(--ar-star), transparent),
+    radial-gradient(1px 1px at 67% 61%, var(--ar-star-soft), transparent),
+    radial-gradient(1px 1px at 41% 83%, var(--ar-star), transparent),
+    radial-gradient(1px 1px at 88% 17%, var(--ar-star-soft), transparent),
+    radial-gradient(1.5px 1.5px at 31% 52%, var(--ar-star-soft), transparent),
+    radial-gradient(1.5px 1.5px at 79% 12%, var(--ar-star), transparent),
+    radial-gradient(2px 2px at 57% 38%, var(--ar-star-soft), transparent),
+    radial-gradient(2px 2px at 12% 71%, var(--ar-star-soft), transparent);
   background-size:
     32px 32px, 32px 32px,
-    190px 190px, 230px 230px, 270px 270px, 310px 310px,
-    410px 410px, 470px 470px, 530px 530px, 350px 350px;
+    260px 260px, 260px 260px, 260px 260px, 260px 260px,
+    430px 430px, 430px 430px,
+    720px 720px, 720px 720px;
+  background-position: center top;
+  animation: ar-sky-in 1200ms var(--ar-ease) both;
 }
 
-.ar :where(h1, h2, h3, h4) { margin: 0; line-height: 1.2; }
+@keyframes ar-sky-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ar :where(h1, h2, h3, h4) {
+  margin: 0;
+  font-family: var(--ar-pixel);
+  font-weight: 400;
+  line-height: 1.45;
+  letter-spacing: 0;
+  text-shadow: 2px 2px 0 var(--ar-line);
+}
+/* Press Start 2P is a 5x7 face: it needs far more room per line than a
+   proportional one, and it must never be asked to carry a long paragraph. */
+.ar :where(h1) { font-size: clamp(1.1rem, 3.2vw, 1.9rem); line-height: 1.5; }
+.ar :where(h2) { font-size: clamp(0.95rem, 2vw, 1.25rem); }
+.ar :where(h3) { font-size: 0.9375rem; }
+.ar :where(h4) { font-size: 0.8125rem; }
 .ar :where(p) { margin: 0 0 1rem; }
 .ar :where(p):last-child { margin-bottom: 0; }
 .ar :where(ul, ol) { margin: 0; padding: 0; list-style: none; }
@@ -207,29 +243,22 @@ body.ar::before {
 .ar :where(img) { max-width: 100%; height: auto; display: block; }
 .ar :where(a) { color: var(--ar-ink); }
 .ar :where(a):hover { color: var(--ar-accent); }
-.ar :where(button) { font: inherit; }
 
-.ar :focus-visible {
-  outline: var(--ar-unit) solid var(--ar-accent);
-  outline-offset: 2px;
-}
+.ar :focus-visible { outline: var(--ar-px) solid var(--ar-accent); outline-offset: 2px; }
 
-/* Long unbroken strings can never widen a container past the viewport. */
 .ar :where(h1, h2, h3, h4, p, li, dd, dt, figcaption, blockquote, a, span) {
   overflow-wrap: anywhere;
 }
-
-.ar-defs { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 .ar-skip {
   position: absolute;
   left: -9999px;
   top: 0;
   z-index: 200;
-  background: var(--ar-accent);
-  color: var(--ar-on-accent);
-  font-family: var(--ar-pixel);
+  background: var(--ar-panel);
+  color: var(--ar-ink);
   padding: 0.75rem 1rem;
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-accent);
 }
 .ar-skip:focus { left: 0; }
 
@@ -242,216 +271,203 @@ body.ar::before {
 }
 
 /* --------------------------------------------------------------------------
-   Pixel vocabulary — the pieces every section is built from
+   Day palette
+   Applied when the visitor has chosen light, and by default when the system
+   asks for it and they have chosen nothing. An explicit "dark" always wins.
+   The two lists are identical by construction.
    -------------------------------------------------------------------------- */
 
-/* The signature shape: a hard border and a solid offset shadow, no blur. */
-.ar-panel {
-  background: var(--ar-panel);
-  border: var(--ar-unit) solid var(--ar-line-strong);
-  box-shadow: var(--ar-unit) var(--ar-unit) 0 0 var(--ar-shadow);
-  padding: var(--ar-pad);
-  min-width: 0;
+@media (prefers-color-scheme: light) {
+  :root:not([data-ar-theme="dark"]) {
+    color-scheme: light;
+
+    /* Day. Warm off-white paper and white surfaces, charcoal-navy ink, and the
+       same accents pulled down to values that carry on paper. The black
+       outlines stay: they are what makes this read as 8-bit at all. */
+    --ar-canvas: #f6f6f1;
+    --ar-panel: #ffffff;
+    --ar-panel-alt: #ecedf3;
+    --ar-ink: #14142b;
+    --ar-muted: #3f4060;
+    --ar-faint: #5a5b78;
+    --ar-line: #000000;
+    --ar-line-strong: #000000;
+    --ar-bevel: #b9bad4;
+    --ar-bevel-dark: #9293b3;
+    --ar-grid: #d9dae6;
+
+    --ar-accent: #8f4e00;
+    --ar-accent-bright: #c47000;
+    --ar-accent-soft: #fff3d6;
+    --ar-on-accent: #ffffff;
+    --ar-cyan: #006d66;
+    --ar-cyan-deep: #00534e;
+    --ar-good: #0f7a35;
+    --ar-bad: #c01f08;
+
+    --ar-btn: #2b2bae;
+    --ar-btn-hi: #7f8ff5;
+    --ar-btn-lo: #16165e;
+    --ar-btn-ink: #ffffff;
+    --ar-input: #ffffff;
+
+    --ar-star: rgba(20, 20, 43, 0.5);
+    --ar-star-soft: rgba(20, 20, 43, 0.28);
+    --ar-orbit-line: rgba(20, 20, 43, 0.2);
+    --ar-orbit-line-faint: rgba(20, 20, 43, 0.1);
+
+    --ar-header-bg: rgba(246, 246, 241, 0.92);
+    --ar-header-bg-focus: rgba(246, 246, 241, 0.98);
+    --ar-panel-glass: rgba(255, 255, 255, 0.86);
+    --ar-plate: rgba(246, 246, 241, 0.88);
+    --ar-scrim: rgba(246, 246, 241, 0.95);
+    --ar-halo: rgba(0, 109, 102, 0.08);
+    --ar-contact-glow: rgba(0, 109, 102, 0.06);
+
+    --ar-sun-fill:
+      radial-gradient(circle at 36% 32%, rgba(255, 241, 214, 0.42), rgba(255, 174, 96, 0.08) 52%, rgba(146, 52, 8, 0.34)),
+      url("sun.webp");
+    --ar-sun-ring: rgba(168, 92, 0, 0.3);
+    --ar-sun-ring-lit: rgba(168, 92, 0, 0.55);
+    --ar-sun-glow: rgba(168, 92, 0, 0.2);
+    --ar-sun-glow-lit: rgba(168, 92, 0, 0.34);
+    --ar-planet-shade: rgba(20, 20, 43, 0.35);
+    --ar-planet-sheen: rgba(255, 255, 255, 0.45);
+    --ar-planet-drop: rgba(20, 20, 43, 0.3);
+    --ar-planet-halo: rgba(0, 109, 102, 0.45);
+  }
 }
 
-.ar-frame {
-  background: var(--ar-panel);
-  border: var(--ar-unit) solid var(--ar-line-strong);
-  box-shadow: var(--ar-unit) var(--ar-unit) 0 0 var(--ar-shadow);
-  overflow: hidden;
-  min-width: 0;
+:root[data-ar-theme="light"] {
+  color-scheme: light;
+
+  /* Day. Warm off-white paper and white surfaces, charcoal-navy ink, and the
+     same accents pulled down to values that carry on paper. The black
+     outlines stay: they are what makes this read as 8-bit at all. */
+  --ar-canvas: #f6f6f1;
+  --ar-panel: #ffffff;
+  --ar-panel-alt: #ecedf3;
+  --ar-ink: #14142b;
+  --ar-muted: #3f4060;
+  --ar-faint: #5a5b78;
+  --ar-line: #000000;
+  --ar-line-strong: #000000;
+  --ar-bevel: #b9bad4;
+  --ar-bevel-dark: #9293b3;
+  --ar-grid: #d9dae6;
+
+  --ar-accent: #8f4e00;
+  --ar-accent-bright: #c47000;
+  --ar-accent-soft: #fff3d6;
+  --ar-on-accent: #ffffff;
+  --ar-cyan: #006d66;
+  --ar-cyan-deep: #00534e;
+  --ar-good: #0f7a35;
+  --ar-bad: #c01f08;
+
+  --ar-btn: #2b2bae;
+  --ar-btn-hi: #7f8ff5;
+  --ar-btn-lo: #16165e;
+  --ar-btn-ink: #ffffff;
+  --ar-input: #ffffff;
+
+  --ar-star: rgba(20, 20, 43, 0.5);
+  --ar-star-soft: rgba(20, 20, 43, 0.28);
+  --ar-orbit-line: rgba(20, 20, 43, 0.2);
+  --ar-orbit-line-faint: rgba(20, 20, 43, 0.1);
+
+  --ar-header-bg: rgba(246, 246, 241, 0.92);
+  --ar-header-bg-focus: rgba(246, 246, 241, 0.98);
+  --ar-panel-glass: rgba(255, 255, 255, 0.86);
+  --ar-plate: rgba(246, 246, 241, 0.88);
+  --ar-scrim: rgba(246, 246, 241, 0.95);
+  --ar-halo: rgba(0, 109, 102, 0.08);
+  --ar-contact-glow: rgba(0, 109, 102, 0.06);
+
+  --ar-sun-fill:
+    radial-gradient(circle at 36% 32%, rgba(255, 241, 214, 0.42), rgba(255, 174, 96, 0.08) 52%, rgba(146, 52, 8, 0.34)),
+    url("sun.webp");
+  --ar-sun-ring: rgba(168, 92, 0, 0.3);
+  --ar-sun-ring-lit: rgba(168, 92, 0, 0.55);
+  --ar-sun-glow: rgba(168, 92, 0, 0.2);
+  --ar-sun-glow-lit: rgba(168, 92, 0, 0.34);
+  --ar-planet-shade: rgba(20, 20, 43, 0.35);
+  --ar-planet-sheen: rgba(255, 255, 255, 0.45);
+  --ar-planet-drop: rgba(20, 20, 43, 0.3);
+  --ar-planet-halo: rgba(0, 109, 102, 0.45);
 }
 
-.ar-kicker {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin: 0 0 0.75rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.16em;
-  color: var(--ar-accent);
-}
-.ar-kicker-accent { color: var(--ar-accent); }
+/* --------------------------------------------------------------------------
+   Light / dark toggle
+   One control, in two places: over the map it floats at the top right of the
+   landing; once the header takes over it lives in the header's own top right.
+   Only ever revealed once script is running, so it is never a dead button.
+   -------------------------------------------------------------------------- */
 
-.ar-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 1rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ar-muted);
-}
-.ar-blink { color: var(--ar-accent); animation: ar-blink 1.4s var(--ar-step) infinite; }
-@keyframes ar-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0.15; } }
-
-/* Headings get their 8-bit weight from a hard offset shadow rather than a
-   novelty font, so body copy stays a normal readable face. */
-.ar-heading,
-.ar-page-title,
-.ar-title {
-  font-family: var(--ar-pixel);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  text-shadow: 3px 3px 0 var(--ar-shadow);
-}
-
-.ar-title {
-  font-size: clamp(1.75rem, min(5vw, 7vh), 3.25rem);
-  line-height: 1.1;
-  margin: 0 0 1rem;
-}
-
-.ar-page-title {
-  font-size: clamp(1.5rem, 4.5vw, 2.5rem);
-  margin: 0 0 0.75rem;
-}
-
-.ar-heading {
-  display: flex;
-  align-items: baseline;
-  gap: 0.75rem;
-  font-size: clamp(1.125rem, 2.6vw, 1.5rem);
-  margin: 0 0 1.75rem;
-  min-width: 0;
-}
-.ar-heading-num {
-  flex: none;
-  overflow-wrap: normal;
-  color: var(--ar-accent);
-  font-variant-numeric: tabular-nums;
-}
-
-.ar-section-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 1rem;
-  margin-bottom: 1.75rem;
-}
-.ar-section-head .ar-heading { margin-bottom: 0; }
-
-.ar-more,
-.ar-crumb a,
-.ar-detail-foot a {
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ar-accent);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.ar-more:hover, .ar-crumb a:hover, .ar-detail-foot a:hover { color: var(--ar-accent); }
-
-.ar-tag {
-  display: inline-block;
-  font-family: var(--ar-pixel);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 0.1rem 0.4rem;
-  border: 2px solid var(--ar-line-strong);
-  color: var(--ar-muted);
-  white-space: nowrap;
-}
-.ar-tag-accent { color: var(--ar-accent); border-color: currentColor; }
-.ar-tag-draft { color: var(--ar-accent-hot); border-color: currentColor; }
-
-/* Buttons press in: the shadow collapses and the face moves into it. */
-.ar-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.8125rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  text-decoration: none;
-  color: var(--ar-ink);
-  background: var(--ar-panel-alt);
-  border: 3px solid var(--ar-line-strong);
-  box-shadow: 3px 3px 0 0 var(--ar-shadow);
-  padding: 0.55rem 0.9rem;
-  cursor: pointer;
-  transition: transform 0.06s var(--ar-step), box-shadow 0.06s var(--ar-step),
-              background-color 0.12s var(--ar-step), color 0.12s var(--ar-step);
-}
-.ar-btn:hover { background: var(--ar-panel); color: var(--ar-accent); border-color: var(--ar-accent); }
-.ar-btn:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--ar-shadow); }
-.ar-btn-accent {
-  background: var(--ar-accent);
-  border-color: var(--ar-accent);
-  color: var(--ar-on-accent);
-}
-.ar-btn-accent:hover { background: var(--ar-accent-strong); border-color: var(--ar-accent-strong); color: var(--ar-on-accent); }
-.ar-btn-quiet { background: transparent; color: var(--ar-muted); }
-.ar-btn-lg { padding: 0.7rem 1.1rem; font-size: 0.875rem; }
-.ar-btn-row { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.25rem; }
-
-.ar-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; min-width: 0; }
-.ar-chips-stacked { flex-direction: column; align-items: flex-start; }
-.ar-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  color: var(--ar-muted);
-  background: var(--ar-panel-alt);
-  border: 2px solid var(--ar-line);
-  padding: 0.2rem 0.5rem;
-  min-width: 0;
-}
-.ar-chip-logo,
-.ar-chip .skill-icon {
-  display: inline-flex;
+.ar-theme {
+  display: none;
   align-items: center;
   justify-content: center;
-  width: 1.05em;
-  height: 1.05em;
+  width: 2.4rem;
+  height: 2.4rem;
   flex: none;
-}
-.ar-chip-logo .icon-svg { height: 100%; width: auto; max-width: 2.4em; display: block; }
-
-.ar-linkrow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem 1rem;
-  margin-top: 1.25rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.ar-linkrow a { position: relative; color: var(--ar-accent); text-decoration: none; }
-.ar-linkrow a:hover { color: var(--ar-accent); }
-.ar-linkrow a::after { content: ""; position: absolute; inset: -0.45rem 0; }
-
-.ar-empty {
-  font-family: var(--ar-pixel);
-  font-size: 0.8125rem;
-  color: var(--ar-muted);
+  padding: 0;
+  border: var(--ar-px) solid var(--ar-line);
+  box-shadow:
+    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel),
+    var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
   background: var(--ar-panel);
-  border: var(--ar-unit) dashed var(--ar-line-strong);
-  padding: 1.5rem;
-}
-.ar-empty a { color: var(--ar-accent); }
-
-.ar-card-num {
-  flex: none;
-  overflow-wrap: normal;
   color: var(--ar-accent);
-  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition: color 0.18s var(--ar-ease), border-color 0.18s var(--ar-ease),
+              background-color 0.18s var(--ar-ease);
+}
+.ar-theme-ready .ar-theme { display: inline-flex; }
+.ar-theme:hover { filter: brightness(1.2); }
+.ar-theme:active { transform: translate(var(--ar-px), var(--ar-px)); box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark); }
+.ar-theme svg { width: 1.05rem; height: 1.05rem; }
+
+/* The icon shows the mode the button will switch to. */
+.ar-theme .ar-theme-moon { display: none; }
+.ar-theme .ar-theme-sun { display: block; }
+:root[data-ar-theme="light"] .ar-theme .ar-theme-moon { display: block; }
+:root[data-ar-theme="light"] .ar-theme .ar-theme-sun { display: none; }
+
+/* Over the map, where the header has stepped aside. */
+.ar-launch-theme {
+  position: absolute;
+  top: clamp(0.9rem, 2.5vh, 1.6rem);
+  right: var(--ar-gutter);
+  z-index: 5;
+  display: none;
+}
+.ar-theme-ready body.is-over-map .ar-launch-theme { display: block; }
+/* Exactly one of the two is live at a time — including in the tab order, so a
+   keyboard never meets the same control twice. */
+body.is-over-map .ar-header-tools .ar-theme { display: none; }
+
+/* Below the two-column layout the intro runs the full width and the floating
+   toggle would sit on top of the identity line, so the line gives it room. */
+@media (max-width: 63.99rem) {
+  .ar-theme-ready body.is-over-map .ar-launch-intro > .ar-label { padding-right: 3.25rem; }
+}
+/* Slightly stronger over the busy map. */
+.ar-launch-theme .ar-theme { background: var(--ar-panel-glass); }
+@supports (backdrop-filter: blur(1px)) {
+  .ar-launch-theme .ar-theme { backdrop-filter: saturate(140%) blur(6px); }
+}
+
+/* The header keeps its mark on the left and everything else to the right;
+   ordering puts the tools after the navigation on a wide screen and beside the
+   menu button on a narrow one. */
+.ar-header-inner { justify-content: flex-start; }
+.ar-mark { margin-right: auto; }
+.ar-header-tools { display: flex; align-items: center; gap: 0.6rem; flex: none; order: 3; }
+.ar-nav { order: 2; }
+
+@media (max-width: 60rem) {
+  .ar-header-tools { order: 2; }
+  .ar-nav { order: 3; }
 }
 
 /* --------------------------------------------------------------------------
@@ -462,125 +478,138 @@ body.ar::before {
   position: sticky;
   top: 0;
   z-index: 60;
-  background: var(--ar-bg-alt);
-  border-bottom: var(--ar-unit) solid var(--ar-line-strong);
+  background: var(--ar-header-bg);
+  border-bottom: 1px solid var(--ar-line);
+  transition: background-color 0.3s var(--ar-ease), border-color 0.3s var(--ar-ease),
+              opacity 0.3s var(--ar-ease), transform 0.3s var(--ar-ease);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .ar-header { backdrop-filter: saturate(150%) blur(10px); }
+}
+
+/* The map fills the first screen, and script hides the header over it — but it
+   only gets to do that after the first paint, which shows as a flash. Holding
+   the header transparent for a moment covers exactly that gap. The animation
+   has no forwards fill, so if script never runs the header simply fades in and
+   a visitor without JavaScript is never left without navigation. */
+body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
+@keyframes ar-header-hold {
+  from { opacity: 0; }
+  to { opacity: 0; }
+}
+
+/* Only ever applied by script, so with JS off the header is simply always on. */
+.ar-header.is-over-map {
+  background: transparent;
+  border-bottom-color: transparent;
+  opacity: 0;
+  transform: translateY(-0.5rem);
+  pointer-events: none;
+}
+.ar-header.is-over-map:focus-within {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  background: var(--ar-header-bg-focus);
 }
 
 .ar-header-inner {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  min-height: 3.75rem;
+  min-height: 4rem;
   flex-wrap: wrap;
 }
 
-.ar-mark {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.6rem;
-  text-decoration: none;
-  margin-right: auto;
-  min-width: 0;
-}
+.ar-mark { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; min-width: 0; }
 .ar-mark-badge {
+  font-family: var(--ar-pixel);
+  font-size: 0.5625rem;
+  border: 2px solid var(--ar-line);
+  box-shadow: inset 2px 2px 0 0 var(--ar-bevel), 2px 2px 0 0 var(--ar-line);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.85rem;
+  height: 1.85rem;
   flex: none;
-  background: var(--ar-accent);
-  color: var(--ar-on-accent);
-  border: 2px solid var(--ar-shadow);
-  font-family: var(--ar-pixel);
+  border-radius: 50%;
+  background: var(--ar-ink);
+  color: var(--ar-panel);
+  font-family: var(--ar-mono);
   font-size: 0.75rem;
-  font-weight: 700;
 }
 .ar-mark-name {
   font-family: var(--ar-pixel);
-  font-size: 0.875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
-.ar-header-tools { display: flex; align-items: center; gap: 0.6rem; flex: none; order: 3; }
-.ar-nav { order: 2; }
-
-.ar-theme {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 2.1rem;
-  height: 2.1rem;
-  flex: none;
-  padding: 0;
-  background: var(--ar-panel-alt);
-  border: 2px solid var(--ar-line-strong);
-  color: var(--ar-muted);
-  font-size: 0.95rem;
-  line-height: 1;
-  cursor: pointer;
-  transition: color 0.12s var(--ar-step), border-color 0.12s var(--ar-step);
-}
-.ar-theme-ready .ar-theme { display: inline-flex; }
-.ar-theme:hover { color: var(--ar-accent); border-color: var(--ar-accent); }
-/* The glyph names the mode the button switches to. */
-.ar-theme .ar-theme-sun { display: inline; }
-.ar-theme .ar-theme-moon { display: none; }
-:root[data-ar-theme="light"] .ar-theme .ar-theme-sun { display: none; }
-:root[data-ar-theme="light"] .ar-theme .ar-theme-moon { display: inline; }
 
 .ar-nav-toggle {
   display: none;
   align-items: center;
   gap: 0.5rem;
   font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.5625rem;
+  border: var(--ar-px) solid var(--ar-line);
+  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel), var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.12em;
   color: var(--ar-ink);
-  background: var(--ar-panel-alt);
-  border: 2px solid var(--ar-line-strong);
-  padding: 0.4rem 0.6rem;
+  background: none;
+  border: 1px solid var(--ar-line-strong);
+  border-radius: var(--ar-radius);
+  padding: 0.4rem 0.65rem;
   cursor: pointer;
 }
 .ar-nav-toggle-bars {
   width: 0.85rem;
   height: 0.5rem;
-  border-top: 2px solid currentColor;
-  border-bottom: 2px solid currentColor;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
 }
 
-.ar-nav { display: flex; align-items: center; gap: clamp(1rem, 2.5vw, 1.75rem); min-width: 0; }
-.ar-nav ul { display: flex; align-items: center; gap: clamp(0.6rem, 1.6vw, 1.25rem); flex-wrap: wrap; min-width: 0; }
+.ar-nav { display: flex; align-items: center; gap: clamp(1rem, 2.5vw, 2rem); min-width: 0; }
+.ar-nav ul {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.75rem, 1.8vw, 1.5rem);
+  flex-wrap: wrap;
+  min-width: 0;
+}
 .ar-nav ul a {
   position: relative;
   font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.5625rem;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.04em;
   color: var(--ar-muted);
   text-decoration: none;
   padding-block: 0.4rem;
   white-space: nowrap;
+  transition: color 0.18s var(--ar-ease);
 }
 .ar-nav ul a::before {
+  height: var(--ar-px);
+  background: var(--ar-accent);
+  transition: none;
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 3px;
+  bottom: 0.1rem;
+  height: 1px;
   background: var(--ar-accent);
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.12s var(--ar-step);
+  transition: transform 0.25s var(--ar-ease);
 }
 .ar-nav ul a:hover,
 .ar-nav ul a[aria-current="page"],
@@ -589,739 +618,1382 @@ body.ar::before {
 .ar-nav ul a[aria-current="page"]::before,
 .ar-nav ul a.is-active::before { transform: scaleX(1); }
 
-.ar-nav-actions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.ar-nav-actions { display: flex; align-items: center; gap: 0.5rem; flex: none; }
 
-@media (max-width: 62rem) {
+@media (max-width: 60rem) {
   .ar-nav-toggle { display: inline-flex; }
-  .ar-header-tools { order: 2; }
   .ar-nav {
-    order: 3;
     display: none;
     flex-direction: column;
     align-items: stretch;
-    gap: 0.75rem;
+    gap: 1rem;
     width: 100%;
-    padding-block: 0.75rem 1rem;
-    border-top: 2px solid var(--ar-line);
+    padding-block: 1rem 1.25rem;
+    border-top: var(--ar-px) solid var(--ar-line);
   }
   .ar-nav.is-open { display: flex; }
   .ar-nav ul { flex-direction: column; align-items: stretch; gap: 0; }
-  .ar-nav ul li { border-bottom: 2px solid var(--ar-line); }
+  .ar-nav ul li { border-bottom: 1px solid var(--ar-line); }
   .ar-nav ul li:last-child { border-bottom: 0; }
   .ar-nav ul a { display: block; padding-block: 0.7rem; }
+  .ar-nav-actions { flex-wrap: wrap; }
 }
-
-.ar-draft {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  background: var(--ar-accent-hot);
-  color: var(--ar-on-warm);
-  padding: 0.5rem var(--ar-gutter);
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-}
-.ar-draft-tag { font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; border: 2px solid currentColor; padding: 0 0.35rem; }
 
 /* --------------------------------------------------------------------------
-   The star chart
+   Type elements — Design 3's vocabulary
    -------------------------------------------------------------------------- */
 
-.ar-map {
-  position: relative;
-  padding-block: clamp(1.5rem, 5vh, 3rem) clamp(2rem, 6vh, 4rem);
-  /* A warm pool of light behind the star. */
-  background: radial-gradient(60% 55% at 72% 46%, var(--ar-glow), transparent 70%);
-}
-
-.ar-map-inner {
-  display: grid;
-  gap: clamp(1.5rem, 4vw, 3rem);
-  align-items: center;
-}
-
-.ar-map-brief { min-width: 0; }
-
-.ar-lede {
-  color: var(--ar-muted);
-  font-size: 1.0625rem;
-  max-width: 34rem;
-  margin-bottom: 1.5rem;
-}
-.ar-lede a { color: var(--ar-accent); }
-
-.ar-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin: 0 0 1.5rem;
-}
-.ar-stats > div {
-  display: flex;
-  align-items: baseline;
-  gap: 0.5rem;
-  background: var(--ar-panel);
-  border: 3px solid var(--ar-line);
-  padding: 0.3rem 0.6rem;
-  min-width: 0;
-}
-.ar-stats dt {
-  font-family: var(--ar-pixel);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--ar-faint);
-}
-.ar-stats dd {
+.ar-label {
+  /* Design 4 lays this out as a flex row. A 5x7 face is wide enough that the
+     text beside the index becomes its own flex line, orphaning the number, so
+     here the label runs as ordinary text and the index is simply the first
+     word of it — same reading order, no orphan at any width. */
+  display: block;
   margin: 0;
   font-family: var(--ar-pixel);
-  font-size: 0.9375rem;
-  font-weight: 700;
+  font-size: 0.625rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1.6;
+  color: var(--ar-cyan);
+}
+.ar-label-num {
+  display: inline-block;
+  margin-right: 0.7rem;
+  white-space: nowrap;
+  overflow-wrap: normal;
   color: var(--ar-accent);
   font-variant-numeric: tabular-nums;
+}
+.ar-label-accent { color: var(--ar-accent); }
+
+.ar-tag {
+  display: inline-block;
+  font-family: var(--ar-pixel);
+  font-size: 0.5625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  padding: 0.45rem 0.5rem;
+  border: 2px solid var(--ar-line);
+  background: var(--ar-panel-alt);
+  box-shadow: inset 2px 2px 0 0 var(--ar-bevel);
+  color: var(--ar-muted);
+  white-space: nowrap;
+}
+.ar-tag-accent { color: var(--ar-accent); }
+.ar-tag-draft { color: var(--ar-on-accent); background: var(--ar-accent); box-shadow: inset 2px 2px 0 0 var(--ar-accent-bright); }
+
+.ar-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--ar-pixel);
+  font-size: 0.625rem;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  color: var(--ar-btn-ink);
+  background: var(--ar-btn);
+  border: var(--ar-px) solid var(--ar-line);
+  padding: 0.85rem 1rem;
+  white-space: nowrap;
+  /* Two inset bevels and one hard drop: the whole of the 8-bit button. */
+  box-shadow:
+    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-btn-hi),
+    inset calc(-1 * var(--ar-px)) calc(-1 * var(--ar-px)) 0 0 var(--ar-btn-lo),
+    var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
+  /* Nothing eases: a sprite changes frame. */
+  transition: none;
+}
+.ar-btn:hover { filter: brightness(1.18); color: var(--ar-btn-ink); }
+/* Pressed: the button moves into its own shadow, which disappears. */
+.ar-btn:active {
+  transform: translate(var(--ar-px), var(--ar-px));
+  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-btn-lo);
+}
+
+.ar-btn-accent {
+  background: var(--ar-accent);
+  color: var(--ar-on-accent);
+  box-shadow:
+    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-accent-bright),
+    inset calc(-1 * var(--ar-px)) calc(-1 * var(--ar-px)) 0 0 #8a6200,
+    var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
+}
+.ar-btn-accent:hover { color: var(--ar-on-accent); }
+.ar-btn-accent:active {
+  transform: translate(var(--ar-px), var(--ar-px));
+  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 #8a6200;
+}
+
+/* The quiet variant is the unpressed console key: panel-coloured, same
+   construction, so it still reads as a control rather than as text. */
+.ar-btn-quiet {
+  background: var(--ar-panel);
+  color: var(--ar-ink);
+  box-shadow:
+    inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel),
+    inset calc(-1 * var(--ar-px)) calc(-1 * var(--ar-px)) 0 0 var(--ar-bevel-dark),
+    var(--ar-px) var(--ar-px) 0 0 var(--ar-line);
+}
+.ar-btn-quiet:hover { color: var(--ar-ink); }
+.ar-btn-quiet:active {
+  transform: translate(var(--ar-px), var(--ar-px));
+  box-shadow: inset var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+}
+
+.ar-btn-lg { padding: 1.05rem 1.35rem; font-size: 0.75rem; }
+
+.ar-linkrow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.1rem;
+  font-family: var(--ar-pixel);
+  font-size: 0.5625rem;
+  line-height: 1.7;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.ar-linkrow a { position: relative; color: var(--ar-cyan); text-decoration: none; }
+.ar-linkrow a:hover { color: var(--ar-accent); text-decoration: underline; text-underline-offset: 3px; }
+.ar-linkrow a::after { content: ""; position: absolute; inset: -0.45rem 0; }
+.ar-linkrow-spaced { margin-top: 1.25rem; }
+
+.ar-techlist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.5rem;
+  font-family: var(--ar-pixel);
+  font-size: 0.5625rem;
+  line-height: 1;
+  color: var(--ar-muted);
+}
+.ar-techlist li {
+  border: 2px solid var(--ar-line);
+  background: var(--ar-panel-alt);
+  box-shadow: inset 2px 2px 0 0 var(--ar-bevel);
+  padding: 0.5rem 0.55rem;
+}
+.ar-techlist-stacked { flex-direction: column; align-items: flex-start; }
+.ar-techlist li.has-icon { display: inline-flex; align-items: center; gap: 0.55rem; }
+.ar-tech-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.05em;
+  width: 1.05em;
+  flex: none;
+}
+.ar-tech-logo .icon-svg { height: 100%; width: auto; max-width: 2.4em; display: block; }
+
+.ar-empty {
+  color: var(--ar-muted);
+  text-align: center;
+  padding: 2.25rem;
+  background: var(--ar-panel-alt);
+  border: var(--ar-px) dashed var(--ar-bevel);
+}
+
+/* --------------------------------------------------------------------------
+   The launch — hero content beside an angled 3D orbital map
+   -------------------------------------------------------------------------- */
+
+.ar-launch {
+  position: relative;
+  margin-top: -4rem;
+  /* Shaved on short viewports. The header is hidden over the map anyway, so
+     the full 4rem of clearance is only needed where there is room for it. */
+  padding-top: clamp(1.75rem, 5vh, 4rem);
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  /* Clips the outermost path where it runs past the frame. min-height (not
+     height) means taller content grows the section instead of being cut.
+
+     hidden is the floor for browsers without clip. clip does the same job
+     without making a scroll container, and unlike hidden it takes a margin —
+     so the clip edge can sit well outside the section. Tilting the plane toward
+     face-on swings the near planets below the section by up to ~70px on a short
+     window, and they used to be cut there mid-body. The margin gives the scene
+     room to stay whole through any orientation; it paints, but contributes
+     nothing scrollable, so the page still cannot be dragged sideways. */
+  overflow: hidden;
+}
+
+/* Clipping only needs to happen sideways. Tilting the plane toward face-on
+   swings the near planets below the section by up to ~70px on a short window,
+   and hidden cut them there mid-body. clip on one axis and visible on the other
+   is the one pairing the cascade keeps as written — hidden would drag visible
+   to auto and hang a scrollbar on the section — so the scene stays whole
+   through any orientation while the page still cannot be dragged sideways.
+   A clip margin was the obvious alternative and is the wrong tool: it applies
+   to every side, and the outermost ring then widens the scrollable area. */
+@supports (overflow: clip) {
+  .ar-launch {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+}
+
+/* A soft warm halo behind the system, echoing the sun. */
+.ar-launch::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(760px 520px at 68% 52%, var(--ar-halo), transparent 66%);
+}
+
+.ar-launch-inner {
+  display: grid;
+  /* The column gap separates the intro from the map; the row gap only sits
+     between the intro and the scroll cue, where it needs far less. */
+  column-gap: clamp(2rem, 5vw, 4rem);
+  row-gap: clamp(0.9rem, 3vh, 2rem);
+  align-items: center;
+  /* Deliberately bottom-heavy. The section centres its content, so the extra
+     padding underneath lifts the composition about half a wheel step up the
+     viewport — the hint is in view on arrival, with nothing jumping. */
+  padding-block: clamp(0.75rem, 2vh, 2rem) clamp(2.5rem, 9vh, 9rem);
+  width: 100%;
+}
+
+.ar-launch-intro { max-width: 34rem; min-width: 0; }
+.ar-launch-intro > .ar-label { margin-bottom: clamp(0.7rem, 2.4vh, 1.5rem); }
+
+.ar-launch-title {
+  font-family: var(--ar-display);
+  /* Height-aware as well as width-aware: the display type gives way first
+     when the viewport is short. */
+  font-size: clamp(1.1rem, min(3.1vw, 4.6vh), 2.1rem);
+  font-weight: 400;
+  letter-spacing: 0;
+  line-height: 1.35;
+  text-shadow: var(--ar-px) var(--ar-px) 0 var(--ar-line);
+  text-transform: uppercase;
+  margin-bottom: clamp(0.9rem, 3vh, 2rem);
+}
+/* One word per line, exactly as Design 3 sets it: the reveal walks these. */
+.ar-launch-line { display: block; }
+.ar-launch-caret { color: var(--ar-accent); margin-left: 0.06em; }
+
+/* Design 3's profile block, carried over: introduction then the index. */
+.ar-launch-profile {
+  display: flex;
+  flex-direction: column;
+  gap: clamp(0.6rem, 2vh, 1.25rem);
+  padding: clamp(0.8rem, min(2.2vw, 2.4vh), 1.5rem);
+  border-radius: var(--ar-radius);
+  /* Translucent, so the star chart still reads behind the panel. */
+  background: var(--ar-panel-glass);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+}
+@supports (backdrop-filter: blur(1px)) {
+  .ar-launch-profile { backdrop-filter: saturate(140%) blur(6px); }
+}
+
+.ar-launch-lead { color: var(--ar-muted); font-size: 1rem; min-width: 0; }
+
+/* The introduction is written in the CMS, so its length is not fixed, and it
+   is the one thing between the top of the page and the instruction line that
+   can grow without limit. It gets a ceiling in vh — well clear of any ordinary
+   introduction, so nothing normally scrolls — and scrolls within the panel past
+   that. Nothing is truncated, and the landing keeps its shape whatever is
+   typed. Only where the map shares the screen with the hero; stacked layouts
+   below that scroll normally anyway. */
+@media (min-width: 64rem) {
+  .ar-launch-lead {
+    max-height: min(12em, 20vh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+.ar-launch-lead a { color: var(--ar-accent); }
+
+.ar-index {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  border-top: var(--ar-px) solid var(--ar-line);
+}
+.ar-index > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-block: clamp(0.3rem, 1.1vh, 0.55rem);
+  border-bottom: 1px solid var(--ar-line);
+  min-width: 0;
+}
+.ar-index dt {
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ar-muted);
+}
+.ar-index dd {
+  margin: 0;
+  font-family: var(--ar-mono);
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ar-ink);
+  flex: none;
   overflow-wrap: normal;
 }
 
-/* --- the dock: the labelled, accessible navigation ----------------------- */
+/* The camera controls need a mouse, so only mention them where they work. */
+.ar-launch-hint-controls { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .ar-launch-hint-controls { display: inline; }
+}
 
-.ar-dock { min-width: 0; }
-.ar-dock-head {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin: 0 0 0.6rem;
+.ar-launch-hint {
+  margin-top: clamp(0.7rem, 2.4vh, 1.5rem);
   font-family: var(--ar-pixel);
-  font-size: 0.75rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.14em;
-  color: var(--ar-accent);
-}
-.ar-hint-key { animation: ar-nudge 1.1s var(--ar-step) infinite; }
-@keyframes ar-nudge { 0%, 100% { transform: translateX(0); } 50% { transform: translateX(3px); } }
-
-.ar-dock ul { display: grid; gap: 0.4rem; }
-
-.ar-dock-link {
-  display: grid;
-  grid-template-columns: 2.25rem minmax(0, 1fr) 1rem;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.5rem 0.6rem;
-  text-decoration: none;
-  background: var(--ar-panel);
-  border: 3px solid var(--ar-line);
-  transition: border-color 0.12s var(--ar-step), background-color 0.12s var(--ar-step),
-              transform 0.08s var(--ar-step);
-}
-.ar-dock-link:hover,
-.ar-dock-link:focus-visible,
-.ar-dock-link.is-lit {
-  border-color: var(--ar-accent);
-  background: var(--ar-panel-alt);
-  transform: translateX(3px);
-}
-
-.ar-dock-sprite { display: block; width: 2.25rem; height: 2.25rem; flex: none; }
-.ar-sprite-chip { width: 100%; height: 100%; display: block; }
-
-.ar-dock-text { display: grid; min-width: 0; }
-.ar-dock-code {
-  font-family: var(--ar-pixel);
-  font-size: 0.6875rem;
-  letter-spacing: 0.14em;
-  color: var(--ar-muted);
-}
-.ar-dock-name {
-  font-family: var(--ar-pixel);
-  font-size: 0.875rem;
-  font-weight: 700;
+  font-size: 0.625rem;
+  line-height: 1.8;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--ar-ink);
+  color: var(--ar-muted);
 }
-.ar-dock-blurb { font-size: 0.8125rem; color: var(--ar-muted); }
-.ar-dock-go { color: var(--ar-accent); font-size: 0.75rem; text-align: right; }
 
-/* --- the orrery: the landing attraction -----------------------------------
-   The frame is the interaction area and the clipping viewport: a window cut
-   into space, bordered like every other panel. Everything inside it is
-   positioned against the camera's three custom properties, so orienting the
-   system is three number writes and never a DOM change.
+.ar-system { display: flex; justify-content: center; align-items: center; min-width: 0; }
 
-   The transform chain is documented in views/partials/galaxy.ejs. The one
-   rule that matters here: the script writes only --ar-zoom, --ar-spin,
-   --ar-unspin and --ar-flat/--ar-unflat, and never touches .ar-arm or
-   .ar-world, which carry the animations. That is what makes it impossible
-   for a drag or a zoom to stutter the orbits.
-   -------------------------------------------------------------------------- */
-
-.ar-orrery { display: flex; justify-content: center; align-items: center; min-width: 0; }
-
-.ar-orrery-frame {
+/* Perspective root. A moderate value keeps the depth convincing without
+   distorting the planets at the near edge. Also the live camera state: script
+   writes these three properties and the whole system re-orients from them. */
+.ar-scene {
   position: relative;
   width: 100%;
-  max-width: min(34rem, 78vh);
-  aspect-ratio: 1;
-  /* The window into space is darker than the page and framed like a panel. */
-  background:
-    radial-gradient(circle at 50% 50%, rgba(46, 230, 214, 0.05) 0%, transparent 58%),
-    var(--ar-void);
-  border: var(--ar-unit) solid var(--ar-line-strong);
-  box-shadow:
-    inset 0 0 0 var(--ar-unit) #04050f,
-    var(--ar-unit) var(--ar-unit) 0 0 var(--ar-shadow);
-  /* Zoomed in, the outer worlds pass behind the frame edge rather than over
-     the page. Clip, not hidden: nothing here ever needs to scroll. */
-  overflow: clip;
-  /* The wheel is only taken over the frame, and only when it would change
-     something — see theme.js. Declaring the intent here as well means a
-     browser that starts the gesture before script runs still scrolls. */
-  touch-action: pan-y;
+  max-width: calc(var(--ar-r) * 2.5);
+  aspect-ratio: 10 / 7;
+  /* Capped on short viewports so the map does not drive the row height. The
+     orbits are sized from --ar-r, not from this box, so the system keeps its
+     scale — the frame just sits higher and tighter. */
+  max-height: min(64vh, 32rem);
+  perspective: 1400px;
+  /* Kept on the camera own transform origin. Moving the vanishing point off it
+     skews the projection about a different point than the sun, which quietly
+     drops the near side of every orbit further down the screen than the
+     geometry predicts — the map sits high because the frame does, not because
+     the vanishing point has been nudged. */
+  perspective-origin: 50% 50%;
+  --ar-tilt-live: var(--ar-tilt);
+  --ar-spin: 0deg;
+  /* The resting zoom: the system arrives already drawn in, four wheel steps
+     closer than face value. Must match REST_ZOOM in theme.js. Where the window
+     is too small to hold that, script lowers it to the geometric ceiling. */
+  --ar-zoom: 360px;
 }
+/* Dragging anywhere in the scene orients the system, so the whole thing reads
+   as grabbable — except the bodies, which say "pointer" over their discs. */
+.ar-scene { cursor: grab; -webkit-user-select: none; user-select: none; }
+.ar-scene.is-grabbing,
+.ar-scene.is-grabbing .ar-planet,
+.ar-scene.is-grabbing .ar-body-tag,
+.ar-scene.is-grabbing .ar-sun { cursor: grabbing; }
 
-/* Space is dark in both palettes. A pale "space" washes the planet art out,
-   and the alternative — redrawing seven sprites for day — would be two sets
-   of art to keep in step. So the frame declares its own interior palette and
-   everything inside it, the hint text included, is coloured against that
-   rather than against the page. On a light page it reads as a lit screen,
-   which is the point. */
-.ar-orrery-frame {
-  --ar-void: #080a1c;
-  --ar-scrim: rgba(8, 10, 28, 0.92);
-  --ar-line: #2b3468;
-  --ar-line-strong: #46539e;
-  --ar-accent: #2ee6d6;
-  --ar-accent-warm: #ffd029;
-  --ar-muted: #a9b3e4;
-  --ar-faint: #7d88c0;
-  --ar-orbit: rgba(80, 100, 180, 0.55);
-  --ar-orbit-lit: rgba(46, 230, 214, 0.65);
-}
-
-/* Corner ticks, so the window reads as instrumentation. */
-.ar-orrery-frame::before,
-.ar-orrery-frame::after {
-  content: "";
-  position: absolute;
-  width: 0.9rem;
-  height: 0.9rem;
-  border: var(--ar-unit) solid var(--ar-accent);
-  opacity: 0.55;
-  pointer-events: none;
-  z-index: 3;
-}
-.ar-orrery-frame::before { left: 6px; top: 6px; border-right: 0; border-bottom: 0; }
-.ar-orrery-frame::after { right: 6px; bottom: 6px; border-left: 0; border-top: 0; }
-
-/* The camera. Uniform zoom, then the spin, then the squash that turns a
-   face-on system into a plane seen at an angle. */
+/* The camera. translateZ runs first, so zoom moves the system straight toward
+   the viewer — that is, toward the sun at the origin. Then the plane is tilted
+   away and spun about its own axis. */
 .ar-camera {
   position: absolute;
   inset: 0;
-  transform: scale(var(--ar-zoom)) rotate(var(--ar-spin)) scaleY(var(--ar-flat));
-  transform-origin: 50% 50%;
-  will-change: transform;
+  transform-style: preserve-3d;
+  transform: translateZ(var(--ar-zoom)) rotateX(var(--ar-tilt-live)) rotateZ(var(--ar-spin));
 }
 
-/* Grabbing is a pointer affordance on the frame, not a state of the system. */
-.ar-orrery-frame.is-grabbing { cursor: grabbing; }
-.ar-orrery-frame.is-draggable { cursor: grab; }
-
-/* --- the star ------------------------------------------------------------ */
-
-.ar-star {
+/* Deliberately flat, not preserve-3d. As a single layer at the centre of the
+   orbital plane the whole ring system sorts behind the planets, so a near ring
+   segment can never be drawn across a body the way an individually depth-sorted
+   ring would. Visually identical: every ring is coplanar anyway. */
+.ar-orbits {
   position: absolute;
-  left: 50%;
+  inset: 0;
+  transform-style: flat;
+  pointer-events: none;
+}
+
+/* Every ring and every body sits at
+     radius = R x (base + step x n)
+   so the orbits step outward by one fixed increment each time. Slot n is set
+   once per element and both the path and the planet read the same value, which
+   is what puts each planet exactly on its own ring. */
+:root {
+  /* Six evenly spaced orbits: 0.36, 0.49, 0.62, 0.76, 0.89, 1.02 of --ar-r.
+     A wider step than the rings started with, so neighbouring planets read as
+     clearly separate bodies rather than a band. */
+  --ar-orbit-base: 0.36;
+  --ar-orbit-step: 0.132;
+}
+
+/* --ar-ring is declared on the ring and the anchor rather than on :root,
+   because a custom property is substituted where it is *declared* — on :root
+   it would only ever see slot 0 and every orbit would land on top of the
+   first. Declared here it resolves against each element own --ar-n. */
+.ar-path, .ar-anchor {
+  --ar-ring: calc(var(--ar-r) * (var(--ar-orbit-base) + var(--ar-orbit-step) * var(--ar-n, 0)));
+}
+
+/* Paths are circles living in the tilted plane. Centred with margins rather
+   than a percentage translate, so spinning the camera cannot shift them. */
+.ar-path {
+  position: absolute;
   top: 50%;
+  left: 50%;
+  width: calc(var(--ar-ring) * 2);
+  height: calc(var(--ar-ring) * 2);
+  margin: calc(var(--ar-ring) * -1);
+  border: 1px solid var(--ar-orbit-line);
+  border-radius: 50%;
+  opacity: 0;
+  animation: ar-path-in 900ms var(--ar-ease) forwards;
+}
+.ar-path--1 { --ar-n: 0; animation-delay: 200ms; }
+.ar-path--2 { --ar-n: 1; animation-delay: 290ms; }
+.ar-path--3 { --ar-n: 2; animation-delay: 380ms; }
+.ar-path--4 { --ar-n: 3; animation-delay: 470ms; }
+.ar-path--5 { --ar-n: 4; animation-delay: 560ms; }
+.ar-path--6 { --ar-n: 5; animation-delay: 650ms; }
+/* One decorative path further out on the same progression, running past the
+   frame, so the view reads as a portion of a larger system. */
+.ar-path--outer {
+  --ar-n: 9;
+  border-style: dashed;
+  border-color: var(--ar-orbit-line-faint);
+  animation-delay: 740ms;
+}
+
+@keyframes ar-path-in {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The sun sits at the origin, is home, and faces the viewer whatever the
+   camera is doing. Centred with margins for the same reason as the paths. */
+.ar-sun {
+  position: absolute;
+  top: 50%;
+  left: 50%;
   width: var(--ar-sun-size);
   height: var(--ar-sun-size);
-  /* Centred with margins, which the camera's transforms cannot disturb. */
-  margin-left: calc(var(--ar-sun-size) / -2);
-  margin-top: calc(var(--ar-sun-size) / -2);
-  /* Held upright and round against whatever the camera is doing. */
-  transform: scaleY(var(--ar-unflat)) rotate(var(--ar-unspin));
-  display: block;
-  z-index: 2;
-}
-
-.ar-sprite-sun { width: 100%; height: 100%; display: block; }
-
-/* The corona flickers by switching one inherited colour in hard steps. CSS
-   selectors cannot reach inside a <use>, but custom properties inherit
-   straight through it, and an unregistered property switches rather than
-   interpolates — which is the 8-bit flicker we want anyway. */
-.ar-star { animation: ar-corona 1.6s var(--ar-step) infinite; }
-@keyframes ar-corona {
-  0%, 100% { --ar-spark-corona: #ffb224; }
-  50% { --ar-spark-corona: #ffe066; }
-}
-
-/* --- orbits -------------------------------------------------------------- */
-
-.ar-ring {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: calc(var(--ar-d) * 1%);
-  height: calc(var(--ar-d) * 1%);
-  margin: calc(var(--ar-d) * -0.5%) 0 0 calc(var(--ar-d) * -0.5%);
-  border: 2px dashed var(--ar-orbit);
+  margin: calc(var(--ar-sun-size) / -2);
+  transform-style: preserve-3d;
+  transform: rotateZ(calc(-1 * var(--ar-spin))) rotateX(calc(-1 * var(--ar-tilt-live)));
+  display: grid;
+  place-items: center;
+  text-align: center;
+  text-decoration: none;
+  /* Rounded, so the hit area is the visible disc and not its bounding box. */
   border-radius: 50%;
-  pointer-events: none;
-}
-
-/* The arm turns; the fix turns back by exactly as much. Both are plain CSS
-   animations on one duration, and nothing in the script reads or writes
-   them. */
-.ar-arm {
-  position: absolute;
-  /* Out by the ring border, so a world centres on the line and not inside it. */
-  inset: -2px;
-  animation: ar-arm var(--ar-dur) linear infinite;
-}
-@keyframes ar-arm { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-.ar-arm-fix {
-  position: absolute;
-  left: 100%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  animation: ar-world var(--ar-dur) linear infinite;
-}
-@keyframes ar-world { from { transform: rotate(0deg); } to { transform: rotate(-360deg); } }
-
-/* The world itself. By this point the two animations have cancelled, so the
-   only thing left to undo is the camera — and undoing it here, on the anchor,
-   means the hit area is round and upright too, not a squashed sliver. */
-.ar-world {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: var(--ar-world-size);
-  height: var(--ar-world-size);
-  margin-left: calc(var(--ar-world-size) / -2);
-  margin-top: calc(var(--ar-world-size) / -2);
-  transform: scaleY(var(--ar-unflat)) rotate(var(--ar-unspin));
-  display: block;
-  pointer-events: auto;
   cursor: pointer;
 }
-
-/* On a touch screen the finger needs more than the art does. */
-.ar-world::before {
-  content: "";
+.ar-sun-core {
   position: absolute;
-  inset: -0.45rem;
+  inset: 0;
+  border-radius: 50%;
+  background-image: var(--ar-sun-fill);
+  background-size: cover;
+  background-position: center;
+  box-shadow: 0 0 0 1px var(--ar-sun-ring), 0 0 46px 10px var(--ar-sun-glow);
+  animation: ar-sun-in 1000ms var(--ar-ease) both;
+  transition: box-shadow 0.25s var(--ar-ease);
 }
-.ar-world-sprite { display: block; width: 100%; height: 100%; }
-.ar-sprite-world {
-  width: 100%;
-  height: 100%;
+.ar-sun:hover .ar-sun-core,
+.ar-sun:focus-visible .ar-sun-core {
+  box-shadow: 0 0 0 1px var(--ar-sun-ring-lit), 0 0 60px 16px var(--ar-sun-glow-lit);
+}
+/* The sun carries no lettering in the map; the name is for the mobile list. */
+.ar-sun-name { display: none; }
+
+@keyframes ar-sun-in {
+  from { opacity: 0; transform: scale(0.85); }
+  to { opacity: 1; transform: none; }
+}
+
+.ar-bodies { position: absolute; inset: 0; transform-style: preserve-3d; }
+.ar-bodies ul { position: absolute; inset: 0; transform-style: preserve-3d; }
+
+/* Every wrapper in the chain is a box lying in the tilted orbital plane, and a
+   planet straddles that plane — so the half of each disc that falls behind it
+   was being hit-tested against the wrapper instead of the planet. Making the
+   whole scaffold hit-transparent leaves exactly the visible bodies clickable;
+   an ancestor set to none never blocks a descendant set to auto. */
+.ar-camera,
+.ar-orbits,
+.ar-bodies,
+.ar-bodies ul,
+.ar-arm,
+.ar-anchor,
+.ar-billboard,
+.ar-orb { pointer-events: none; }
+.ar-planet,
+.ar-body-tag,
+.ar-sun { pointer-events: auto; }
+
+/* Four nested transforms per body:
+   arm       — rotates around the sun in the tilted plane
+   anchor    — pushes the body out to its ring, and undoes the camera spin
+   billboard — undoes the arm rotation and the resting tilt
+   body      — absorbs whatever tilt the visitor has dragged in
+   The rotations cancel exactly, so a label is upright at every orbital
+   position and at every camera orientation. */
+.ar-arm {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform-style: preserve-3d;
+  animation: ar-arm linear infinite;
+}
+.ar-anchor {
+  position: absolute;
+  transform-style: preserve-3d;
   display: block;
-  transition: transform 0.1s var(--ar-step);
+  /* Declared here, not on :root, so it resolves against this arm's own rate.
+     The middle of the system has a rate of ~1 and so barely drifts at all —
+     that is what keeps the drag feeling exactly as responsive as it did. */
+  --ar-drift: calc(var(--ar-spin) * (var(--ar-rate, 1) - 1));
+  /* Drift out to the body, then unwind the camera spin and the drift together,
+     which is what keeps the label upright through all of it. */
+  transform: rotateZ(var(--ar-drift))
+             translateX(var(--ar-ring))
+             rotateZ(calc(-1 * var(--ar-spin) - var(--ar-drift)));
 }
-.ar-world:hover .ar-sprite-world,
-.ar-world.is-lit .ar-sprite-world { transform: scale(1.2); }
-
-/* A selection bracket, drawn around the world on hover. */
-.ar-world::after {
-  content: "";
+.ar-billboard {
   position: absolute;
-  inset: -22%;
-  border: var(--ar-unit) solid var(--ar-accent);
-  opacity: 0;
-  transition: opacity 0.1s var(--ar-step);
-}
-.ar-world:hover::after,
-.ar-world.is-lit::after { opacity: 1; }
-
-/* A lit world brightens its orbit too, so the pairing reads at a glance. */
-.ar-ring:has(.ar-world.is-lit) { border-color: var(--ar-orbit-lit); border-style: solid; }
-
-/* Ring geometry. Diameters are a share of the frame, stepping outward evenly.
-   Periods are minutes long, so the system drifts rather than spins, and each
-   is different so the worlds never lock into formation. */
-.ar-orrery-frame { --ar-world-base: clamp(1.9rem, 7.6vmin, 2.6rem); --ar-sun-size: clamp(2.6rem, 11vmin, 3.9rem); }
-.ar-ring { --ar-world-size: calc(var(--ar-world-base) * var(--ar-world-scale, 1)); }
-
-.ar-ring--1 { --ar-d: 22;   --ar-world-scale: 0.82; }
-.ar-ring--2 { --ar-d: 33.4; --ar-world-scale: 1; }
-.ar-ring--3 { --ar-d: 44.8; --ar-world-scale: 0.9; }
-.ar-ring--4 { --ar-d: 56.2; --ar-world-scale: 1.08; }
-.ar-ring--5 { --ar-d: 67.6; --ar-world-scale: 1.3; }
-.ar-ring--6 { --ar-d: 79;   --ar-world-scale: 1.02; }
-
-.ar-ring--1 { --ar-dur: 54s; }
-.ar-ring--2 { --ar-dur: 72s; }
-.ar-ring--3 { --ar-dur: 92s; }
-.ar-ring--4 { --ar-dur: 114s; }
-.ar-ring--5 { --ar-dur: 138s; }
-.ar-ring--6 { --ar-dur: 164s; }
-
-/* Each pair starts somewhere different around its orbit. An arm and its fix
-   must always share a delay, or the world tips. */
-.ar-ring--1 .ar-arm, .ar-ring--1 .ar-arm-fix { animation-delay: -6s; }
-.ar-ring--2 .ar-arm, .ar-ring--2 .ar-arm-fix { animation-delay: -30s; }
-.ar-ring--3 .ar-arm, .ar-ring--3 .ar-arm-fix { animation-delay: -54s; }
-.ar-ring--4 .ar-arm, .ar-ring--4 .ar-arm-fix { animation-delay: -18s; }
-.ar-ring--5 .ar-arm, .ar-ring--5 .ar-arm-fix { animation-delay: -96s; }
-.ar-ring--6 .ar-arm, .ar-ring--6 .ar-arm-fix { animation-delay: -66s; }
-
-/* Surface details that blink, driven the same way as the corona. */
-.ar-sprite-world { animation: ar-surface 2.4s var(--ar-step) infinite; }
-@keyframes ar-surface {
-  0%, 100% { --ar-spark-hot: #ffab1f; --ar-spark-cool: #2bb8ac; --ar-spark-beacon: #8a5f06; }
-  50% { --ar-spark-hot: #fffbe0; --ar-spark-cool: #c4fff8; --ar-spark-beacon: #ffe89c; }
+  transform-style: preserve-3d;
+  display: block;
+  /* Pivot on the anchor point. Left at its default box centre, the billboard
+     would swing the planet off its own ring as it counter-rotates. */
+  transform-origin: 0 0;
+  animation: ar-billboard linear infinite;
 }
 
-/* --- the heads-up display ------------------------------------------------ */
+@keyframes ar-arm {
+  from { transform: rotateZ(0deg); }
+  to { transform: rotateZ(360deg); }
+}
+/* -62deg is --ar-tilt negated. Kept literal because it is the *resting* tilt
+   the billboard cancels; live tilt is handled on .ar-body. */
+@keyframes ar-billboard {
+  from { transform: rotateZ(0deg) rotateX(-62deg); }
+  to { transform: rotateZ(-360deg) rotateX(-62deg); }
+}
 
-.ar-hud {
+/* Slots, periods and starting phases. Periods are minutes long, so the system
+   drifts rather than spins; script re-rolls each starting phase per visit. */
+.ar-arm--1 { --ar-n: 0; --ar-rate: 2.189; animation-duration: 111s; animation-delay: -12s; }
+.ar-arm--2 { --ar-n: 1; --ar-rate: 1.500; animation-duration: 162s; animation-delay: -108s; }
+.ar-arm--3 { --ar-n: 2; --ar-rate: 1.130; animation-duration: 215s; animation-delay: -48s; }
+.ar-arm--4 { --ar-n: 3; --ar-rate: 0.897; animation-duration: 271s; animation-delay: -196s; }
+.ar-arm--5 { --ar-n: 4; --ar-rate: 0.739; animation-duration: 329s; animation-delay: -84s; }
+.ar-arm--6 { --ar-n: 5; --ar-rate: 0.626; animation-duration: 388s; animation-delay: -250s; }
+
+/* Must match the arm exactly, or the label stops cancelling its own rotation. */
+.ar-arm--1 .ar-billboard { animation-duration: 111s; animation-delay: -12s; }
+.ar-arm--2 .ar-billboard { animation-duration: 162s; animation-delay: -108s; }
+.ar-arm--3 .ar-billboard { animation-duration: 215s; animation-delay: -48s; }
+.ar-arm--4 .ar-billboard { animation-duration: 271s; animation-delay: -196s; }
+.ar-arm--5 .ar-billboard { animation-duration: 329s; animation-delay: -84s; }
+.ar-arm--6 .ar-billboard { animation-duration: 388s; animation-delay: -250s; }
+
+/* Keyboard focus holds the system still so a focused target can be activated.
+   Hovering deliberately does not: the orbits keep running under the pointer. */
+.ar-scene:focus-within .ar-arm,
+.ar-scene:focus-within .ar-billboard { animation-play-state: paused; }
+
+.ar-scene.is-managed:focus-within .ar-arm,
+.ar-scene.is-managed:focus-within .ar-billboard { animation-play-state: running; }
+
+.ar-scene.is-managed.is-holding .ar-arm,
+.ar-scene.is-managed.is-holding .ar-billboard { animation-play-state: paused; }
+
+.ar-body {
+  display: grid;
+  grid-template-rows: var(--ar-orb) auto;
+  justify-items: center;
+  gap: 0.35rem;
+  width: 8rem;
+  margin-left: -4rem;
+  /* Half the orb slot, so the planet's centre — not the top of the label —
+     lands exactly on the ring, whatever size that planet is. */
+  margin-top: calc(var(--ar-orb) / -2);
+  padding: 0 0.2rem 0.35rem;
+  text-decoration: none;
+  text-align: center;
+  border-radius: var(--ar-radius);
+  /* The link box is only a layout frame: it must not swallow clicks meant for
+     a body behind it. The disc and the plate opt back in below. */
+  pointer-events: none;
+  /* 1px toward the viewer breaks the depth tie with the ring the planet sits
+     on. Too small to shift the projection — measured under 0.2px. */
+  transform: translateZ(1px) rotateX(calc(var(--ar-tilt) - var(--ar-tilt-live)));
+  /* Pivot on the planet, not on the middle of the label, so absorbing a live
+     tilt change never nudges the planet off its ring. */
+  transform-origin: 50% calc(var(--ar-orb) / 2);
+}
+
+/* A fixed-height slot centres every planet on its ring regardless of size. */
+.ar-orb {
+  display: grid;
+  place-items: center;
+  height: var(--ar-orb);
+  /* Identity, deliberately: see the entrance note below. */
+  transform: scale(1);
+}
+
+/* The planets arrive with the rings, so the system enters as one scene.
+   No forwards fill: once the entrance is over the elements fall back to their
+   normal styles, which are fully visible whatever happened during it. */
+.ar-orb {
+  animation: ar-orb-in 720ms var(--ar-ease) backwards;
+  animation-delay: calc(320ms + var(--ar-n, 0) * 90ms);
+}
+.ar-body-tag {
+  animation: ar-tag-in 720ms var(--ar-ease) backwards;
+  animation-delay: calc(420ms + var(--ar-n, 0) * 90ms);
+}
+
+@keyframes ar-orb-in {
+  from { opacity: 0; transform: scale(0.3); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes ar-tag-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Each planet is a small lit sphere: distinct size, distinct colour, a soft
+   terminator on the shaded side and a contact shadow on the orbital plane. */
+.ar-planet {
+  display: block;
+  /* The map is a square disc with transparent corners, so it lines up with the
+     circle exactly. Sized to the element, which is what keeps a 20px planet
+     from trying to paint at the file's own 256px. */
+  background-size: cover;
+  background-repeat: no-repeat;
+  /* The visible disc is the hit area, and border-radius clips hit testing to
+     the circle. Because it lives inside the 3D chain, it scales and moves with
+     the camera, so the target stays exact at any zoom or orientation. */
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 50%;
+  background-image: var(--ar-planet-fill);
+  box-shadow:
+    inset -0.18em -0.22em 0.4em var(--ar-planet-shade),
+    inset 0.1em 0.12em 0.3em var(--ar-planet-sheen),
+    0 0.12em 0.5em var(--ar-planet-drop);
+  transition: transform 0.25s var(--ar-ease), box-shadow 0.25s var(--ar-ease);
+}
+
+/* Planet, ring and sun maps: Solar System Scope (solarsystemscope.com), CC BY 4.0.
+   Re-projected from equirectangular to a sphere seen head on, then reduced to
+   256px — see Credits in the README. The disc carries only the surface; the
+   lighting above stays in CSS, so both palettes light it their own way. */
+.ar-body--1 .ar-planet { width: 1.00rem; height: 1.00rem; --ar-planet-fill: url("planet-mercury.webp"); }
+.ar-body--2 .ar-planet { width: 1.20rem; height: 1.20rem; --ar-planet-fill: url("planet-venus.webp"); }
+.ar-body--3 .ar-planet { width: 1.22rem; height: 1.22rem; --ar-planet-fill: url("planet-earth.webp"); }
+.ar-body--4 .ar-planet { width: 1.07rem; height: 1.07rem; --ar-planet-fill: url("planet-mars.webp"); }
+.ar-body--5 .ar-planet { width: 1.96rem; height: 1.96rem; --ar-planet-fill: url("planet-jupiter.webp"); }
+.ar-body--6 { --ar-saturn: 1.88rem; }
+.ar-body--6 .ar-planet { width: 1.88rem; height: 1.88rem; --ar-planet-fill: url("planet-saturn.webp"); }
+
+/* Saturn's rings.
+   Decoration only, and deliberately hung off .ar-orb rather than the planet:
+   the orb takes no pointer events, and a pseudo-element inherits that, so the
+   hit area stays exactly the visible disc no matter how far the rings reach.
+   Two halves, because a ring that only ever passes in front of the planet reads
+   as a sticker — the far side has to go behind it. The map is swept from the
+   pack's radial strip and runs out to 2.3 planet radii, which is where the box
+   size comes from; flattening and tipping it puts it in Saturn's own plane. */
+.ar-body--6 .ar-orb { position: relative; }
+
+.ar-body--6 .ar-orb::before,
+.ar-body--6 .ar-orb::after {
+  content: "";
   position: absolute;
   left: 50%;
-  bottom: 0.65rem;
-  transform: translateX(-50%);
-  margin: 0;
-  z-index: 4;
-  font-family: var(--ar-pixel);
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ar-muted);
-  background: var(--ar-scrim);
-  border: var(--ar-unit) solid var(--ar-line);
-  padding: 0.25rem 0.55rem;
-  white-space: nowrap;
+  top: 50%;
+  width: calc(var(--ar-saturn) * 2.3);
+  height: calc(var(--ar-saturn) * 2.3);
+  margin: calc(var(--ar-saturn) * -1.15) 0 0 calc(var(--ar-saturn) * -1.15);
+  background: url("saturn-rings.webp") center / 100% 100% no-repeat;
+  /* Flattened, and deliberately not rotated. The disc is projected with the
+     pole straight up, so every latitude circle lands as a horizontal chord and
+     Saturn's bands run flat across it. The rings share that plane, so their
+     major axis has to be flat too — the 14deg tip this used to carry put the
+     ring plane at an angle to the planet's own equator, and skewed the line
+     where the near half crosses in front. Both are inside the billboard, so
+     once they agree here they stay parallel at every camera orientation. */
+  transform: scaleY(0.34);
   pointer-events: none;
+}
+
+/* Far side, behind the planet; near side, across it. The orb already makes a
+   stacking context, so neither escapes past its own body. */
+.ar-body--6 .ar-orb::before { z-index: -1; clip-path: inset(0 0 50% 0); }
+.ar-body--6 .ar-orb::after { z-index: 1; clip-path: inset(50% 0 0 0); }
+
+.ar-body-tag {
+  display: grid;
+  gap: 0.05rem;
+  pointer-events: auto;
+  cursor: pointer;
+  padding: 0.15rem 0.4rem;
+  border-radius: var(--ar-radius);
+  /* A quiet plate so labels stay legible over paths and other bodies. */
+  background: var(--ar-plate);
+}
+.ar-body-code {
+  font-family: var(--ar-mono);
+  font-size: 0.5625rem;
+  letter-spacing: 0.14em;
+  /* Muted rather than faint: this is small type over a busy scene. */
+  color: var(--ar-muted);
+  transition: color 0.25s var(--ar-ease);
+}
+.ar-body-name {
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ar-ink);
+}
+.ar-body-note {
+  font-size: 0.6875rem;
+  color: var(--ar-muted);
   opacity: 0;
-  transition: opacity 0.15s var(--ar-step);
-}
-.ar-hud-key { color: var(--ar-accent); }
-.ar-hud-sep { color: var(--ar-faint); }
-
-.ar-hud-zoom {
-  left: auto;
-  right: 0.65rem;
-  bottom: auto;
-  top: 0.65rem;
-  transform: none;
-  color: var(--ar-accent-warm);
+  height: 0;
+  transition: opacity 0.25s var(--ar-ease);
 }
 
-/* Only shown once the controls actually exist, and only where they work. */
-.ar-orrery-frame.is-live .ar-hud { opacity: 1; }
-/* The readout is feedback, not furniture: it appears while the camera is
-   being worked and gets out of the way the rest of the time. */
-.ar-orrery-frame.is-live .ar-hud-zoom { opacity: 0; }
-.ar-orrery-frame.is-live:hover .ar-hud-zoom,
-.ar-orrery-frame.is-live.is-grabbing .ar-hud-zoom { opacity: 1; }
+/* Hover lights the planet up where it is. It is never displaced, and the orbit
+   underneath it never pauses — the highlight rides along with the body. */
+.ar-body:hover .ar-planet, .ar-body:focus-visible .ar-planet {
+  transform: scale(1.16);
+  box-shadow:
+    inset -0.18em -0.22em 0.4em var(--ar-planet-shade),
+    inset 0.1em 0.12em 0.3em var(--ar-planet-sheen),
+    0 0 0 0.28em var(--ar-accent-soft),
+    0 0.12em 0.7em var(--ar-planet-halo);
+}
+.ar-body:hover .ar-body-code, .ar-body:focus-visible .ar-body-code { color: var(--ar-accent); }
+.ar-body:hover .ar-body-name, .ar-body:focus-visible .ar-body-name { color: var(--ar-accent); }
+.ar-body:hover .ar-body-note, .ar-body:focus-visible .ar-body-note { opacity: 1; height: auto; }
 
-/* --- layout -------------------------------------------------------------- */
+.ar-scroll-cue {
+  justify-self: center;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--ar-pixel);
+  font-size: 0.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: var(--ar-muted);
+  text-decoration: none;
+  padding: 0.5rem 0.25rem;
+}
+.ar-scroll-cue:hover { color: var(--ar-accent); }
+.ar-scroll-arrow { animation: ar-cue 2.6s ease-in-out infinite; }
+@keyframes ar-cue {
+  0%, 100% { transform: translateY(0); opacity: 0.7; }
+  50% { transform: translateY(3px); opacity: 1; }
+}
 
-/* Two columns once there is room; the brief leads, the orrery sits beside it. */
 @media (min-width: 64rem) {
-  .ar-map-inner {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
-    grid-template-areas: "brief orrery" "cue orrery";
+  .ar-launch-inner {
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+    grid-template-areas: "intro system" "cue system";
     align-content: center;
   }
-  .ar-map-brief { grid-area: brief; }
-  .ar-orrery { grid-area: orrery; }
-  .ar-scroll { grid-area: cue; }
+  .ar-launch-intro { grid-area: intro; }
+  .ar-system { grid-area: system; }
+  .ar-scroll-cue { grid-area: cue; justify-self: start; }
 }
 
-/* Below that the map leads and the dock follows it, which keeps the solar
-   system the first thing on the page at every width. The frame shrinks but
-   nothing is taken away: the same six worlds, the same controls. */
-@media (max-width: 63.99rem) {
-  .ar-map-inner {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas: "orrery" "brief" "cue";
+/* --- mobile: a list, not a shrunken orbit --------------------------------- */
+
+@media (max-width: 48rem) {
+  .ar-launch { min-height: 0; padding-block: 1rem 3rem; overflow: visible; }
+  .ar-launch-inner { padding-block: 2rem 0; }
+  .ar-launch-hint { display: none; }
+
+  /* Saturn's rings run out to 2.3 planet radii — past the 2rem disc column
+     and into the text, by a constant 4px at every width here, since both are
+     sized in rem. The planets stay exactly where they are and the text column
+     moves instead, by the same amount on every row so the list stays true to
+     one column. Eased up a little on wider tablets, where there is room. */
+  .ar-scene { --ar-list-gap: clamp(1.6rem, 1.1rem + 1.6vw, 2rem); }
+
+  .ar-scene {
+    max-width: none;
+    max-height: none;
+    aspect-ratio: auto;
+    perspective: none;
+    position: static;
   }
-  .ar-map-brief { grid-area: brief; }
-  .ar-orrery { grid-area: orrery; }
-  .ar-scroll { grid-area: cue; justify-self: start; }
+  .ar-camera { position: static; transform: none; transform-style: flat; }
+  .ar-orbits { display: none; }
 
-  .ar-orrery-frame { max-width: min(26rem, 62vh); }
-  .ar-dock-link { padding: 0.65rem 0.7rem; grid-template-columns: 2.5rem minmax(0, 1fr) 1rem; }
-  .ar-dock-sprite { width: 2.5rem; height: 2.5rem; }
-}
-
-/* Phones. The map stays, sized so it never crowds the text beneath it, and
-   the worlds keep a finger-sized hit area whatever the art measures. */
-@media (max-width: 34rem) {
-  .ar-orrery-frame {
-    max-width: min(20rem, 54vh);
-    --ar-world-base: clamp(1.75rem, 9.4vmin, 2.2rem);
-    --ar-sun-size: clamp(2.2rem, 12vmin, 3rem);
+  .ar-sun {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0 0 0.5rem;
+    transform: none;
+    transform-style: flat;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: var(--ar-list-gap);
+    text-align: left;
+    padding-bottom: 1.25rem;
+    border-radius: 0;
+    border-bottom: 1px solid var(--ar-line);
   }
-  /* Never below this: the hint is real text, not decoration. */
-  .ar-hud { font-size: 0.7rem; letter-spacing: 0.06em; padding: 0.2rem 0.4rem; }
-}
+  .ar-sun-core {
+    position: static;
+    inset: auto;
+    width: 2.5rem;
+    height: 2.5rem;
+    flex: none;
+    box-shadow: 0 0 0 1px var(--ar-sun-ring), 0 0 20px 4px var(--ar-sun-glow);
+  }
+  .ar-sun-name {
+    display: block;
+    font-family: var(--ar-mono);
+    font-size: 0.9375rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    color: var(--ar-ink);
+    text-align: left;
+  }
 
-/* A finger needs more room than the art does, and on the smallest screens the
-   art is at its smallest. The target grows to meet it. */
-@media (pointer: coarse) {
-  .ar-world::before { inset: -0.9rem; }
+  .ar-bodies, .ar-bodies ul { position: static; transform-style: flat; }
+  .ar-bodies ul { display: grid; }
+
+  .ar-arm {
+    position: static;
+    width: auto;
+    height: auto;
+    animation: none;
+    transform: none;
+    transform-style: flat;
+    border-bottom: 1px solid var(--ar-line);
+  }
+  .ar-arm:last-child { border-bottom: 0; }
+  .ar-anchor, .ar-billboard {
+    position: static;
+    transform: none;
+    animation: none;
+    transform-style: flat;
+    display: block;
+  }
+
+  .ar-body {
+    grid-template-rows: auto;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: center;
+    justify-items: start;
+    gap: 0.9rem;
+    column-gap: var(--ar-list-gap);
+    width: auto;
+    margin: 0;
+    padding: 0.9rem 0.25rem;
+    text-align: left;
+    transform: none;
+  }
+  /* A tap anywhere on the row should follow it, and nothing is overlapping. */
+  .ar-body { pointer-events: auto; }
+  .ar-orb { height: auto; justify-self: center; animation: none; }
+  .ar-body-tag { animation: none; }
+  .ar-scene { cursor: auto; }
+
+  /* Follows the list, aligned to it. */
+  .ar-scroll-cue { justify-self: start; margin-top: 0.5rem; padding-left: 0; }
+  .ar-body-tag { background: none; padding: 0; justify-items: start; }
+  .ar-body-note { opacity: 1; height: auto; }
 }
 
 /* --------------------------------------------------------------------------
    Sections
    -------------------------------------------------------------------------- */
 
-.ar-section { padding-block: clamp(2.5rem, 6vw, 4.5rem) 0; }
-.ar-section-first { padding-top: clamp(1.75rem, 4vw, 3rem); }
-.ar-section-last { padding-bottom: clamp(2.5rem, 6vw, 4.5rem); }
+.ar-section { padding-block: clamp(3rem, 7vw, 5.5rem) 0; }
+.ar-section-first { padding-top: clamp(2.5rem, 5vw, 4rem); }
+.ar-section-last { padding-bottom: clamp(3rem, 7vw, 5.5rem); }
 
-.ar-page-head { margin-bottom: 2rem; max-width: 56rem; }
-.ar-page-lede { color: var(--ar-muted); max-width: var(--ar-measure); }
-
-.ar-message { padding-block: clamp(3rem, 10vw, 6rem); }
-.ar-gameover {
-  font-family: var(--ar-pixel);
-  font-size: clamp(1.75rem, 7vw, 3.5rem);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: var(--ar-accent-warm);
-  text-shadow: 4px 4px 0 var(--ar-shadow);
-  margin: 0 0 1.25rem;
-  animation: ar-blink 1.2s var(--ar-step) infinite;
+.ar-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  min-height: 2.25rem;
+  padding-bottom: 1rem;
+  border-bottom: var(--ar-px) solid var(--ar-line-strong);
 }
+.ar-section-body { margin-top: var(--ar-label-gap); }
 
-/* --- about --------------------------------------------------------------- */
+.ar-section-link {
+  position: relative;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ar-muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.ar-section-link:hover { color: var(--ar-accent); }
+.ar-section-link::after { content: ""; position: absolute; inset: -0.5rem 0; }
 
-.ar-about { display: grid; gap: 1.5rem; align-items: start; }
+.ar-page-head { padding-block: clamp(1.5rem, 4vw, 3rem) 0; }
+.ar-page-head .ar-label { margin-bottom: 1.25rem; }
+.ar-page-title {
+  font-family: var(--ar-display);
+  font-size: clamp(2.25rem, 6vw, 4rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.ar-page-lead { color: var(--ar-muted); max-width: var(--ar-measure); }
+
+.ar-message { padding-block: clamp(3rem, 10vw, 7rem); }
+.ar-message .ar-label { margin-bottom: 1.25rem; }
+.ar-message-action { margin-top: 2rem; }
+
+/* --------------------------------------------------------------------------
+   About / featured / cards
+   -------------------------------------------------------------------------- */
+
+.ar-about { display: grid; gap: 2rem; align-items: start; }
 @media (min-width: 60rem) {
   .ar-about { grid-template-columns: 16rem minmax(0, 1fr); }
-  .ar-about-text { max-width: var(--ar-measure); }
+  .ar-about-body { max-width: var(--ar-measure); }
 }
-.ar-portrait-img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; }
-.ar-about-extra { margin-top: 1.5rem; }
+.ar-portrait { overflow: hidden; box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark); border-radius: var(--ar-radius); }
+.ar-portrait-img { width: 100%; aspect-ratio: 4 / 5; object-fit: cover; transition: transform 0.6s var(--ar-ease); }
+.ar-portrait:hover .ar-portrait-img { transform: scale(1.03); }
 
-/* --- project cards ------------------------------------------------------- */
-
-.ar-grid {
+.ar-featured {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(18rem, 100%), 1fr));
-  gap: 1.25rem;
-  margin-top: 1.5rem;
+  gap: 0;
+  background: var(--ar-panel);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
 }
-.ar-card { min-width: 0; display: flex; }
-.ar-card-body { display: flex; flex-direction: column; gap: 0.65rem; flex: 1; min-width: 0; }
+.ar-featured-media { overflow: hidden; background: var(--ar-panel-alt); min-width: 0; }
+.ar-featured-media a { display: block; }
+.ar-featured-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; transition: transform 0.7s var(--ar-ease); }
+.ar-featured:hover .ar-featured-img { transform: scale(1.035); }
+.ar-featured-placeholder { width: 100%; aspect-ratio: 16 / 10; background: var(--ar-panel-alt); }
 
-.ar-card-media { margin: calc(var(--ar-pad) * -1) calc(var(--ar-pad) * -1) 0; border-bottom: 3px solid var(--ar-line-strong); overflow: hidden; }
-.ar-card-media a { display: block; }
-.ar-card-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
-.ar-card-blank {
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  display: grid;
-  place-items: center;
-  background: var(--ar-panel-alt);
-  color: var(--ar-faint);
-  font-family: var(--ar-pixel);
+.ar-featured-body {
+  padding: var(--ar-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+  border-top: var(--ar-px) solid var(--ar-line);
+}
+.ar-featured-title {
+  font-family: var(--ar-display);
+  font-size: clamp(1.5rem, 3.2vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+}
+.ar-featured-title a { text-decoration: none; }
+.ar-featured-title a:hover { color: var(--ar-accent); }
+.ar-featured-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin: 0;
+  font-family: var(--ar-mono);
   font-size: 0.75rem;
-  letter-spacing: 0.14em;
+  color: var(--ar-faint);
+}
+.ar-featured-summary { color: var(--ar-muted); margin: 0; max-width: var(--ar-measure); }
+.ar-featured-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: auto; padding-top: 0.5rem; }
+
+@media (min-width: 60rem) {
+  .ar-featured { grid-template-columns: minmax(0, 6fr) minmax(0, 6fr); }
+  .ar-featured-body { border-top: 0; border-left: 1px solid var(--ar-line); }
+  .ar-featured-img, .ar-featured-placeholder { height: 100%; aspect-ratio: auto; min-height: 21rem; }
 }
 
+.ar-card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(20rem, 100%), 1fr));
+  gap: 1.5rem;
+}
+
+.ar-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: var(--ar-panel);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
+  overflow: hidden;
+  transition: box-shadow 0.2s var(--ar-ease), transform 0.2s var(--ar-ease);
+}
+.ar-card:hover { box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-accent); transform: translateY(-2px); }
+
+.ar-card-media { overflow: hidden; background: var(--ar-panel-alt); border-bottom: 1px solid var(--ar-line); }
+.ar-card-media a { display: block; }
+.ar-card-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; transition: transform 0.6s var(--ar-ease); }
+.ar-card:hover .ar-card-img { transform: scale(1.045); }
+
+.ar-card-body {
+  padding: var(--ar-pad);
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  min-width: 0;
+}
 .ar-card-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
   margin: 0;
-  font-family: var(--ar-pixel);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
   color: var(--ar-faint);
 }
-.ar-card-title {
-  font-family: var(--ar-pixel);
-  font-size: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+.ar-card-num { flex: none; white-space: nowrap; overflow-wrap: normal; color: var(--ar-accent); font-variant-numeric: tabular-nums; }
+.ar-card-title { font-size: 1.125rem; font-weight: 600; letter-spacing: -0.015em; }
+.ar-card-title a { text-decoration: none; display: inline-flex; align-items: baseline; gap: 0.4rem; }
+.ar-card-title a:hover { color: var(--ar-accent); }
+.ar-card-arrow {
+  color: var(--ar-accent);
+  opacity: 0;
+  transform: translateX(-0.2rem);
+  transition: opacity 0.2s var(--ar-ease), transform 0.2s var(--ar-ease);
 }
-.ar-card-title a { text-decoration: none; }
-.ar-card-text { color: var(--ar-muted); font-size: 0.9375rem; margin: 0; }
-.ar-card-links {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 0.9rem;
-  margin-top: auto;
-  padding-top: 0.5rem;
-  font-family: var(--ar-pixel);
+.ar-card:hover .ar-card-arrow,
+.ar-record:hover .ar-card-arrow,
+.ar-card-title a:focus-visible .ar-card-arrow,
+.ar-record-title a:focus-visible .ar-card-arrow { opacity: 1; transform: none; }
+.ar-card-summary { color: var(--ar-muted); font-size: 0.9375rem; margin: 0; }
+.ar-card .ar-linkrow { margin-top: auto; padding-top: 0.4rem; }
+
+/* --------------------------------------------------------------------------
+   Toolkit / records / timeline
+   -------------------------------------------------------------------------- */
+
+.ar-toolkit, .ar-records, .ar-timeline {
+  background: var(--ar-panel);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
+}
+
+.ar-toolkit-row, .ar-timeline-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: var(--ar-pad);
+  border-bottom: 1px solid var(--ar-line);
+}
+.ar-toolkit-row:last-child, .ar-timeline-row:last-child { border-bottom: 0; }
+
+.ar-toolkit-head { display: flex; align-items: baseline; gap: 0.75rem; min-width: 0; }
+.ar-toolkit-num {
+  flex: none;
+  white-space: nowrap;
+  overflow-wrap: normal;
+  font-family: var(--ar-mono);
   font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--ar-accent);
+  font-variant-numeric: tabular-nums;
+}
+.ar-toolkit-name {
+  font-family: var(--ar-mono);
+  font-size: 0.8125rem;
+  font-weight: 500;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
 }
-.ar-card-links a { color: var(--ar-accent); text-decoration: none; }
-.ar-card-links a:hover { color: var(--ar-accent); }
-
-.ar-hero-card { display: grid; gap: 0; padding: 0; margin-bottom: 1.5rem; }
-.ar-hero-card-media { overflow: hidden; border-bottom: var(--ar-unit) solid var(--ar-line-strong); min-width: 0; }
-.ar-hero-card-media a { display: block; }
-.ar-hero-card-img { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; }
-.ar-hero-card-body { padding: var(--ar-pad); display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
-.ar-hero-card-title {
-  font-family: var(--ar-pixel);
-  font-size: clamp(1.125rem, 2.8vw, 1.625rem);
-  font-weight: 700;
-  text-transform: uppercase;
-  text-shadow: 2px 2px 0 var(--ar-shadow);
+.ar-toolkit-items { display: flex; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
+.ar-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 0.65rem;
+  background: var(--ar-panel-alt);
+  border: 1px solid var(--ar-line);
+  border-radius: var(--ar-radius);
+  font-family: var(--ar-mono);
+  font-size: 0.8125rem;
+  color: var(--ar-muted);
+  min-width: 0;
+  transition: border-color 0.18s var(--ar-ease), color 0.18s var(--ar-ease);
 }
-.ar-hero-card-title a { text-decoration: none; }
-@media (min-width: 60rem) {
-  .ar-hero-card { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-  .ar-hero-card-media { border-bottom: 0; border-right: var(--ar-unit) solid var(--ar-line-strong); }
-  .ar-hero-card-img { height: 100%; aspect-ratio: auto; min-height: 18rem; }
+.ar-tool:hover { border-color: var(--ar-line-strong); color: var(--ar-ink); }
+.ar-tool-logo { display: inline-flex; align-items: center; justify-content: center; height: 1.2rem; width: 1.2rem; flex: none; }
+.ar-tool-logo .icon-svg { height: 100%; width: auto; max-width: 2.4rem; display: block; }
+
+.ar-record {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  padding: clamp(1.5rem, 3vw, 2.25rem) var(--ar-pad);
+  border-bottom: 1px solid var(--ar-line);
+  transition: background-color 0.2s var(--ar-ease);
 }
-
-/* --- skills, research, education ---------------------------------------- */
-
-.ar-skills, .ar-records, .ar-timeline { display: grid; gap: 1rem; }
-
-.ar-skill-row { display: grid; gap: 0.75rem; }
-.ar-skill-head { display: flex; align-items: baseline; gap: 0.6rem; margin: 0; min-width: 0; }
-.ar-skill-name {
-  font-family: var(--ar-pixel);
-  font-size: 0.875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-
-.ar-record { min-width: 0; }
-.ar-record-body { display: grid; gap: 0.6rem; }
+.ar-record:last-child { border-bottom: 0; }
+.ar-record:hover { background: var(--ar-panel-alt); }
 .ar-record-meta {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
-  margin: 0;
-  font-family: var(--ar-pixel);
-  font-size: 0.6875rem;
+  gap: 0.6rem;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ar-faint);
-}
-.ar-record-title {
-  font-family: var(--ar-pixel);
-  font-size: clamp(1rem, 2.2vw, 1.25rem);
-  font-weight: 700;
-  text-transform: uppercase;
-}
-.ar-record-title a { text-decoration: none; }
-.ar-record-by { color: var(--ar-muted); font-size: 0.875rem; margin: 0; }
-
-.ar-timeline-row { display: grid; gap: 0.6rem; }
-.ar-timeline-when {
-  margin: 0;
-  font-family: var(--ar-pixel);
-  font-size: 0.6875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ar-accent);
-}
-.ar-timeline-body { min-width: 0; }
-.ar-timeline-degree {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  text-transform: uppercase;
   min-width: 0;
 }
-.ar-timeline-logo img { width: 1.75rem; height: 1.75rem; object-fit: contain; }
-.ar-timeline-where { color: var(--ar-muted); font-size: 0.875rem; margin: 0.2rem 0 0.5rem; }
-@media (min-width: 60rem) {
-  .ar-timeline-row { grid-template-columns: 11rem minmax(0, 1fr); gap: 1.5rem; align-items: start; }
+.ar-record-num { flex: none; white-space: nowrap; overflow-wrap: normal; color: var(--ar-accent); font-variant-numeric: tabular-nums; }
+.ar-record-year { color: var(--ar-ink); }
+.ar-record-body { min-width: 0; }
+.ar-record-title {
+  font-family: var(--ar-display);
+  font-size: clamp(1.25rem, 2.6vw, 1.625rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  margin-bottom: 0.6rem;
 }
+.ar-record-title a { text-decoration: none; display: inline-flex; align-items: baseline; gap: 0.4rem; }
+.ar-record-title a:hover { color: var(--ar-accent); }
+.ar-record-byline { color: var(--ar-muted); font-size: 0.875rem; margin-bottom: 0.6rem; }
+.ar-record-abstract { color: var(--ar-muted); margin-bottom: 1rem; max-width: var(--ar-measure); }
 
-/* --- contact ------------------------------------------------------------- */
-
-.ar-contact { background: var(--ar-panel); }
-.ar-contact-head {
-  font-family: var(--ar-pixel);
-  font-size: clamp(1.125rem, 3.5vw, 1.75rem);
-  font-weight: 700;
+.ar-timeline-dates {
+  margin: 0;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  color: var(--ar-faint);
   text-transform: uppercase;
-  text-shadow: 3px 3px 0 var(--ar-shadow);
-  margin: 0 0 1rem;
 }
-.ar-contact-body { color: var(--ar-muted); max-width: var(--ar-measure); }
+.ar-timeline-body { min-width: 0; }
+.ar-timeline-degree { font-size: 1.0625rem; font-weight: 600; display: flex; align-items: center; gap: 0.6rem; min-width: 0; }
+.ar-timeline-logo img { width: 1.6rem; height: 1.6rem; object-fit: contain; }
+.ar-timeline-school { color: var(--ar-muted); font-size: 0.9375rem; margin: 0.2rem 0 0.5rem; }
 
-/* --- detail pages -------------------------------------------------------- */
-
-.ar-detail { padding-block: clamp(1.5rem, 4vw, 2.5rem) clamp(2.5rem, 6vw, 4rem); }
-.ar-crumb { margin-bottom: 1.5rem; }
-.ar-detail-figure { margin-bottom: 2rem; }
-.ar-detail-img { width: auto; max-width: 100%; max-height: 26rem; margin-inline: auto; }
-
-.ar-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
-.ar-detail-side { display: grid; gap: 1rem; align-content: start; min-width: 0; }
-.ar-side-block { min-width: 0; }
-.ar-side-value { font-family: var(--ar-pixel); font-size: 0.8125rem; margin: 0; color: var(--ar-muted); }
-.ar-detail-main { min-width: 0; }
-.ar-detail-wide { max-width: 56rem; min-width: 0; }
-.ar-detail-block { margin-top: 2rem; }
-.ar-detail-foot { margin-top: 2.5rem; padding-top: 1.25rem; border-top: 3px solid var(--ar-line); }
-
-@media (min-width: 64rem) {
-  .ar-detail-layout { grid-template-columns: 15rem minmax(0, 1fr); gap: clamp(1.5rem, 3vw, 2.5rem); }
-  .ar-detail-side { position: sticky; top: 5rem; }
+@media (min-width: 60rem) {
+  .ar-toolkit-row, .ar-record, .ar-timeline-row {
+    grid-template-columns: 14rem minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+  .ar-record-meta { flex-direction: column; align-items: flex-start; gap: 0.45rem; }
 }
 
 /* --------------------------------------------------------------------------
-   Prose and CMS content blocks
+   Contact + footer
+   -------------------------------------------------------------------------- */
+
+.ar-contact {
+  padding: clamp(1.75rem, 4vw, 3rem);
+  background:
+    radial-gradient(700px 300px at 82% 0%, var(--ar-contact-glow), transparent 70%),
+    var(--ar-panel);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
+}
+.ar-contact-heading {
+  font-family: var(--ar-display);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  text-transform: uppercase;
+  margin: 0 0 1.5rem;
+}
+.ar-contact-body { color: var(--ar-muted); max-width: var(--ar-measure); margin-bottom: 2rem; }
+.ar-contact-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-bottom: 2rem; }
+.ar-contact-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding-top: 1.25rem;
+  border-top: var(--ar-px) solid var(--ar-line);
+}
+.ar-contact-links a { position: relative; color: var(--ar-muted); text-decoration: none; }
+.ar-contact-links a:hover { color: var(--ar-accent); }
+.ar-contact-links a::after { content: ""; position: absolute; inset: -0.5rem 0; }
+
+.ar-footer { margin-top: clamp(3rem, 7vw, 5.5rem); padding-block: 2.5rem clamp(2rem, 5vw, 4rem); border-top: 1px solid var(--ar-line-strong); }
+.ar-footer-inner { display: grid; gap: 2rem; }
+@media (min-width: 48rem) { .ar-footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.ar-footer-name { font-weight: 600; margin: 1rem 0 0.35rem; }
+.ar-footer-meta { font-family: var(--ar-mono); font-size: 0.75rem; color: var(--ar-faint); margin: 0; }
+.ar-footer-meta a { color: var(--ar-faint); }
+/* Quieter again than the meta line above it: this is a licence credit, not
+   something a visitor came for. Same mono face as the rest of the colophon. */
+.ar-footer-credit {
+  font-family: var(--ar-mono);
+  font-size: 0.6875rem;
+  line-height: 1.5;
+  color: var(--ar-faint);
+  margin: 0.5rem 0 0;
+  max-width: 22rem;
+}
+.ar-footer-credit a { color: var(--ar-muted); text-decoration: none; border-bottom: var(--ar-px) solid var(--ar-line-strong); }
+.ar-footer-credit a:hover { color: var(--ar-accent); border-bottom-color: currentColor; }
+.ar-footer-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-top: 1rem;
+  font-family: var(--ar-mono);
+  font-size: 0.8125rem;
+}
+.ar-footer-links a { position: relative; color: var(--ar-muted); text-decoration: none; }
+.ar-footer-links a:hover { color: var(--ar-accent); }
+.ar-footer-links a::after { content: ""; position: absolute; inset: -0.45rem 0; }
+
+/* --------------------------------------------------------------------------
+   Detail pages
+   -------------------------------------------------------------------------- */
+
+.ar-detail { padding-block: clamp(1.5rem, 4vw, 2.5rem) clamp(3rem, 7vw, 5rem); }
+
+.ar-crumb {
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 2rem;
+}
+.ar-crumb a { color: var(--ar-muted); text-decoration: none; }
+.ar-crumb a:hover { color: var(--ar-accent); }
+
+.ar-detail-head { max-width: 58rem; margin-bottom: 2.5rem; }
+.ar-detail-head .ar-label { margin-bottom: 1.25rem; }
+.ar-detail-year { color: var(--ar-ink); }
+.ar-detail-title {
+  font-family: var(--ar-display);
+  font-size: clamp(2rem, 5.5vw, 3.5rem);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+.ar-detail-lead { color: var(--ar-muted); font-size: 1.0625rem; max-width: var(--ar-measure); }
+.ar-detail-byline { font-size: 0.9375rem; margin-bottom: 0.35rem; }
+.ar-detail-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1.75rem; }
+
+.ar-detail-figure {
+  overflow: hidden;
+  margin-bottom: 2.5rem;
+  background: var(--ar-panel);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
+}
+.ar-detail-img { width: auto; max-width: 100%; max-height: 26rem; margin-inline: auto; }
+
+.ar-detail-layout { display: grid; grid-template-columns: minmax(0, 1fr); gap: 2rem; }
+.ar-detail-side { display: grid; gap: 1.5rem; align-content: start; min-width: 0; }
+.ar-side-block { padding-top: 1rem; border-top: 1px solid var(--ar-line-strong); min-width: 0; }
+.ar-side-block .ar-label { margin-bottom: 0.6rem; }
+.ar-side-value { font-size: 0.9375rem; margin: 0; }
+.ar-detail-content { min-width: 0; }
+.ar-detail-content-wide { max-width: 58rem; }
+.ar-detail-block { margin-top: 2.5rem; }
+.ar-detail-block .ar-label { margin-bottom: 1.25rem; }
+
+.ar-detail-foot {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--ar-line-strong);
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+.ar-detail-foot a { color: var(--ar-muted); text-decoration: none; }
+.ar-detail-foot a:hover { color: var(--ar-accent); }
+
+.ar-keywords { display: flex; flex-wrap: wrap; gap: 0.35rem; min-width: 0; }
+.ar-keywords li {
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  color: var(--ar-muted);
+  background: var(--ar-panel-alt);
+  border: 1px solid var(--ar-line);
+  border-radius: var(--ar-radius);
+  padding: 0.15rem 0.5rem;
+  overflow-wrap: anywhere;
+}
+
+@media (min-width: 64rem) {
+  .ar-detail-layout { grid-template-columns: 15rem minmax(0, 1fr); gap: clamp(2rem, 4vw, 3.5rem); }
+  .ar-detail-side { position: sticky; top: 6rem; }
+}
+
+/* --------------------------------------------------------------------------
+   Prose + CMS content blocks
    -------------------------------------------------------------------------- */
 
 .ar-prose { max-width: var(--ar-measure); min-width: 0; }
 .ar-prose > *:first-child { margin-top: 0; }
-.ar-prose p { margin-bottom: 1.1rem; color: var(--ar-muted); }
-.ar-prose h2, .ar-prose h3, .ar-prose h4 {
-  font-family: var(--ar-pixel);
-  text-transform: uppercase;
-  color: var(--ar-ink);
-}
-.ar-prose h2 { font-size: 1.1875rem; margin: 2rem 0 0.75rem; }
-.ar-prose h3 { font-size: 1.0625rem; margin: 1.75rem 0 0.6rem; }
-.ar-prose h4 { font-size: 0.9375rem; margin: 1.5rem 0 0.5rem; }
-.ar-prose ul, .ar-prose ol { margin: 0 0 1.1rem; padding-left: 1.2rem; color: var(--ar-muted); }
-.ar-prose li { list-style: square; margin-bottom: 0.3rem; }
+.ar-prose p { margin-bottom: 1.15rem; color: var(--ar-muted); }
+.ar-prose h2 { font-size: 1.375rem; font-weight: 700; letter-spacing: -0.02em; margin: 2.25rem 0 0.875rem; }
+.ar-prose h3 { font-size: 1.125rem; font-weight: 600; margin: 1.875rem 0 0.7rem; }
+.ar-prose ul, .ar-prose ol { margin: 0 0 1.15rem; padding-left: 1.2rem; color: var(--ar-muted); }
+.ar-prose li { list-style: disc; margin-bottom: 0.35rem; }
 .ar-prose ol li { list-style: decimal; }
 .ar-prose a { color: var(--ar-accent); }
-.ar-prose strong { color: var(--ar-ink); }
+.ar-prose strong { color: var(--ar-ink); font-weight: 650; }
 .ar-prose blockquote {
-  margin: 1.25rem 0;
-  padding-left: 1rem;
-  border-left: var(--ar-unit) solid var(--ar-accent);
+  margin: 1.5rem 0;
+  padding-left: 1.125rem;
+  border-left: 2px solid var(--ar-accent);
   color: var(--ar-muted);
 }
-.ar-prose hr { border: 0; border-top: 3px dashed var(--ar-line); margin: 2rem 0; }
-.ar-prose-tight { font-size: 0.9375rem; }
-.ar-prose-tight p { margin-bottom: 0.6rem; }
-
 .ar-prose code, .ar .block-prose code {
-  font-family: var(--ar-pixel);
+  font-family: var(--ar-mono);
   font-size: 0.8125em;
   background: var(--ar-panel-alt);
-  border: 2px solid var(--ar-line);
-  padding: 0.05em 0.3em;
+  border: 1px solid var(--ar-line);
+  border-radius: var(--ar-radius);
+  padding: 0.1em 0.35em;
   overflow-wrap: anywhere;
 }
 .ar-prose pre, .ar .block-prose pre {
   background: var(--ar-panel-alt);
-  border: 3px solid var(--ar-line-strong);
-  padding: 1rem;
-  margin: 1.25rem 0;
+  border: 1px solid var(--ar-line);
+  border-radius: var(--ar-radius);
+  padding: 1.125rem;
+  margin: 1.5rem 0;
   max-width: 100%;
   overflow-x: auto;
 }
@@ -1339,58 +2011,49 @@ body.ar::before {
   overflow-x: auto;
   border-collapse: collapse;
   font-size: 0.9375rem;
-  margin: 1.25rem 0;
+  margin: 1.5rem 0;
 }
 .ar-prose th, .ar-prose td, .ar .block-prose th, .ar .block-prose td {
-  border: 2px solid var(--ar-line);
-  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid var(--ar-line);
+  padding: 0.5rem 0.75rem;
   text-align: left;
 }
-.ar-prose th, .ar .block-prose th { font-family: var(--ar-pixel); text-transform: uppercase; font-size: 0.75rem; }
+.ar-prose hr { border: 0; border-top: var(--ar-px) solid var(--ar-line); margin: 2rem 0; }
+.ar-prose-tight { font-size: 0.9375rem; }
+.ar-prose-tight p { margin-bottom: 0.7rem; }
 
-.ar .blocks { margin-top: 2rem; max-width: 56rem; min-width: 0; }
-.ar .blocks > * { margin-bottom: 1.75rem; max-width: var(--ar-measure); min-width: 0; }
+.ar .blocks { margin-top: 2.5rem; max-width: 58rem; min-width: 0; }
+.ar .blocks > * { margin-bottom: 2rem; max-width: var(--ar-measure); min-width: 0; }
 .ar .blocks > *:last-child { margin-bottom: 0; }
-.ar .blocks > .is-wide, .ar .is-wide { max-width: 100%; margin-inline: 0; }
+.ar .blocks > .is-wide,
+.ar .is-wide { max-width: 100%; margin-inline: 0; }
 
-.ar .block-heading {
-  font-family: var(--ar-pixel);
-  font-size: 1.25rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  text-shadow: 2px 2px 0 var(--ar-shadow);
-  margin-top: 2.5rem;
-}
-.ar .block-heading-small { font-size: 1.0625rem; margin-top: 2rem; }
+.ar .block-heading { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; margin-top: 3rem; }
+.ar .block-heading-small { font-size: 1.1875rem; margin-top: 2.25rem; }
 .ar .blocks > .block-heading:first-child { margin-top: 0; }
 
 .ar .block-prose { color: var(--ar-muted); }
-.ar .block-prose p { margin-bottom: 1.1rem; }
+.ar .block-prose p { margin-bottom: 1.15rem; }
 .ar .block-prose a { color: var(--ar-accent); }
 .ar .block-prose strong { color: var(--ar-ink); }
-.ar .block-prose ul, .ar .block-prose ol { margin: 0 0 1.1rem; padding-left: 1.2rem; }
-.ar .block-prose li { list-style: square; margin-bottom: 0.3rem; }
+.ar .block-prose ul, .ar .block-prose ol { margin: 0 0 1.15rem; padding-left: 1.2rem; }
+.ar .block-prose li { list-style: disc; margin-bottom: 0.35rem; }
 .ar .block-prose ol li { list-style: decimal; }
 
-.ar .block-divider {
-  border: 0;
-  border-top: var(--ar-unit) dashed var(--ar-line-strong);
-  margin-block: 2.5rem;
-}
+.ar .block-divider { border: 0; border-top: 1px solid var(--ar-line-strong); margin-block: 3rem; }
 
 .ar .block-quote {
-  margin-block: 2rem;
-  padding: 1.1rem 1.25rem;
+  margin-block: 2.5rem;
+  padding: 1.25rem 1.5rem;
   background: var(--ar-panel);
-  border: 3px solid var(--ar-line-strong);
-  border-left-width: var(--ar-unit);
-  border-left-color: var(--ar-accent);
-  box-shadow: var(--ar-unit) var(--ar-unit) 0 0 var(--ar-shadow);
+  border-left: 2px solid var(--ar-accent);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
 }
-.ar .block-quote blockquote { margin: 0; font-size: 1.0625rem; color: var(--ar-ink); }
+.ar .block-quote blockquote { margin: 0; font-size: 1.125rem; color: var(--ar-ink); }
 .ar .block-quote figcaption {
-  margin-top: 0.6rem;
-  font-family: var(--ar-pixel);
+  margin-top: 0.7rem;
+  font-family: var(--ar-mono);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -1398,63 +2061,63 @@ body.ar::before {
 }
 
 .ar figcaption {
-  margin-top: 0.6rem;
-  font-family: var(--ar-pixel);
+  margin-top: 0.65rem;
+  font-family: var(--ar-mono);
   font-size: 0.75rem;
   color: var(--ar-faint);
   max-width: 100%;
 }
 
-/* Media keeps its own look — framed, never filtered or pixelated. */
 .ar .block-image img, .ar .block-gallery img, .ar .gallery-img {
   width: 100%;
   max-width: 100%;
-  border: 3px solid var(--ar-line-strong);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
 }
 .ar .ar-detail .block-image img {
   width: auto;
   max-width: 100%;
-  max-height: 28rem;
+  max-height: 30rem;
   margin-inline: auto;
 }
 
 .ar .gallery-grid {
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fill, minmax(min(14rem, 100%), 1fr));
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(15rem, 100%), 1fr));
   min-width: 0;
 }
-.ar .gallery-grid[data-columns="3"] { grid-template-columns: repeat(auto-fill, minmax(min(10rem, 100%), 1fr)); }
-.ar .gallery-item { display: block; overflow: hidden; min-width: 0; }
-.ar .gallery-img { aspect-ratio: 4 / 3; object-fit: cover; transition: transform 0.12s var(--ar-step); }
+.ar .gallery-grid[data-columns="3"] { grid-template-columns: repeat(auto-fill, minmax(min(11rem, 100%), 1fr)); }
+.ar .gallery-item { display: block; overflow: hidden; border-radius: var(--ar-radius); min-width: 0; }
+.ar .gallery-img { aspect-ratio: 4 / 3; object-fit: cover; transition: transform 0.5s var(--ar-ease); }
 .ar .gallery-item:hover .gallery-img { transform: scale(1.04); }
 
 .ar .block-code {
   background: var(--ar-panel);
-  border: 3px solid var(--ar-line-strong);
-  box-shadow: var(--ar-unit) var(--ar-unit) 0 0 var(--ar-shadow);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
   min-width: 0;
   overflow: hidden;
 }
-.ar .block-code pre { margin: 0; padding: 1rem; max-width: 100%; overflow-x: auto; background: transparent; border: 0; }
+.ar .block-code pre { margin: 0; padding: 1.125rem; max-width: 100%; overflow-x: auto; background: transparent; border: 0; }
 .ar .block-code-lang {
-  font-family: var(--ar-pixel);
+  font-family: var(--ar-mono);
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--ar-accent);
-  padding: 0.45rem 1rem;
-  border-bottom: 2px solid var(--ar-line);
+  padding: 0.5rem 1.125rem;
+  border-bottom: 1px solid var(--ar-line);
   background: var(--ar-panel-alt);
 }
-.ar .block-code figcaption { padding: 0 1rem 0.8rem; margin-top: 0.5rem; }
+.ar .block-code figcaption { padding: 0 1.125rem 0.9rem; margin-top: 0.5rem; }
 
 .ar .block-embed .embed-frame {
   position: relative;
   aspect-ratio: 16 / 9;
   overflow: hidden;
   background: var(--ar-panel-alt);
-  border: 3px solid var(--ar-line-strong);
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
 }
 .ar .embed-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 
@@ -1462,128 +2125,285 @@ body.ar::before {
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.8125rem;
-  font-weight: 700;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-decoration: none;
   color: var(--ar-ink);
-  background: var(--ar-panel-alt);
-  border: 3px solid var(--ar-line-strong);
-  box-shadow: 3px 3px 0 0 var(--ar-shadow);
+  background: var(--ar-panel);
+  border: 1px solid var(--ar-line-strong);
+  border-radius: var(--ar-radius);
   padding: 0.55rem 0.9rem;
+  transition: border-color 0.18s var(--ar-ease), color 0.18s var(--ar-ease);
 }
-.ar .button:hover { color: var(--ar-accent); border-color: var(--ar-accent); }
-.ar .button:active { transform: translate(3px, 3px); box-shadow: 0 0 0 0 var(--ar-shadow); }
+.ar .button:hover { border-color: var(--ar-ink); }
 .ar .button-primary { background: var(--ar-accent); border-color: var(--ar-accent); color: var(--ar-on-accent); }
-.ar .button-primary:hover { background: var(--ar-accent-strong); border-color: var(--ar-accent-strong); color: var(--ar-on-accent); }
+.ar .button-primary:hover { background: var(--ar-accent-bright); border-color: var(--ar-accent-bright); color: var(--ar-on-accent); }
 
 .ar .project-ref-card {
   display: flex;
-  gap: 1rem;
+  gap: 1.25rem;
   align-items: center;
   background: var(--ar-panel);
-  border: 3px solid var(--ar-line-strong);
-  box-shadow: var(--ar-unit) var(--ar-unit) 0 0 var(--ar-shadow);
-  padding: 0.75rem;
+  box-shadow: 0 0 0 var(--ar-px) var(--ar-line), var(--ar-px) var(--ar-px) 0 0 var(--ar-bevel-dark);
+  border-radius: var(--ar-radius);
+  padding: 1rem;
   text-decoration: none;
   min-width: 0;
+  transition: box-shadow 0.2s var(--ar-ease);
 }
-.ar .project-ref-card:hover { border-color: var(--ar-accent); }
-.ar .project-ref-thumb { width: 6rem; flex: none; }
+.ar .project-ref-card:hover { box-shadow: 0 0 0 1px var(--ar-accent); }
+.ar .project-ref-thumb { width: 7rem; flex: none; }
 .ar .project-ref-thumb img { aspect-ratio: 4 / 3; object-fit: cover; }
 .ar .project-ref-body { min-width: 0; }
 .ar .project-ref-body .eyebrow {
-  font-family: var(--ar-pixel);
+  font-family: var(--ar-mono);
   font-size: 0.6875rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--ar-accent);
-  margin: 0 0 0.25rem;
+  margin: 0 0 0.3rem;
 }
-.ar .project-ref-body h3 {
-  font-family: var(--ar-pixel);
-  font-size: 0.9375rem;
-  text-transform: uppercase;
-  margin-bottom: 0.25rem;
-}
+.ar .project-ref-body h3 { font-size: 1.0625rem; font-weight: 600; margin-bottom: 0.25rem; }
 .ar .project-ref-body p { color: var(--ar-muted); font-size: 0.875rem; margin: 0; }
 
 .ar .block-skill-group .skill-group-title {
-  font-family: var(--ar-pixel);
+  font-family: var(--ar-mono);
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
-  color: var(--ar-accent);
-  margin-bottom: 0.75rem;
+  color: var(--ar-faint);
+  margin-bottom: 1rem;
 }
-.ar .skill-list { display: flex; flex-wrap: wrap; gap: 0.4rem; min-width: 0; }
+.ar .skill-list { display: flex; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
 .ar .skill-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
-  font-family: var(--ar-pixel);
-  font-size: 0.75rem;
+  gap: 0.5rem;
+  font-family: var(--ar-mono);
+  font-size: 0.8125rem;
   color: var(--ar-muted);
   background: var(--ar-panel-alt);
-  border: 2px solid var(--ar-line);
-  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--ar-line);
+  border-radius: var(--ar-radius);
+  padding: 0.3rem 0.6rem;
   min-width: 0;
 }
 .ar .skill-icon { display: inline-flex; align-items: center; justify-content: center; height: 1.05em; width: 1.05em; flex: none; }
 .ar .skill-icon .icon-svg { height: 100%; width: auto; max-width: 2.4em; display: block; }
 
 /* --------------------------------------------------------------------------
-   Footer
+   Gallery lightbox
+   Progressive enhancement over the gallery links. With script, a picture opens
+   in place with previous/next; without it the link still opens the file in a
+   new tab exactly as before, so nothing depends on this existing.
+   The image is bounded by the viewport directly — not by its container — so
+   any aspect ratio fits both ways with no cropping and no reliance on a
+   definite parent height.
    -------------------------------------------------------------------------- */
 
-.ar-footer {
-  margin-top: clamp(2.5rem, 6vw, 4.5rem);
-  padding-top: clamp(2rem, 5vw, 3rem);
-  border-top: var(--ar-unit) solid var(--ar-line-strong);
-  background: var(--ar-bg-alt);
+.ar-lightbox {
+  --ar-lb-gutter: clamp(1rem, 3vw, 2.5rem);
+  --ar-lb-top: 4rem;      /* room for the counter and the close control */
+  --ar-lb-bottom: 2rem;
+  /* Room for the side arrows, so a wide picture can never run underneath
+     them. Zero where the arrows live in the bottom bar instead. */
+  --ar-lb-side: 3.4rem;
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--ar-lb-top) var(--ar-lb-gutter) var(--ar-lb-bottom);
+  background: var(--ar-scrim);
+  opacity: 0;
+  transition: opacity 0.22s var(--ar-ease);
+  /* Not clickable through, and never scrolls the page underneath. */
+  overscroll-behavior: contain;
 }
-.ar-footer-inner { display: grid; gap: 1.25rem; padding-bottom: 2rem; }
-@media (min-width: 48rem) { .ar-footer-inner { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-.ar-footer-name {
-  font-family: var(--ar-pixel);
-  font-size: 1rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  margin: 0 0 0.3rem;
+.ar-lightbox[hidden] { display: none; }
+.ar-lightbox.is-open { opacity: 1; }
+@supports (backdrop-filter: blur(1px)) {
+  .ar-lightbox { backdrop-filter: blur(12px) saturate(140%); }
 }
-.ar-footer-meta { font-family: var(--ar-pixel); font-size: 0.75rem; color: var(--ar-muted); margin: 0; }
-.ar-footer-meta a { color: var(--ar-accent); }
-.ar-footer-links { display: grid; gap: 0.35rem; font-family: var(--ar-pixel); font-size: 0.8125rem; }
-.ar-footer-links a { position: relative; color: var(--ar-muted); text-decoration: none; }
-.ar-footer-links a:hover { color: var(--ar-accent); }
-.ar-footer-links a::after { content: ""; position: absolute; inset: -0.4rem 0; }
 
-.ar-footer-sign {
+.ar-lightbox-figure {
   margin: 0;
-  padding: 0.75rem var(--ar-gutter);
-  border-top: 2px solid var(--ar-line);
+  display: grid;
+  gap: 0.8rem;
+  justify-items: center;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.ar-lightbox-img {
+  display: block;
+  width: auto;
+  height: auto;
+  /* Both bounds are viewport-relative, so a portrait, a panorama and a square
+     all scale to the largest size that fits without ever being cut. */
+  max-width: calc(100vw - 2 * var(--ar-lb-gutter) - 2 * var(--ar-lb-side));
+  max-height: calc(100vh - var(--ar-lb-top) - var(--ar-lb-bottom) - 3rem);
+  max-height: calc(100dvh - var(--ar-lb-top) - var(--ar-lb-bottom) - 3rem);
+  background: var(--ar-panel);
+  border-radius: var(--ar-radius);
+  box-shadow: 0 0 0 1px var(--ar-line), 0 1.5rem 3rem rgba(0, 0, 0, 0.18);
+  transform: scale(0.985);
+  transition: transform 0.28s var(--ar-ease);
+  /* A picture with no alt of its own still shows something in the frame. */
+  color: var(--ar-muted);
+}
+.ar-lightbox.is-open .ar-lightbox-img { transform: none; }
+
+.ar-lightbox-caption {
+  margin: 0;
+  max-width: 44rem;
+  max-height: 3rem;
+  overflow: auto;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  line-height: 1.5;
   text-align: center;
-  font-family: var(--ar-pixel);
+  color: var(--ar-muted);
+  overflow-wrap: anywhere;
+}
+.ar-lightbox-caption:empty { display: none; }
+.ar-lightbox-caption small {
+  display: block;
   font-size: 0.6875rem;
-  letter-spacing: 0.2em;
   color: var(--ar-faint);
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+}
+
+/* Controls share the toggle's vocabulary: a small disc, a hairline, mono type. */
+.ar-lightbox-btn {
+  position: fixed;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 1px solid var(--ar-line-strong);
+  border-radius: 50%;
+  background: var(--ar-panel);
+  color: var(--ar-ink);
+  cursor: pointer;
+  transition: color 0.18s var(--ar-ease), border-color 0.18s var(--ar-ease),
+              transform 0.18s var(--ar-ease);
+}
+.ar-lightbox-btn:hover { color: var(--ar-accent); border-color: var(--ar-accent); }
+.ar-lightbox-btn:active { transform: scale(0.94); }
+.ar-lightbox-btn svg { width: 1.1rem; height: 1.1rem; display: block; }
+.ar-lightbox-btn[hidden] { display: none; }
+
+.ar-lightbox-close { top: var(--ar-lb-gutter); right: var(--ar-lb-gutter); }
+.ar-lightbox-prev { left: var(--ar-lb-gutter); top: 50%; transform: translateY(-50%); }
+.ar-lightbox-next { right: var(--ar-lb-gutter); top: 50%; transform: translateY(-50%); }
+.ar-lightbox-prev:active { transform: translateY(-50%) scale(0.94); }
+.ar-lightbox-next:active { transform: translateY(-50%) scale(0.94); }
+
+.ar-lightbox-count {
+  position: fixed;
+  top: calc(var(--ar-lb-gutter) + 0.6rem);
+  left: var(--ar-lb-gutter);
+  margin: 0;
+  font-family: var(--ar-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  color: var(--ar-muted);
+  font-variant-numeric: tabular-nums;
+}
+.ar-lightbox-count b { font-weight: 500; color: var(--ar-accent); }
+.ar-lightbox-count[hidden] { display: none; }
+
+/* Below the tablet breakpoint the side arrows would sit on the picture, so
+   they move to a bar along the bottom with the counter between them, and the
+   frame keeps clear of that bar. */
+@media (max-width: 48rem) {
+  .ar-lightbox { --ar-lb-top: 3.75rem; --ar-lb-bottom: 4.75rem; --ar-lb-side: 0px; }
+  .ar-lightbox-prev,
+  .ar-lightbox-next { top: auto; bottom: var(--ar-lb-gutter); transform: none; }
+  .ar-lightbox-prev:active,
+  .ar-lightbox-next:active { transform: scale(0.94); }
+  .ar-lightbox-count {
+    top: auto;
+    bottom: calc(var(--ar-lb-gutter) + 0.7rem);
+    left: 50%;
+    transform: translateX(-50%);
+  }
 }
 
 /* --------------------------------------------------------------------------
-   Reveal — only ever active once script has confirmed it can undo it
+   Draft banner
+   -------------------------------------------------------------------------- */
+
+.ar-draft {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  background: var(--ar-accent-soft);
+  border-bottom: var(--ar-px) solid var(--ar-line-strong);
+  padding: 0.55rem var(--ar-gutter);
+  font-size: 0.8125rem;
+}
+.ar-draft-tag {
+  font-family: var(--ar-mono);
+  font-size: 0.6875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ar-accent);
+  border: 1px solid currentColor;
+  border-radius: var(--ar-radius);
+  padding: 0.05rem 0.4rem;
+}
+
+/* --------------------------------------------------------------------------
+   Reveal — only active once script has confirmed it can undo it
    -------------------------------------------------------------------------- */
 
 .ar-js [data-reveal] {
   opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.4s var(--ar-step), transform 0.4s var(--ar-step);
+  transform: translateY(14px);
+  transition: opacity 0.55s var(--ar-ease), transform 0.55s var(--ar-ease);
 }
 .ar-js [data-reveal].is-in { opacity: 1; transform: none; }
+
+/* --------------------------------------------------------------------------
+   Hero typing reveal (the launch only, so never on a detail page)
+   Characters are wrapped by script and faded in left to right. They stay
+   inline and only opacity animates, so the line keeps its exact shaping and
+   nothing shifts. Without script the heading renders as the server sent it.
+   -------------------------------------------------------------------------- */
+
+.ar-typing .ar-char {
+  opacity: 0;
+  animation: ar-char-in 260ms var(--ar-ease) forwards;
+  /* Script writes each key its own moment, so the rhythm is uneven the way a
+     hand is; an even multiple of an index would tick like a clock. */
+  animation-delay: var(--ar-char-delay, 0ms);
+}
+
+@keyframes ar-char-in {
+  to { opacity: 1; }
+}
+
+/* The caret is part of the static design; it only blinks while typing runs. */
+.ar-launch-caret.is-blinking {
+  animation: ar-caret-blink 700ms steps(2, jump-none) infinite;
+}
+
+@keyframes ar-caret-blink {
+  0%, 45% { opacity: 1; }
+  50%, 100% { opacity: 0.15; }
+}
+
+/* The profile block settles in just behind the name. */
+.ar-js .ar-launch-profile[data-reveal] { transition-delay: 400ms; }
+.ar-js .ar-launch-hint[data-reveal] { transition-delay: 640ms; }
 
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
@@ -1591,41 +2411,40 @@ body.ar::before {
   .ar-js [data-reveal],
   .ar-js [data-reveal].is-in { opacity: 1; transform: none; transition: none; }
 
-  /* The system becomes a still diagram: the worlds hold their places and
-     nothing blinks. Angles are set per ring so they do not stack up, and an
-     arm and its fix always get the same angle with opposite signs, or the
-     world would sit tipped over. .ar-world is left alone — its transform is
-     the camera correction, not an animation. */
-  .ar-arm, .ar-arm-fix, .ar-star, .ar-sprite-world { animation: none !important; }
-  .ar-ring--1 .ar-arm { transform: rotate(40deg); }
-  .ar-ring--2 .ar-arm { transform: rotate(150deg); }
-  .ar-ring--3 .ar-arm { transform: rotate(265deg); }
-  .ar-ring--4 .ar-arm { transform: rotate(85deg); }
-  .ar-ring--5 .ar-arm { transform: rotate(200deg); }
-  .ar-ring--6 .ar-arm { transform: rotate(320deg); }
-  .ar-ring--1 .ar-arm-fix { transform: rotate(-40deg); }
-  .ar-ring--2 .ar-arm-fix { transform: rotate(-150deg); }
-  .ar-ring--3 .ar-arm-fix { transform: rotate(-265deg); }
-  .ar-ring--4 .ar-arm-fix { transform: rotate(-85deg); }
-  .ar-ring--5 .ar-arm-fix { transform: rotate(-200deg); }
-  .ar-ring--6 .ar-arm-fix { transform: rotate(-320deg); }
+  /* The map becomes a still diagram: the perspective and every body stay
+     exactly where they are, and nothing moves. */
+  .ar-arm, .ar-billboard { animation: none !important; }
+  .ar-arm--1 { transform: rotateZ(28deg); }
+  .ar-arm--2 { transform: rotateZ(-64deg); }
+  .ar-arm--3 { transform: rotateZ(126deg); }
+  .ar-arm--4 { transform: rotateZ(-142deg); }
+  .ar-arm--5 { transform: rotateZ(74deg); }
+  .ar-arm--6 { transform: rotateZ(-16deg); }
+  .ar-arm--1 .ar-billboard { transform: rotateZ(-28deg) rotateX(-62deg); }
+  .ar-arm--2 .ar-billboard { transform: rotateZ(64deg) rotateX(-62deg); }
+  .ar-arm--3 .ar-billboard { transform: rotateZ(-126deg) rotateX(-62deg); }
+  .ar-arm--4 .ar-billboard { transform: rotateZ(142deg) rotateX(-62deg); }
+  .ar-arm--5 .ar-billboard { transform: rotateZ(-74deg) rotateX(-62deg); }
+  .ar-arm--6 .ar-billboard { transform: rotateZ(16deg) rotateX(-62deg); }
 
-  /* The blinking pixels settle on their lit colour rather than their dim one,
-     so a still planet still reads as alive. */
-  .ar-orrery, .ar-dock {
-    --ar-spark-corona: #ffc83c;
-    --ar-spark-hot: #ffd27a;
-    --ar-spark-cool: #8ff6ec;
-    --ar-spark-beacon: #ffc53d;
-  }
-
-  .ar-blink, .ar-flare, .ar-beacon, .ar-hint-key, .ar-scroll-arrow, .ar-gameover {
-    animation: none !important;
-    opacity: 1;
-  }
+  body.ar::before { animation: none !important; opacity: 1; }
+  .ar-path { animation: none !important; opacity: 1; }
+  .ar-sun-core { animation: none !important; }
+  .ar-orb, .ar-body-tag { animation: none !important; opacity: 1; transform: none; }
+  .ar-scroll-arrow { animation: none !important; }
+  .ar-typing .ar-char { opacity: 1; animation: none !important; }
+  .ar-launch-caret.is-blinking { animation: none !important; }
+  .ar-lightbox, .ar-lightbox-img { transition: none !important; transform: none !important; }
+  .ar-js .ar-launch-profile[data-reveal],
+  .ar-js .ar-launch-hint[data-reveal] { transition-delay: 0s; }
 
   .ar *, .ar *::before, .ar *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
+
+  /* The one exception to the blanket above. This animation moves nothing —
+     it holds the header at opacity 0 while script decides whether the map is
+     under it — so the flash is prevented here too. */
+  body.ar-home .ar-header { animation-duration: 320ms !important; }
 }

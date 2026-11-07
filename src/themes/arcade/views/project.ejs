@@ -3,20 +3,19 @@
 <article class="ar-detail">
   <div class="ar-shell">
     <nav class="ar-crumb" aria-label="Breadcrumb">
-      <a href="/projects"><span aria-hidden="true">◀</span> Projects</a>
+      <a href="/projects"><span aria-hidden="true">←</span> Projects</a>
     </nav>
 
-    <header class="ar-page-head">
-      <p class="ar-kicker">
-        Project
-        <% if (project.year) { %><span class="ar-tag"><%= project.year %></span><% } %>
-        <% if (project.featured) { %><span class="ar-tag ar-tag-accent">★ Featured</span><% } %>
+    <header class="ar-detail-head">
+      <p class="ar-label">
+        <span class="ar-label-num">P</span>Project
+        <% if (project.year) { %><span class="ar-detail-year"><%= project.year %></span><% } %>
+        <% if (project.featured) { %><span class="ar-tag ar-tag-accent">Featured</span><% } %>
       </p>
+      <h1 class="ar-detail-title"><%= project.title %></h1>
+      <% if (project.summary) { %><p class="ar-detail-lead"><%= project.summary %></p><% } %>
 
-      <h1 class="ar-page-title"><%= project.title %></h1>
-      <% if (project.summary) { %><p class="ar-page-lede"><%= project.summary %></p><% } %>
-
-      <div class="ar-btn-row">
+      <div class="ar-detail-actions">
         <% if (safeUrl(project.github_url)) { %>
           <a class="ar-btn ar-btn-accent" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">View source</a>
         <% } %>
@@ -27,7 +26,7 @@
     </header>
 
     <% if (project.thumbnail) { %>
-      <figure class="ar-frame ar-detail-figure" data-reveal>
+      <figure class="ar-detail-figure" data-reveal>
         <%- include('shared/image', {
               media: project.thumbnail,
               imgSizes: '(max-width: 72rem) 100vw, 60rem',
@@ -40,23 +39,21 @@
     <div class="ar-detail-layout">
       <aside class="ar-detail-side">
         <% if (project.tech.length) { %>
-          <div class="ar-panel ar-side-block">
-            <p class="ar-kicker">Stack</p>
-            <ul class="ar-chips ar-chips-stacked">
-              <% project.tech.forEach(function (tech) { %>
-                <li class="ar-chip<%= tech.icon ? ' has-icon' : '' %>"><% if (tech.icon) { %><span class="ar-chip-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li>
-              <% }); %>
+          <div class="ar-side-block">
+            <p class="ar-label"><span class="ar-label-num">—</span>Stack</p>
+            <ul class="ar-techlist ar-techlist-stacked">
+              <% project.tech.forEach(function (tech) { %><li<%- tech.icon ? ' class="has-icon"' : '' %>><% if (tech.icon) { %><span class="ar-tech-logo" aria-hidden="true"><%- renderIcon(tech.icon, { style: skillIconStyle }) %></span><% } %><span><%= tech.name %></span></li><% }); %>
             </ul>
           </div>
         <% } %>
 
-        <div class="ar-panel ar-side-block">
-          <p class="ar-kicker">Status</p>
+        <div class="ar-side-block">
+          <p class="ar-label"><span class="ar-label-num">—</span>Status</p>
           <p class="ar-side-value"><%= project.isPublished ? 'Published' : 'Draft' %></p>
         </div>
       </aside>
 
-      <div class="ar-detail-main">
+      <div class="ar-detail-content">
         <% if (project.description) { %>
           <div class="ar-prose" data-reveal><%- md(project.description) %></div>
         <% } %>
@@ -65,12 +62,12 @@
 
         <% if (project.gallery.length) { %>
           <section class="ar-detail-block" data-reveal>
-            <h2 class="ar-kicker">Gallery</h2>
+            <p class="ar-label"><span class="ar-label-num">—</span>Gallery</p>
             <ul class="gallery-grid" data-columns="2">
               <% project.gallery.forEach(function (image) { %>
                 <li>
                   <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
-                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 22rem', imgClass: 'gallery-img' }) %>
+                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 24rem', imgClass: 'gallery-img' }) %>
                   </a>
                 </li>
               <% }); %>
@@ -81,7 +78,7 @@
     </div>
 
     <footer class="ar-detail-foot">
-      <a href="/projects"><span aria-hidden="true">◀</span> All projects</a>
+      <a href="/projects"><span aria-hidden="true">←</span> All projects</a>
     </footer>
   </div>
 </article>

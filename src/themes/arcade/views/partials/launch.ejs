@@ -1,0 +1,153 @@
+<%
+  // Destinations orbiting the sun. Each is a real link with a real href, so the
+  // scene works with JavaScript off and by keyboard alone — the 3D orbital
+  // motion is decoration layered over an ordinary nav list.
+  const isHome = currentPath === '/';
+  const anchor = (id) => (isHome ? '#' + id : '/#' + id);
+
+  const destinations = [];
+  if (settings.sections.about) {
+    destinations.push({ label: 'About', code: 'ABT', href: anchor('about'), note: 'Who I am' });
+  }
+  if (settings.sections.projects) {
+    destinations.push({ label: 'Work', code: 'WRK', href: '/projects', note: 'Selected projects' });
+  }
+  if (settings.sections.skills) {
+    destinations.push({ label: 'Toolkit', code: 'TLK', href: anchor('skills'), note: 'What I build with' });
+  }
+  if (settings.sections.research) {
+    destinations.push({ label: 'Research', code: 'RSH', href: '/research', note: 'Studies and papers' });
+  }
+  // Gated on there being entries too, because the section itself only renders
+  // when there are — a planet must never point at an anchor that is not there.
+  if (settings.sections.education && (education || []).length) {
+    destinations.push({ label: 'Education', code: 'EDU', href: anchor('education'), note: 'Where I studied' });
+  }
+  if (settings.sections.contact) {
+    destinations.push({ label: 'Contact', code: 'CTC', href: anchor('contact'), note: 'Get in touch' });
+  }
+  navPages.forEach(function (page) {
+    destinations.push({ label: page.title, code: 'PGE', href: page.href, note: 'Page' });
+  });
+
+  // Six orbit slots are defined in the stylesheet; anything beyond reuses the
+  // outermost one rather than disappearing.
+  const bodies = destinations.slice(0, 6);
+  const siteName = settings.site.name || 'Portfolio';
+
+  // The display type is the name broken onto its own lines — a graphic element
+  // built from real content, and the unit the typing reveal walks through.
+  const launchName = hero.headline || siteName;
+  const launchLines = launchName.split(/\s+/).filter(Boolean);
+
+  // Counts are derived from what is actually published, not vanity numbers.
+  const launchTech = new Set((projects || []).flatMap((project) => project.tech.map((t) => t.name))).size;
+%>
+
+<section class="ar-launch" aria-labelledby="ar-launch-title">
+  <%# Shown only while the header has stepped aside over the map. %>
+  <div class="ar-launch-theme">
+    <button class="ar-theme" type="button" data-theme-toggle aria-label="Switch to dark theme" title="Switch theme">
+      <svg class="ar-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"></path>
+      </svg>
+      <svg class="ar-theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+        <circle cx="12" cy="12" r="4.1"></circle>
+        <path d="M12 2.6v2.1M12 19.3v2.1M4.2 4.2l1.5 1.5M18.3 18.3l1.5 1.5M2.6 12h2.1M19.3 12h2.1M4.2 19.8l1.5-1.5M18.3 5.7l1.5-1.5"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="ar-launch-inner ar-shell">
+    <div class="ar-launch-intro">
+      <p class="ar-label"><span class="ar-label-num">00</span><%= hero.identity || settings.site.tagline || 'Portfolio' %></p>
+
+      <h1 class="ar-launch-title" id="ar-launch-title">
+        <% launchLines.forEach(function (line, index) { %>
+          <span class="ar-launch-line"><%= line %><% if (index === launchLines.length - 1) { %><span class="ar-launch-caret" aria-hidden="true">_</span><% } %></span>
+        <% }); %>
+      </h1>
+
+      <div class="ar-launch-profile" data-reveal>
+        <p class="ar-label"><span class="ar-label-num">—</span>Profile</p>
+
+        <% if (hero.intro) { %>
+          <div class="ar-launch-lead"><p><%- mdInline(hero.intro) %></p></div>
+        <% } %>
+
+        <dl class="ar-index">
+          <% if (settings.sections.projects) { %>
+            <div><dt>Projects</dt><dd><%= String((projects || []).length).padStart(2, '0') %></dd></div>
+          <% } %>
+          <% if (launchTech) { %>
+            <div><dt>Technologies</dt><dd><%= String(launchTech).padStart(2, '0') %></dd></div>
+          <% } %>
+          <% if (settings.sections.research && (research || []).length) { %>
+            <div><dt>Research</dt><dd><%= String((research || []).length).padStart(2, '0') %></dd></div>
+          <% } %>
+        </dl>
+      </div>
+
+      <p class="ar-launch-hint" aria-hidden="true" data-reveal>Select a body to travel<span class="ar-launch-hint-controls"> · Scroll to zoom · Drag to orbit</span></p>
+    </div>
+
+    <div class="ar-system" data-system>
+      <!-- perspective root: everything inside shares one camera -->
+      <div class="ar-scene" data-scene>
+        <div class="ar-camera" data-camera>
+          <!-- Orbit paths. Circles in the tilted plane, so perspective draws
+               them as ellipses. Flattened into a single layer by the stylesheet
+               so they always sit behind the planets. Purely decorative. -->
+          <div class="ar-orbits" aria-hidden="true">
+            <% bodies.forEach(function (body, index) { %>
+              <span class="ar-path ar-path--<%= index + 1 %>"></span>
+            <% }); %>
+            <span class="ar-path ar-path--outer"></span>
+          </div>
+
+          <!-- The sun is home. Following it re-enters the portfolio. The whole
+               disc is the hit area; the name shows only in the mobile list. -->
+          <a class="ar-sun" href="/" aria-label="Home">
+            <span class="ar-sun-core" aria-hidden="true"></span>
+            <span class="ar-sun-name">Home</span>
+          </a>
+
+          <nav class="ar-bodies" aria-label="Explore">
+            <ul>
+              <% bodies.forEach(function (body, index) { %>
+                <%
+                  const slot = index + 1;
+                %>
+                <li class="ar-arm ar-arm--<%= slot %>">
+                  <!-- anchor: pushes the body out to its orbit and undoes the
+                       camera's spin; billboard: undoes the arm rotation and the
+                       resting tilt; the link itself absorbs any live tilt. The
+                       three together keep every label upright and readable.
+                       Only the disc and the label plate take pointer events, so
+                       overlapping bodies never steal each other's clicks. -->
+                  <span class="ar-anchor ar-anchor--<%= slot %>">
+                    <span class="ar-billboard ar-billboard--<%= slot %>">
+                      <a class="ar-body ar-body--<%= slot %>" href="<%= body.href %>" data-body>
+                        <span class="ar-orb" aria-hidden="true"><span class="ar-planet"></span></span>
+                        <span class="ar-body-tag">
+                          <span class="ar-body-code" aria-hidden="true"><%= String(slot).padStart(2, '0') %> / <%= body.code %></span>
+                          <span class="ar-body-name"><%= body.label %></span>
+                          <span class="ar-body-note" aria-hidden="true"><%= body.note %></span>
+                        </span>
+                      </a>
+                    </span>
+                  </span>
+                </li>
+              <% }); %>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <a class="ar-scroll-cue" href="#ar-content">
+      <span class="ar-scroll-text">Continue</span>
+      <span class="ar-scroll-arrow" aria-hidden="true">↓</span>
+    </a>
+  </div>
+</section>

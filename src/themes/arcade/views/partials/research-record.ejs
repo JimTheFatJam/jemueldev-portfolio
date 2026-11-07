@@ -1,33 +1,29 @@
-<%
-  // Locals: item, recordIndex.
-  const _href = item.hasDetailPage ? item.href : (safeUrl(item.paper_url) || safeUrl(item.github_url) || '');
-%>
-<li class="ar-record">
-  <article class="ar-panel ar-record-body">
-    <p class="ar-record-meta">
-      <span class="ar-card-num"><%= String(recordIndex + 1).padStart(2, '0') %></span>
-      <% if (item.date) { %><span><%= item.date %></span><% } %>
-      <% if (item.work_status) { %><span class="ar-tag"><%= item.work_status %></span><% } %>
-      <% if (!item.isPublished) { %><span class="ar-tag ar-tag-draft">Draft</span><% } %>
-    </p>
+<% const num = String((typeof recordIndex !== 'undefined' ? recordIndex : 0) + 1).padStart(2, '0'); %>
+<article class="ar-record" data-reveal>
+  <div class="ar-record-meta">
+    <span class="ar-record-num"><%= num %></span>
+    <% if (item.date) { %><span class="ar-record-year"><%= item.date %></span><% } %>
+    <% if (item.work_status) { %><span class="ar-tag ar-tag-accent"><%= item.work_status %></span><% } %>
+    <% if (!item.isPublished) { %><span class="ar-tag ar-tag-draft">Draft</span><% } %>
+  </div>
 
+  <div class="ar-record-body">
     <h3 class="ar-record-title">
-      <% if (_href) { %><a href="<%= _href %>"><%= item.title %></a><% } else { %><%= item.title %><% } %>
+      <% if (item.hasDetailPage) { %>
+        <a href="<%= item.href %>"><%= item.title %><span class="ar-card-arrow" aria-hidden="true">→</span></a>
+      <% } else { %><%= item.title %><% } %>
     </h3>
 
-    <% if (item.authors) { %><p class="ar-record-by"><%= item.authors %></p><% } %>
-    <% if (item.abstract) { %><div class="ar-prose ar-prose-tight"><%- md(item.abstract) %></div><% } %>
-
-    <% if (item.keywords.length) { %>
-      <ul class="ar-chips">
-        <% item.keywords.forEach(function (keyword) { %><li class="ar-chip"><span><%= keyword %></span></li><% }); %>
-      </ul>
+    <% if (item.authors || item.institution) { %>
+      <p class="ar-record-byline">
+        <%= item.authors %><% if (item.authors && item.institution) { %> · <% } %><%= item.institution %>
+      </p>
     <% } %>
 
-    <ul class="ar-card-links">
-      <% if (item.hasDetailPage) { %>
-        <li><a href="<%= item.href %>">Open <span aria-hidden="true">▶</span></a></li>
-      <% } %>
+    <% if (item.abstract) { %><p class="ar-record-abstract"><%= plain(item.abstract, 260) %></p><% } %>
+
+    <ul class="ar-linkrow">
+      <% if (item.hasDetailPage) { %><li><a href="<%= item.href %>">Read record</a></li><% } %>
       <% if (safeUrl(item.paper_url)) { %>
         <li><a href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Paper</a></li>
       <% } %>
@@ -38,5 +34,5 @@
         <li><a href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a></li>
       <% } }); %>
     </ul>
-  </article>
-</li>
+  </div>
+</article>

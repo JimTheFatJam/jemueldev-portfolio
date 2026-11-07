@@ -2,14 +2,16 @@
 
 <footer class="ar-footer">
   <div class="ar-shell ar-footer-inner">
-    <div class="ar-panel">
-      <p class="ar-kicker">Player</p>
+    <div>
+      <p class="ar-label"><span class="ar-label-num">—</span>Colophon</p>
       <p class="ar-footer-name"><%= settings.site.name %></p>
       <p class="ar-footer-meta">&copy; <%= new Date().getFullYear() %><% if (user) { %> · <a href="/admin">Admin</a><% } %></p>
+      <%# CC BY 4.0 asks for the credit to travel with the work. %>
+      <p class="ar-footer-credit">Planet textures by <a href="https://www.solarsystemscope.com/textures/" target="_blank" rel="noopener noreferrer">Solar System Scope</a> · <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener noreferrer">CC BY 4.0</a></p>
     </div>
 
-    <div class="ar-panel">
-      <p class="ar-kicker">Links</p>
+    <div>
+      <p class="ar-label"><span class="ar-label-num">—</span>Elsewhere</p>
       <ul class="ar-footer-links">
         <% settings.site.emails.forEach(function (address) { %>
           <li><a href="mailto:<%= address %>"><%= address %></a></li>
@@ -29,8 +31,6 @@
       </ul>
     </div>
   </div>
-
-  <p class="ar-footer-sign" aria-hidden="true">● ● ●  THANKS FOR PLAYING  ● ● ●</p>
 </footer>
 
 <script src="<%= themeAssets %>/theme.js" defer></script>

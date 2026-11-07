@@ -63,9 +63,10 @@ export const THEMES = [
     label: 'Design 5 — Arcade',
     name: 'Arcade',
     description:
-      'A retro pixel-art universe: hand-drawn planets orbiting a pixel sun as the ' +
-      'landing navigation, hard-edged panels and chunky type over a star field, ' +
-      'with a night palette by default and a designed day mode.',
+      "Design 4's orbital map in an 8-bit coat: the same solar system and the " +
+      'same controls, wearing pixel type, hard black outlines and sprite ' +
+      'buttons over a navy grid, with a night palette by default and a ' +
+      'designed day mode.',
     hasScript: true
   }
 ];

@@ -3,21 +3,20 @@
 <article class="ar-detail">
   <div class="ar-shell">
     <nav class="ar-crumb" aria-label="Breadcrumb">
-      <a href="/research"><span aria-hidden="true">◀</span> Research</a>
+      <a href="/research"><span aria-hidden="true">←</span> Research</a>
     </nav>
 
-    <header class="ar-page-head">
-      <p class="ar-kicker">
-        Research
-        <% if (item.date) { %><span class="ar-tag"><%= item.date %></span><% } %>
+    <header class="ar-detail-head">
+      <p class="ar-label">
+        <span class="ar-label-num">R</span>Record
+        <% if (item.date) { %><span class="ar-detail-year"><%= item.date %></span><% } %>
         <% if (item.work_status) { %><span class="ar-tag ar-tag-accent"><%= item.work_status %></span><% } %>
       </p>
+      <h1 class="ar-detail-title"><%= item.title %></h1>
+      <% if (item.authors) { %><p class="ar-detail-byline"><%= item.authors %></p><% } %>
+      <% if (item.institution) { %><p class="ar-detail-lead"><%= item.institution %></p><% } %>
 
-      <h1 class="ar-page-title"><%= item.title %></h1>
-      <% if (item.authors) { %><p class="ar-record-by"><%= item.authors %></p><% } %>
-      <% if (item.institution) { %><p class="ar-page-lede"><%= item.institution %></p><% } %>
-
-      <div class="ar-btn-row">
+      <div class="ar-detail-actions">
         <% if (safeUrl(item.paper_url)) { %>
           <a class="ar-btn ar-btn-accent" href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Read the paper</a>
         <% } %>
@@ -31,7 +30,7 @@
     </header>
 
     <% if (item.thumbnail) { %>
-      <figure class="ar-frame ar-detail-figure" data-reveal>
+      <figure class="ar-detail-figure" data-reveal>
         <%- include('shared/image', {
               media: item.thumbnail,
               imgSizes: '(max-width: 72rem) 100vw, 60rem',
@@ -43,32 +42,32 @@
 
     <div class="ar-detail-layout">
       <aside class="ar-detail-side">
-        <div class="ar-panel ar-side-block">
-          <p class="ar-kicker">Status</p>
+        <div class="ar-side-block">
+          <p class="ar-label"><span class="ar-label-num">—</span>Status</p>
           <p class="ar-side-value"><%= item.work_status || (item.isPublished ? 'Published' : 'Draft') %></p>
         </div>
 
-        <% if (item.keywords.length) { %>
-          <div class="ar-panel ar-side-block">
-            <p class="ar-kicker">Keywords</p>
-            <ul class="ar-chips ar-chips-stacked">
-              <% item.keywords.forEach(function (keyword) { %><li class="ar-chip"><span><%= keyword %></span></li><% }); %>
-            </ul>
+        <% if (item.institution) { %>
+          <div class="ar-side-block">
+            <p class="ar-label"><span class="ar-label-num">—</span>Institution</p>
+            <p class="ar-side-value"><%= item.institution %></p>
           </div>
         <% } %>
 
-        <% if (item.institution) { %>
-          <div class="ar-panel ar-side-block">
-            <p class="ar-kicker">Institution</p>
-            <p class="ar-side-value"><%= item.institution %></p>
+        <% if (item.keywords.length) { %>
+          <div class="ar-side-block">
+            <p class="ar-label"><span class="ar-label-num">—</span>Keywords</p>
+            <ul class="ar-keywords">
+              <% item.keywords.forEach(function (keyword) { %><li><%= keyword %></li><% }); %>
+            </ul>
           </div>
         <% } %>
       </aside>
 
-      <div class="ar-detail-main">
+      <div class="ar-detail-content">
         <% if (item.abstract) { %>
           <section class="ar-detail-block" data-reveal>
-            <h2 class="ar-kicker">Abstract</h2>
+            <p class="ar-label"><span class="ar-label-num">—</span>Abstract</p>
             <div class="ar-prose"><%- md(item.abstract) %></div>
           </section>
         <% } %>
@@ -77,12 +76,12 @@
 
         <% if (item.gallery.length) { %>
           <section class="ar-detail-block" data-reveal>
-            <h2 class="ar-kicker">Figures</h2>
+            <p class="ar-label"><span class="ar-label-num">—</span>Figures</p>
             <ul class="gallery-grid" data-columns="2">
               <% item.gallery.forEach(function (image) { %>
                 <li>
                   <a class="gallery-item" href="<%= image.url %>" target="_blank" rel="noopener noreferrer">
-                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 22rem', imgClass: 'gallery-img' }) %>
+                    <%- include('shared/image', { media: image, imgSizes: '(max-width: 48rem) 100vw, 24rem', imgClass: 'gallery-img' }) %>
                   </a>
                 </li>
               <% }); %>
@@ -93,7 +92,7 @@
     </div>
 
     <footer class="ar-detail-foot">
-      <a href="/research"><span aria-hidden="true">◀</span> All research</a>
+      <a href="/research"><span aria-hidden="true">←</span> All research</a>
     </footer>
   </div>
 </article>

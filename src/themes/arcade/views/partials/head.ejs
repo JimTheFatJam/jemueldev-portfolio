@@ -14,7 +14,6 @@
   const anchor = (id) => (isHome ? '#' + id : '/#' + id);
   const resume = safeUrl(site.resumeUrl);
 
-  // Two letters for the cartridge badge in the header.
   const initials = siteName
     .split(/\s+/)
     .filter(Boolean)
@@ -30,6 +29,7 @@
 <title><%= fullTitle %></title>
 <% if (description) { %><meta name="description" content="<%= description %>"><% } %>
 <% if (canonical) { %><link rel="canonical" href="<%= canonical %>"><% } %>
+<meta name="theme-color" content="#070b14">
 <meta property="og:type" content="website">
 <meta property="og:title" content="<%= fullTitle %>">
 <% if (description) { %><meta property="og:description" content="<%= description %>"><% } %>
@@ -63,9 +63,14 @@
     </a>
 
     <div class="ar-header-tools">
-      <button class="ar-theme" type="button" data-theme-toggle aria-label="Switch to light mode" title="Switch mode">
-        <span class="ar-theme-moon" aria-hidden="true">☾</span>
-        <span class="ar-theme-sun" aria-hidden="true">☀</span>
+      <button class="ar-theme" type="button" data-theme-toggle aria-label="Switch to dark theme" title="Switch theme">
+        <svg class="ar-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M20 14.2A8.2 8.2 0 0 1 9.8 4 8.2 8.2 0 1 0 20 14.2Z"></path>
+        </svg>
+        <svg class="ar-theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="12" r="4.1"></circle>
+          <path d="M12 2.6v2.1M12 19.3v2.1M4.2 4.2l1.5 1.5M18.3 18.3l1.5 1.5M2.6 12h2.1M19.3 12h2.1M4.2 19.8l1.5-1.5M18.3 5.7l1.5-1.5"></path>
+        </svg>
       </button>
 
       <button class="ar-nav-toggle" type="button" aria-expanded="false" aria-controls="ar-nav">
@@ -81,10 +86,10 @@
           <li><a href="<%= anchor('about') %>" data-nav-section="about">About</a></li>
         <% } %>
         <% if (settings.sections.projects) { %>
-          <li><a href="/projects"<%- currentPath.startsWith('/projects') ? ' aria-current="page"' : '' %> data-nav-section="projects">Projects</a></li>
+          <li><a href="/projects"<%- currentPath.startsWith('/projects') ? ' aria-current="page"' : '' %> data-nav-section="projects">Work</a></li>
         <% } %>
         <% if (settings.sections.skills) { %>
-          <li><a href="<%= anchor('skills') %>" data-nav-section="skills">Skills</a></li>
+          <li><a href="<%= anchor('skills') %>" data-nav-section="skills">Toolkit</a></li>
         <% } %>
         <% if (settings.sections.research) { %>
           <li><a href="/research"<%- currentPath.startsWith('/research') ? ' aria-current="page"' : '' %> data-nav-section="research">Research</a></li>
@@ -99,7 +104,7 @@
           <a class="ar-btn ar-btn-quiet" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
         <% } %>
         <% if (settings.sections.contact) { %>
-          <a class="ar-btn ar-btn-accent" href="<%= anchor('contact') %>">Say hello</a>
+          <a class="ar-btn ar-btn-accent" href="<%= anchor('contact') %>">Get in touch</a>
         <% } else if (site.email) { %>
           <a class="ar-btn ar-btn-accent" href="mailto:<%= site.email %>">Email</a>
         <% } %>

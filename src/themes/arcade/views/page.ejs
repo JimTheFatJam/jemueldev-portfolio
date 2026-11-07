@@ -2,12 +2,12 @@
 
 <article class="ar-detail">
   <div class="ar-shell">
-    <header class="ar-page-head">
-      <p class="ar-kicker">Page</p>
-      <h1 class="ar-page-title"><%= page.title %></h1>
+    <header class="ar-detail-head">
+      <p class="ar-label"><span class="ar-label-num">—</span>Page</p>
+      <h1 class="ar-detail-title"><%= page.title %></h1>
     </header>
 
-    <div class="ar-detail-wide">
+    <div class="ar-detail-content ar-detail-content-wide">
       <%- include('shared/blocks', { blocks: blocks }) %>
     </div>
   </div>

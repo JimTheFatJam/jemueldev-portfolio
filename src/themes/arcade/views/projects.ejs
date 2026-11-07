@@ -3,20 +3,24 @@
 <section class="ar-section ar-section-first" id="projects">
   <div class="ar-shell">
     <div class="ar-page-head">
-      <p class="ar-kicker">World 02</p>
+      <p class="ar-label"><span class="ar-label-num">02</span>Work</p>
       <h1 class="ar-page-title">Projects</h1>
-      <p class="ar-page-lede">Things I have designed, built and shipped.</p>
+      <p class="ar-page-lead">Things I have designed, built and shipped.</p>
     </div>
 
-    <% if (projects.length) { %>
-      <ul class="ar-grid">
-        <% projects.forEach(function (project, index) { %>
-          <%- include('./partials/project-card', { project: project, cardIndex: index }) %>
-        <% }); %>
-      </ul>
-    <% } else { %>
-      <p class="ar-empty">No projects published yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %></p>
-    <% } %>
+    <div class="ar-section-body">
+      <% if (projects.length) { %>
+        <ul class="ar-card-grid">
+          <% projects.forEach(function (project, index) { %>
+            <%- include('./partials/project-card', { project: project, cardIndex: index }) %>
+          <% }); %>
+        </ul>
+      <% } else { %>
+        <p class="ar-empty">
+          No projects published yet.<% if (user) { %> <a href="/admin/projects">Add one in the admin</a>.<% } %>
+        </p>
+      <% } %>
+    </div>
   </div>
 </section>
 
