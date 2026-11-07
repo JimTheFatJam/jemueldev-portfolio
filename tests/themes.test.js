@@ -1898,6 +1898,76 @@ describe('arcade theme', () => {
     }
   });
 
+  test('nothing on a phone can be wider than the phone', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+
+    // A button is nowrap so short labels stay on one line, but an email
+    // address is content: the owner's address can be any length, and
+    // jemuel.jv.valencia@gmail.com measured 401px in a 5x7 face, pushing the
+    // whole page 125px wider than a 320px phone.
+    const btn = (css.match(/\n\.ar-btn \{[\s\S]*?\n\}/) || [''])[0];
+    assert.match(btn, /max-width: 100%;/, 'a button can still outgrow its container');
+
+    const mailto = (css.match(/\.ar-btn\[href\^="mailto:"\] \{[\s\S]*?\n\}/) || [''])[0];
+    assert.ok(mailto, 'addresses have no wrapping rule');
+    assert.match(mailto, /white-space: normal;/);
+    assert.match(mailto, /overflow-wrap: anywhere;/);
+  });
+
+  test('the mobile list has one straight column of discs', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+    const list = (css.match(/@media \(max-width: 48rem\) \{[\s\S]*?\n\}\n/) || [''])[0];
+    assert.ok(list, 'no mobile list block');
+
+    // The column has to be wide enough for the widest body. Saturn's rings
+    // are drawn 2.3 planet radii across, and against the old 2rem column they
+    // hung 15px past the page gutter and sat on the edge of the screen.
+    const col = list.match(/--ar-list-col: ([\d.]+)rem;/);
+    assert.ok(col, 'the disc column is not declared');
+    const saturn = css.match(/\.ar-body--6 \.ar-planet \{ width: ([\d.]+)rem;/);
+    assert.ok(saturn, 'Saturn has no size');
+    assert.ok(Number(col[1]) >= Number(saturn[1]) * 2.3,
+      'the disc column (' + col[1] + 'rem) cannot hold Saturn\'s rings (' +
+      (Number(saturn[1]) * 2.3).toFixed(2) + 'rem)');
+
+    // Both the sun row and the planet rows use that one column, so the list
+    // reads as a single column rather than a ragged edge.
+    assert.match(list, /grid-template-columns: var\(--ar-list-col\) minmax\(0, 1fr\);[\s\S]*?grid-template-columns: var\(--ar-list-col\) minmax\(0, 1fr\);/);
+    assert.match(list, /\.ar-sun-core \{[\s\S]*?justify-self: center;/);
+    // and the sun's own row is left-aligned like the others, not centred the
+    // way the orbital map centres it. Scoped to .ar-sun: .ar-body carries the
+    // same declaration, so an unscoped match passes even when the sun loses
+    // it, which is exactly what happened the first time this was written.
+    const sunStart = list.indexOf('.ar-sun {');
+    assert.ok(sunStart > -1, 'no .ar-sun rule in the mobile list');
+    const sunRule = list.slice(sunStart, list.indexOf('}', sunStart));
+    assert.match(sunRule, /justify-items: start;/);
+    assert.match(sunRule, /display: grid;/);
+  });
+
+  test('the header stays one row on a narrow phone', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+
+    // As a wrapping flex row the header broke in two below 375px even though
+    // its contents fitted, and the wordmark would not shrink to prevent it.
+    // A two-column grid gives the brand whatever is left and lets it
+    // ellipsise, which is what it was already set up to do.
+    const at = css.indexOf('@media (max-width: 60rem) {', css.indexOf('.ar-header-inner {\n  display: flex;'));
+    assert.ok(at > -1, 'no mobile header block after the base rule');
+    const block = css.slice(at, css.indexOf('\n}\n', at));
+    assert.match(block, /\.ar-header-inner \{[\s\S]*?display: grid;/);
+    assert.match(block, /grid-template-columns: minmax\(0, 1fr\) auto;/);
+    assert.match(block, /\.ar-mark \{[^}]*min-width: 0;/);
+    assert.match(block, /\.ar-mark-name \{ min-width: 0; \}/);
+    // the menu still needs a row of its own when it opens
+    assert.match(block, /\.ar-nav \{ grid-column: 1 \/ -1; \}/);
+
+    // It must come after the base rule, which sets display: flex at the same
+    // specificity — placed before it, the grid silently loses.
+    assert.ok(at > css.indexOf('.ar-header-inner {\n  display: flex;'),
+      'the mobile header grid is declared before the flex rule it overrides');
+  });
+
   test('no rule declares the same property twice over itself', async () => {
     // Restyling a forked theme means editing rules that already had opinions.
     // A declaration added above an existing one simply loses, silently — that

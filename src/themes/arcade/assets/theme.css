@@ -609,6 +609,28 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   flex-wrap: wrap;
 }
 
+/* Below the nav breakpoint the header is a grid instead. This has to come
+   after the rule above, which sets display: flex at the same specificity. */
+@media (max-width: 60rem) {
+  /* Two explicit columns rather than a wrapping flex row. The row was
+     breaking in two below 375px even though its contents fitted, and the
+     wordmark would not shrink to prevent it whatever it was told. As a grid
+     the brand simply gets whatever is left and ellipsises, which is what it
+     was always set up to do, and the header stays one row down to 300px.
+     The menu still drops onto a row of its own when opened. */
+  .ar-header-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    column-gap: 0.75rem;
+    row-gap: 1rem;
+  }
+  .ar-mark { grid-column: 1; margin-right: 0; min-width: 0; }
+  .ar-mark-name { min-width: 0; }
+  .ar-header-tools { grid-column: 2; justify-self: end; }
+  .ar-nav { grid-column: 1 / -1; }
+}
+
 .ar-mark { display: inline-flex; align-items: center; gap: 0.6rem; text-decoration: none; min-width: 0; }
 .ar-mark-badge {
   font-family: var(--ar-pixel);
@@ -808,6 +830,8 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   border: var(--ar-px) solid var(--ar-line);
   padding: 0.85rem 1rem;
   white-space: nowrap;
+  /* Never wider than the column it sits in, whatever the label says. */
+  max-width: 100%;
   /* Two inset bevels and one hard drop: the whole of the 8-bit button.
      Re-pointed by the variants below; blue is the default key. */
   --ar-key: var(--ar-btn);
@@ -858,6 +882,17 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
 }
 
 .ar-btn-lg { padding: 1.05rem 1.35rem; font-size: 0.75rem; }
+
+/* An address is content rather than a label, so these wrap instead of running
+   off the screen. Breaking anywhere is right for an address: there is no
+   sensible word boundary in one. */
+.ar-btn[href^="mailto:"] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
+  justify-content: center;
+  line-height: 1.5;
+}
 
 .ar-linkrow {
   display: flex;
@@ -1538,12 +1573,14 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   .ar-launch-inner { padding-block: 2rem 0; }
   .ar-launch-hint { display: none; }
 
-  /* Saturn's rings run out to 2.3 planet radii — past the 2rem disc column
-     and into the text, by a constant 4px at every width here, since both are
-     sized in rem. The planets stay exactly where they are and the text column
-     moves instead, by the same amount on every row so the list stays true to
-     one column. Eased up a little on wider tablets, where there is room. */
-  .ar-scene { --ar-list-gap: clamp(1.6rem, 1.1rem + 1.6vw, 2rem); }
+  /* Saturn's rings run out to 2.3 planet radii, wider than any of the discs.
+     The column is sized to hold them rather than letting them escape it, so
+     every row's art centres on the same axis and the widest one still clears
+     the page gutter. Before this the rings reached x=1 on a 390px phone. */
+  .ar-scene {
+    --ar-list-col: 4.5rem;
+    --ar-list-gap: clamp(0.9rem, 0.6rem + 1vw, 1.25rem);
+  }
 
   .ar-scene {
     max-width: none;
@@ -1562,10 +1599,15 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
     margin: 0 0 0.5rem;
     transform: none;
     transform-style: flat;
-    display: flex;
+    /* The same two columns as every row below it, so Home lines up with the
+       planets instead of sitting proud of them. justify-items has to be
+       reset: the desktop rule centres everything, which is right for a sun
+       sitting in the middle of an orbital map and wrong for a list row. */
+    display: grid;
+    grid-template-columns: var(--ar-list-col) minmax(0, 1fr);
+    column-gap: var(--ar-list-gap);
     align-items: center;
-    justify-content: flex-start;
-    gap: var(--ar-list-gap);
+    justify-items: start;
     text-align: left;
     padding-bottom: 1.25rem;
     border-radius: 0;
@@ -1577,6 +1619,7 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
     width: 2.5rem;
     height: 2.5rem;
     flex: none;
+    justify-self: center;
     box-shadow: 0 0 0 1px var(--ar-sun-ring), 0 0 20px 4px var(--ar-sun-glow);
   }
   .ar-sun-name {
@@ -1612,7 +1655,7 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
 
   .ar-body {
     grid-template-rows: auto;
-    grid-template-columns: 2rem minmax(0, 1fr);
+    grid-template-columns: var(--ar-list-col) minmax(0, 1fr);
     align-items: center;
     justify-items: start;
     gap: 0.9rem;
