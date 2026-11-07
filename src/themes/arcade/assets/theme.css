@@ -121,6 +121,11 @@
   --ar-stop-hi: #f87858;
   --ar-stop-lo: #581000;
   --ar-stop-ink: #f8f8f8;
+
+  --ar-info: #00a8a0;
+  --ar-info-hi: #5ff0e4;
+  --ar-info-lo: #00605c;
+  --ar-info-ink: #000000;
   --ar-input: #0b0b1e;
 
   /* Light text over a dark page: the hard black offset is what makes a
@@ -353,6 +358,11 @@ body.ar::before {
     --ar-stop-hi: #f87858;
     --ar-stop-lo: #581000;
     --ar-stop-ink: #f8f8f8;
+
+    --ar-info: #00a8a0;
+    --ar-info-hi: #5ff0e4;
+    --ar-info-lo: #00605c;
+    --ar-info-ink: #000000;
     --ar-input: #ffffff;
 
     /* Not black: the ink is already near-black, so a black shadow
@@ -437,6 +447,11 @@ body.ar::before {
   --ar-stop-hi: #f87858;
   --ar-stop-lo: #581000;
   --ar-stop-ink: #f8f8f8;
+
+  --ar-info: #00a8a0;
+  --ar-info-hi: #5ff0e4;
+  --ar-info-lo: #00605c;
+  --ar-info-ink: #000000;
   --ar-input: #ffffff;
 
   /* Not black: the ink is already near-black, so a black shadow
@@ -774,7 +789,11 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   white-space: nowrap;
 }
 .ar-tag-accent { color: var(--ar-accent); }
-.ar-tag-draft { color: var(--ar-on-accent); background: var(--ar-accent); box-shadow: inset 2px 2px 0 0 var(--ar-accent-bright); }
+.ar-tag-draft {
+  color: var(--ar-stop-ink);
+  background: var(--ar-stop);
+  box-shadow: inset 2px 2px 0 0 var(--ar-stop-hi);
+}
 
 .ar-btn {
   display: inline-flex;
@@ -830,6 +849,12 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   --ar-key-hi: var(--ar-stop-hi);
   --ar-key-lo: var(--ar-stop-lo);
   --ar-key-ink: var(--ar-stop-ink);
+}
+.ar-btn-info {
+  --ar-key: var(--ar-info);
+  --ar-key-hi: var(--ar-info-hi);
+  --ar-key-lo: var(--ar-info-lo);
+  --ar-key-ink: var(--ar-info-ink);
 }
 
 .ar-btn-lg { padding: 1.05rem 1.35rem; font-size: 0.75rem; }
@@ -2380,8 +2405,16 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   transition: color 0.18s var(--ar-ease), border-color 0.18s var(--ar-ease),
               transform 0.18s var(--ar-ease);
 }
-.ar-lightbox-btn:hover { color: var(--ar-accent); border-color: var(--ar-accent); }
-.ar-lightbox-btn:active { transform: scale(0.94); }
+.ar-lightbox-btn:hover { filter: brightness(1.18); }
+.ar-lightbox-btn:active { transform: translate(2px, 2px); }
+.ar-lightbox-close {
+  background: var(--ar-stop);
+  color: var(--ar-stop-ink);
+  box-shadow:
+    inset 2px 2px 0 0 var(--ar-stop-hi),
+    inset -2px -2px 0 0 var(--ar-stop-lo),
+    2px 2px 0 0 var(--ar-line);
+}
 .ar-lightbox-btn svg { width: 1.1rem; height: 1.1rem; display: block; }
 .ar-lightbox-btn[hidden] { display: none; }
 
@@ -2432,20 +2465,27 @@ body.ar-home .ar-header { animation: ar-header-hold 320ms linear; }
   justify-content: center;
   gap: 0.75rem;
   flex-wrap: wrap;
-  background: var(--ar-accent-soft);
-  border-bottom: var(--ar-px) solid var(--ar-line-strong);
+  background: var(--ar-stop);
+  color: var(--ar-stop-ink);
+  border-bottom: var(--ar-px) solid var(--ar-line);
+  box-shadow: inset 0 var(--ar-px) 0 0 var(--ar-stop-hi);
   padding: 0.55rem var(--ar-gutter);
   font-size: 0.8125rem;
 }
+.ar-draft a { color: var(--ar-stop-ink); }
+/* Inverted against the red banner, so it reads as a stamp rather than
+   disappearing into it: the accent yellow it used to use only managed 4.28
+   on red at night, and on paper it was a dark brown on dark red. */
 .ar-draft-tag {
-  font-family: var(--ar-mono);
-  font-size: 0.6875rem;
+  font-family: var(--ar-pixel);
+  font-size: 0.5625rem;
+  line-height: 1;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--ar-accent);
-  border: 1px solid currentColor;
-  border-radius: var(--ar-radius);
-  padding: 0.05rem 0.4rem;
+  letter-spacing: 0.08em;
+  color: var(--ar-stop);
+  background: var(--ar-stop-ink);
+  border: 2px solid var(--ar-line);
+  padding: 0.4rem 0.45rem;
 }
 
 /* --------------------------------------------------------------------------

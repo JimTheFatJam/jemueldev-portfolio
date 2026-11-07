@@ -112,10 +112,10 @@
                 <a class="ar-btn ar-btn-accent" href="<%= featured.href %>">View project <span aria-hidden="true">→</span></a>
               <% } %>
               <% if (safeUrl(featured.github_url)) { %>
-                <a class="ar-btn" href="<%= safeUrl(featured.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a>
+                <a class="ar-btn ar-btn-info" href="<%= safeUrl(featured.github_url) %>" target="_blank" rel="noopener noreferrer">Source</a>
               <% } %>
               <% if (safeUrl(featured.demo_url)) { %>
-                <a class="ar-btn" href="<%= safeUrl(featured.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
+                <a class="ar-btn ar-btn-quiet" href="<%= safeUrl(featured.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
               <% } %>
             </div>
           </div>
@@ -243,7 +243,7 @@
             <a class="ar-btn ar-btn-lg<%= index === 0 ? ' ar-btn-accent' : '' %>" href="mailto:<%= address %>"><%= address %></a>
           <% }); } %>
           <% if (resume) { %>
-            <a class="ar-btn ar-btn-lg" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
+            <a class="ar-btn ar-btn-quiet ar-btn-lg" href="<%= resume %>" target="_blank" rel="noopener noreferrer">Resume</a>
           <% } %>
         </div>
 

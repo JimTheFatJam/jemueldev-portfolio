@@ -21,10 +21,10 @@
           <a class="ar-btn ar-btn-accent" href="<%= safeUrl(item.paper_url) %>" target="_blank" rel="noopener noreferrer">Read the paper</a>
         <% } %>
         <% if (safeUrl(item.github_url)) { %>
-          <a class="ar-btn" href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">View code</a>
+          <a class="ar-btn ar-btn-info" href="<%= safeUrl(item.github_url) %>" target="_blank" rel="noopener noreferrer">View code</a>
         <% } %>
         <% (item.links || []).forEach(function (link) { if (safeUrl(link.url)) { %>
-          <a class="ar-btn" href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
+          <a class="ar-btn ar-btn-quiet" href="<%= safeUrl(link.url) %>" target="_blank" rel="noopener noreferrer"><%= link.label %></a>
         <% } }); %>
       </div>
     </header>

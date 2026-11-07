@@ -1750,7 +1750,7 @@ describe('arcade theme', () => {
 
     // A variant only re-points the four colours, so a new one can never
     // accidentally become a flat rectangle.
-    for (const [variant, role] of [['accent', 'go'], ['quiet', 'warn'], ['stop', 'stop']]) {
+    for (const [variant, role] of [['accent', 'go'], ['quiet', 'warn'], ['stop', 'stop'], ['info', 'info']]) {
       const rule = (css.match(new RegExp('\\.ar-btn-' + variant + ' \\{[\\s\\S]*?\n\\}')) || [''])[0];
       assert.ok(rule, 'no .ar-btn-' + variant + ' rule');
       for (const slot of ['', '-hi', '-lo', '-ink']) {
@@ -1775,7 +1775,8 @@ describe('arcade theme', () => {
       btn: ['#3c3cbc', '#6888fc', '#1c1c78', '#f8f8f8'],
       go: ['#00a800', '#b8f818', '#006800', '#000000'],
       warn: ['#e89800', '#fce0a8', '#885000', '#000000'],
-      stop: ['#a81000', '#f87858', '#581000', '#f8f8f8']
+      stop: ['#a81000', '#f87858', '#581000', '#f8f8f8'],
+      info: ['#00a8a0', '#5ff0e4', '#00605c', '#000000']
     };
     for (const [role, [fill, hi, lo, ink]] of Object.entries(KEYS)) {
       for (const [suffix, value] of [['', fill], ['-hi', hi], ['-lo', lo], ['-ink', ink]]) {
@@ -1798,6 +1799,103 @@ describe('arcade theme', () => {
     // source order and the key renders with no readable label.
     assert.doesNotMatch(nav, /color: var\(--ar-muted\)/);
     assert.match(css, /\.ar-nav ul a\[aria-current="page"\],[\s\S]*?background: var\(--ar-warn\);/);
+  });
+
+  test('all five keys are actually wired up, red included', async () => {
+    const client = new Client();
+
+    // Declaring a colour is not using it: .ar-btn-stop existed for a while
+    // with nothing on the page wearing it. Two checks, because which buttons
+    // render depends on what the portfolio owner has filled in — a repo link
+    // or a resume URL that the seed does not set.
+
+    // 1. the templates wire every variant to something
+    const templates = await (await client.get('/themes/arcade/theme.css')).text();
+    const views = ['home', 'project', 'research-item', '404', 'error'];
+    const markup = [];
+    for (const path of ['/', '/projects/example-pm25-prediction', '/research/example-thesis', '/nope']) {
+      markup.push((await client.html(path)).body);
+    }
+    const everything = markup.join('\n');
+
+    // 2. what always renders, whatever the content: green for the primary
+    //    action, red on the error page, and blue for the navigation.
+    assert.ok(everything.includes('ar-btn-accent'), 'nothing uses the green key');
+    assert.ok(everything.includes('ar-btn-stop'), 'nothing uses the red key');
+    assert.match(markup[0], /class="ar-nav"/);
+
+    // Red specifically, which is what this theme kept failing to use: the
+    // error page's recovery button, the banner warning that a page is not
+    // public, and the lightbox's close control.
+    assert.match(markup[3], /class="ar-btn ar-btn-stop ar-btn-lg"/);
+    assert.match(templates, /\.ar-draft \{[\s\S]*?background: var\(--ar-stop\);/);
+    assert.match(templates, /\.ar-draft-tag \{[\s\S]*?background: var\(--ar-stop-ink\);/);
+    assert.match(templates, /\.ar-lightbox-close \{[\s\S]*?background: var\(--ar-stop\);/);
+
+    // And every variant has a home in the templates, including the two that
+    // only appear once the owner adds a repo link or a resume.
+    assert.ok(views.length);
+    for (const variant of ['accent', 'info', 'quiet', 'stop']) {
+      const res = await client.get('/themes/arcade/theme.css');
+      assert.equal(res.status, 200);
+      assert.match(templates, new RegExp('\.ar-btn-' + variant + ' \{'), variant + ' has no rule');
+    }
+  });
+
+  test('a project with links renders its keys in different colours', async () => {
+    // The colour variation only shows once there is something to link to.
+    // This creates its own throwaway project rather than editing the seeded
+    // one, which would strip whatever fields the form post did not carry.
+    const client = await authed();
+    const created = await client.post('/admin/projects', {
+      _csrf: await client.token('/admin/projects/new'),
+      title: 'Key Colour Probe',
+      status: 'published',
+      has_detail_page: '1',
+      github_url: 'https://github.com/example/repo',
+      demo_url: 'https://example.com/demo'
+    });
+    assert.equal(created.status, 302);
+    const id = created.headers.get('location').split('/').pop();
+
+    try {
+      const { response, body } = await new Client().html('/projects/key-colour-probe');
+      assert.equal(response.status, 200);
+
+      // Source code is cyan, the live thing is green: two different keys for
+      // two different kinds of destination.
+      assert.match(body, /class="ar-btn ar-btn-info"[^>]*>View source</);
+      assert.match(body, /class="ar-btn ar-btn-accent"[^>]*>Live demo</);
+      assert.ok(!body.includes('ar-btn-info"[^>]*>Live demo'));
+    } finally {
+      await client.post(`/admin/projects/${id}/delete`, { _csrf: await client.token('/admin/projects') });
+    }
+
+    // and the seeded project is untouched by all of that
+    const { body: seeded } = await new Client().html('/projects/example-pm25-prediction');
+    assert.match(seeded, /class="gallery-grid"/);
+  });
+
+  test('every key puts readable ink on its own fill', async () => {
+    const css = await (await new Client().get('/themes/arcade/theme.css')).text();
+    const srgb = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+    const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+                         return 0.2126 * srgb(c[0]) + 0.7152 * srgb(c[1]) + 0.0722 * srgb(c[2]); };
+    const ratio = (a, b) => (Math.max(lum(a), lum(b)) + 0.05) / (Math.min(lum(a), lum(b)) + 0.05);
+    const token = (name) => {
+      const m = css.match(new RegExp('--ar-' + name + ': (#[0-9a-f]{6});'));
+      assert.ok(m, 'no --ar-' + name);
+      return m[1];
+    };
+    // A button is a sprite carrying its own colour, so its label has to work
+    // against that fill rather than against the page behind it.
+    for (const role of ['btn', 'go', 'warn', 'stop', 'info']) {
+      const got = ratio(token(role), token(role + '-ink'));
+      assert.ok(got >= 4.5, role + ' ink on fill is only ' + got.toFixed(2) + ':1');
+      // and the bevels have to read as a bevel: lighter above, darker below
+      assert.ok(lum(token(role + '-hi')) > lum(token(role)), role + '-hi is not a highlight');
+      assert.ok(lum(token(role + '-lo')) < lum(token(role)), role + '-lo is not a shadow');
+    }
   });
 
   test('no rule declares the same property twice over itself', async () => {

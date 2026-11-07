@@ -17,10 +17,10 @@
 
       <div class="ar-detail-actions">
         <% if (safeUrl(project.github_url)) { %>
-          <a class="ar-btn ar-btn-accent" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">View source</a>
+          <a class="ar-btn ar-btn-info" href="<%= safeUrl(project.github_url) %>" target="_blank" rel="noopener noreferrer">View source</a>
         <% } %>
         <% if (safeUrl(project.demo_url)) { %>
-          <a class="ar-btn" href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
+          <a class="ar-btn ar-btn-accent" href="<%= safeUrl(project.demo_url) %>" target="_blank" rel="noopener noreferrer">Live demo</a>
         <% } %>
       </div>
     </header>
